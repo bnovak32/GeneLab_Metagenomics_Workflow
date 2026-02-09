@@ -1,0 +1,13 @@
+sample_id,barcode_id,forward,group,NTC,concentration,paired
+sample1,barcode01,/path/to/raw_data/barcode01.fastq.gz,Even_5pg,FALSE,0.005,FALSE
+sample2,barcode02,/path/to/raw_data/barcode02.fastq.gz,Even_5pg,FALSE,0.005,FALSE
+sample3,barcode03,/path/to/raw_data/barcode03.fastq.gz,Even_5pg,FALSE,0.005,FALSE
+sample4,barcode04,/path/to/raw_data/barcode04.fastq.gz,Even_5pg,FALSE,0.005,FALSE
+sample5,barcode05,/path/to/raw_data/barcode05.fastq.gz,Even_10pg,FALSE,0.01,FALSE
+sample6,barcode06,/path/to/raw_data/barcode06.fastq.gz,Even_10pg,FALSE,0.01,FALSE
+sample7,barcode07,/path/to/raw_data/barcode07.fastq.gz,Even_10pg,FALSE,0.01,FALSE
+sample8,barcode08,/path/to/raw_data/barcode08.fastq.gz,Even_10pg,FALSE,0.01,FALSE
+ntc1,barcode09,/path/to/raw_data/barcode09.fastq.gz,NTC,TRUE,0,FALSE
+ntc2,barcode10,/path/to/raw_data/barcode10.fastq.gz,NTC,TRUE,0,FALSE
+ntc3,barcode11,/path/to/raw_data/barcode11.fastq.gz,NTC,TRUE,0.1,FALSE
+ntc4,barcode12,/path/to/raw_data/barcode12.fastq.gz,NTC,TRUE,0.1,FALSE

@@ -1,0 +1,6 @@
+name: kaiju
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::kaiju=1.10.1

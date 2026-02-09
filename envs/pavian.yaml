@@ -1,0 +1,12 @@
+name: pavian
+channels:
+    - conda-forge
+    - bioconda
+    - maximinio
+    - defaults
+dependencies:
+    - r-base=4.0.5
+    - r-optparse=1.7.3
+    - r-tidyverse=1.3.2
+    - r-glue=1.6.2
+    - r-pavian=1.2.0

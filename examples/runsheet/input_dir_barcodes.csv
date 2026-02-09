@@ -1,0 +1,10 @@
+sample_id,barcode_id,group,NTC,concentration,paired
+sample1,barcode01,positive_control,FALSE,0.01,FALSE
+sample2,barcode02,positive_control,FALSE,0.01,FALSE
+sample3,barcode03,cleanroom_spike,FALSE,0.1,FALSE
+sample4,barcode04,cleanroom_floor,FALSE,0.1,FALSE
+sample5,barcode05,cleanroom_floor,FALSE,0.1,FALSE
+sample6,barcode06,cleanroom_floor,FALSE,0.1,FALSE
+sample7,barcode07,cleanroom_floor,FALSE,0.1,FALSE
+sample8,barcode08,cleanroom_floor,FALSE,0.1,FALSE
+sample9,barcode09,no_template_control,TRUE,0,FALSE
