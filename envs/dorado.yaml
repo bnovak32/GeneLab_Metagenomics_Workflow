@@ -1,0 +1,6 @@
+name: dorado
+channels:
+  - conda-forge
+  - hcc
+dependencies:
+  - dorado=0.7.2

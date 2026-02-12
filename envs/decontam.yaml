@@ -1,0 +1,6 @@
+name: decontam
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconductor-decontam=1.26.0
