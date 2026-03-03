@@ -99,7 +99,7 @@ workflow assembly_based {
         failed_assemblies = RENAME_HEADERS.out.failed_assembly
         failed_assemblies
               .map{ it.text }
-              .collectFile(name: "${params.assemblies_dir}/Failed-assemblies.tsv", cache: false)
+              .collectFile(name: "${params.assembly_based_dir}/assemblies/Failed-assemblies.tsv", cache: false)
         
         // Map reads to assembly
         if(params.technology == "illumina"){

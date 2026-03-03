@@ -83,7 +83,6 @@ process KAIJU2KRONA {
 process KRONA_REPORT {
 
     tag "Creating a krona html report.."
-    label "read_based_outputs"
     label "krona"
 
 

@@ -60,7 +60,6 @@ process MAKE_COMBINED_GENE_LEVEL_TABLES {
 
     tag "Combining all gene level annotations...."
     label "bit"
-    label "combine_outputs"
 
     input:
         path(gene_coverage_annotation_and_tax_files)
@@ -158,7 +157,6 @@ process MAKE_COMBINED_CONTIG_TAX_TABLES {
 
     tag "Making a summary contig taxonomy table...."
     label "bit"
-    label "combine_outputs"
 
     input:
         path(contig_coverage_and_tax_files)

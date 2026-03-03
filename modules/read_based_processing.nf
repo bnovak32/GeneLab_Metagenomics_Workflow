@@ -128,7 +128,6 @@ process SPLIT_READ_BASED_PROCESSING_TABLES {
 
     tag "Splitting humann stratified tables..."
     label "read_based"
-    label "read_based_outputs"
 
     input:
         path(gene_families)
@@ -185,7 +184,6 @@ process GEN_NORMALIZED_READ_BASED_PROCESSING_TABLES {
 
     tag "Generating normalized humann tables..."
     label "read_based"
-    label "read_based_outputs"
 
     input:
        path(gene_families)
@@ -219,7 +217,6 @@ process GEN_READ_BASED_PROCESSING_KO_TABLE {
 
     tag "Retrieving Kegg Orthologs..."
     label "read_based"
-    label "read_based_outputs"
     
     input:
         path(gene_families)
@@ -248,7 +245,6 @@ process COMBINE_READ_BASED_PROCESSING_TAXONOMY {
 
     tag "Merging metaphlan taxonomy tables..."
     label "read_based"
-    label "read_based_outputs"
 
     input:
         path(metaphlan_bugs_list_files)
@@ -464,11 +460,11 @@ workflow read_based {
         COMBINE_READ_BASED_PROCESSING_TAXONOMY.out.version | mix(software_versions_ch) | set{software_versions_ch}
 
     emit:
-        gene_families = GEN_NORMALIZED_READ_BASED_PROCESSING_TABLES.out.gene_families
+        gene_families   = GEN_NORMALIZED_READ_BASED_PROCESSING_TABLES.out.gene_families
         path_abundances = GEN_NORMALIZED_READ_BASED_PROCESSING_TABLES.out.path_abundances
-        ko_table = ko_table_ch
-        taxonomy = taxonomy_ch 
-        versions = software_versions_ch
+        ko_table        = ko_table_ch
+        taxonomy        = taxonomy_ch 
+        versions        = software_versions_ch
 }
 
 

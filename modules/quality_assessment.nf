@@ -73,7 +73,8 @@ process MULTIQC {
     path(multiqc_config)
     path(files)
   output:
-    path("${params.additional_filename_prefix}${prefix}_multiqc_report"), emit: report_dir
+    path("${params.additional_filename_prefix}${prefix}_multiqc${params.assay_suffix}.html"), emit: html
+    path("${params.additional_filename_prefix}${prefix}_multiqc_report/${prefix}_multiqc_data/"), emit: data
     path("${params.additional_filename_prefix}${prefix}_reads_per_sample.tsv"), emit: reads_per_sample
     path("versions.txt"), emit: version
   script:
@@ -84,6 +85,12 @@ process MULTIQC {
               --outdir ${params.additional_filename_prefix}${prefix}_multiqc_report  ${files} > /dev/null 2>&1
 
 
+      # Copy and rename html file 
+      cp ${params.additional_filename_prefix}${prefix}_multiqc_report/${prefix}_multiqc.html  \\
+          ${params.additional_filename_prefix}${prefix}_multiqc${params.assay_suffix}.html
+  
+
+       
       if [ `find -type f  -name 'multiqc_nanostat.txt' | wc -l` -gt 0 ]; then
 
       # Nanopore dataset - Nanoplot
@@ -118,14 +125,14 @@ process ZIP_MULTIQC {
         path(multiqc_dir)
 
     output:
-        path("${params.additional_filename_prefix}${prefix}_multiqc${params.assay_suffix}_report.zip"), emit: report
+        path("${params.additional_filename_prefix}${prefix}_multiqc${params.assay_suffix}_data.zip"), emit: data
         path("versions.txt"), emit: version
 
     script:
         """
         # zipping and removing unzipped dir
         zip -q -r \\
-           ${params.additional_filename_prefix}${prefix}_multiqc${params.assay_suffix}_report.zip \\
+           ${params.additional_filename_prefix}${prefix}_multiqc${params.assay_suffix}_data.zip \\
            ${multiqc_dir}
 
         zip -h | grep "Zip" | sed -E 's/(Zip.+\\)).+/\\1/' > versions.txt
@@ -227,9 +234,6 @@ process PORECHOP {
     tag "Trimming ${sample_id}-s reads...."
     beforeScript "chmod +x ${projectDir}/bin/*"
 
-    conda "${projectDir}/envs/porechop.yaml"
-    container 'quay.io/biocontainers/porechop:0.2.4--py311he264feb_9'
-
     input:
         tuple val(sample_id), path(reads), val(isPaired)
 
@@ -273,7 +277,7 @@ workflow nano_quality_check {
                               .flatten()
                               .collect()
         MULTIQC(prefix_ch, multiqc_config, nanoplot_ch)
-        ZIP_MULTIQC(prefix_ch, MULTIQC.out.report_dir)
+        ZIP_MULTIQC(prefix_ch, MULTIQC.out.data)
 
         software_versions_ch = Channel.empty()
         NANOPLOT.out.version | mix(software_versions_ch) | set{software_versions_ch}
@@ -300,7 +304,7 @@ workflow quality_check {
         FASTQC(reads_ch)
         fastqc_ch = FASTQC.out.html.flatten().collect()
         MULTIQC(prefix_ch, multiqc_config, fastqc_ch)
-        ZIP_MULTIQC(prefix_ch, MULTIQC.out.report_dir)
+        ZIP_MULTIQC(prefix_ch, MULTIQC.out.data)
 
         software_versions_ch = Channel.empty()
         FASTQC.out.version | mix(software_versions_ch) | set{software_versions_ch}

@@ -75,7 +75,6 @@ process REMOVE_LINEWRAPS {
 process KO_ANNOTATION {
 
     tag "Running KO annotation of ${sample_id}-s predicted amino acids.."
-    //label "contig_annotation"
     
     input:
        tuple val(sample_id), path(assembly), path(aa), path(nt)

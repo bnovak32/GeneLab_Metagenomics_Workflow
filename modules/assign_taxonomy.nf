@@ -46,7 +46,6 @@ process KRAKEN2TABLE {
 
 
     tag "Creating a species table from multiple kraken reports.."
-    label "read_based_outputs"
 
     input:
         path(reports)
@@ -108,7 +107,6 @@ process KAIJU2TABLE {
  
     tag "Merging kaiju reports in a ${taxon_level} table.."
     label "kaiju"
-    label "read_based_outputs"
 
     input:
         path(DB)

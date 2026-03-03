@@ -7,7 +7,6 @@ process METAPHLAN2COUNT {
 
     tag "Processing metaphlan count table..."
     label "R_downstream"
-    label "read_based_outputs"
 
     input:
         path(metaphlan_table) // Metaphlan-taxonomy_GLmetagenomics.tsv
@@ -38,8 +37,6 @@ process KAIJU2SPECIES_TABLE  {
 
     tag "Processing kaiju species table..."
     label "R_downstream"
-    label "read_based_outputs"
-
 
     input:
         path(merged_table) // merged_kaiju_table.tsv
@@ -103,7 +100,6 @@ process ASSEMBLY_TABLE {
   
     tag "processing your ${level} ${type} table..."
     label "R_downstream"
-    label "combine_outputs"
 
 
     input:
@@ -187,7 +183,6 @@ process BARPLOT {
 
     tag "Making your bar plot..."
     label "R_downstream"
-    label "read_based_outputs"
 
     input:
       val(meta)
@@ -201,6 +196,8 @@ process BARPLOT {
 
     script:
         """
+        # To fix Fontconfig error: No writable cache directories
+        #mkdir -p cache/fontconfig/ && export FONTCONFIG_CACHE=cache/fontconfig/
         make_barplot.R \\
                   --metadata-table '${metadata}' \\
                   --feature-table '${feature_table}' \\
@@ -225,7 +222,6 @@ process HEATMAP {
 
     tag "Making your heatmap..."
     label "R_downstream"
-    label "combine_outputs"
 
 
     input:

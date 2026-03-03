@@ -142,10 +142,15 @@ counts <- read_delim(read_count, col_names = c("Sample_ID", "Reads"), skip = 1) 
                                                    } ) ) %>%
                 distinct()
 
+# Get unique samples read count 
+samples <- colnames(abund_species_table)	
+counts <- map(samples, function(sample) { index <- grep(sample, counts$Sample_ID)[1]
+                                          data.frame(Sample_ID=sample, Reads=counts$Reads[index]) }) %>% list_rbind()
+
 max_val <- counts$Reads %>% max
 # If counts are expressed as decimals
 # multiply by a million
-if(max_val < 10) { counts <- counts %>%  mutate(Reads= Reads * 1000000)}
+if(max_val %% 1 != 0) { counts <- counts %>%  mutate(Reads= Reads * 1000000)}
 counts <- counts %>% as.data.frame()
 
 

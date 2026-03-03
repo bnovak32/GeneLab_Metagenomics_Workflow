@@ -1,8 +1,7 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl = 2
 
-//params.isFast5 = true
-//params.input_dir = "path/to/fast5/or/pod5/directory/"
+//params.input_dir = "path/to/pod5/directory/"
 // can be path sof existing config of just the model category i.e. hac, sup and fast etc
 //params.model = "/path/to/dorado/mmodel/file/dna_r10.4.1_e8.2_400bps_hac@v4.3.0"
 //params.kit_name = "SQK-RBK114-24" // nanopore kit used.options are:
@@ -15,33 +14,6 @@ nextflow.enable.dsl = 2
 // SQK-RBK111-96 SQK-RBK114-24 SQK-RBK114-96 SQK-RLB001 SQK-RPB004 
 // SQK-RPB114-24 TWIST-16-UDI TWIST-96A-UDI VSK-PTC001 VSK-VMK001 VSK-VMK004 VSK-VPS001
 
-// conver5 fast5 to pod5 file
-process FAST52POD5 {
-
-    tag "converting fast5 to post5"
-
-    input:
-        path(fast5_dir)
-
-    output:
-        path("pod5_dir/"), emit: pod5_dir
-        path("versions.txt"), emit: version
-        
-    script:
-        """   
-        # Convert each fast5 to its relative converted output. The output files are written
-        # into the output directory at paths relatve to the path given to the
-        # --one-to-one argument. Note: This path must be a relative parent to all
-        #input paths.
-        #ls input/*.fast5
-        #file_1.fast5 file_2.fast5 ... file_N.fast5
-        pod5 convert fast5  --output pod5_dir/ --one-to-one ${fast5_dir}
-
-
-        VERSION=`pod5 --version | awk '{print \$3}'`
-        echo pod5 \${VERSION} > versions.txt
-        """
-}
 
 //  Runs the basecalling process to convert raw nanopore signal data to nucleotide sequences
 // https://github.com/nanoporetech/dorado/
@@ -208,14 +180,6 @@ workflow{
      pod5_dir   = Channel.fromPath(params.input_dir, checkIfExists: true)
      config_file = Channel.fromPath(params.config_file, checkIfExists: true)
  
-     if(params.isFast5){
-
-     input_dir   = Channel.fromPath(params.input_dir, checkIfExists: true)
-     FAST52POD5(input_dir)
-
-     pod5_dir = FAST52POD5.out.pod5_dir
-     }
-
      DORADO_BASECALLER(pod5_dir, config_file, params.kit_name)
 
      DORADO_DEMUX(DORADO_BASECALLER.out.bam, params.kit_name)

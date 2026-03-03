@@ -317,7 +317,7 @@ workflow nano_remove_contaminants {
 
     emit:
        clean_reads = NANO_REMOVE_CONTAMINANT.out.reads
-       logs = log_ch
-       versions = software_versions_ch
+       logs        = log_ch
+       versions    = software_versions_ch
 
 }

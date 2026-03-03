@@ -163,6 +163,7 @@ run_decontam <- function(feature_table, metadata, contam_threshold=0.1,
       )
       )
     sub_metadata[, freq_col] <- as.numeric(sub_metadata[,freq_col])
+    sub_metadata[, prev_col] <- tolower(sub_metadata[,prev_col])
     
   }
   
@@ -238,6 +239,9 @@ metadata <- metadata[samples,]
 feature_table <- feature_table[,samples]
 
 # Run decontam
+# Assign prev and freq column names to NULL if the values in the supplied columns arrent unique
+if( length(unique(metadata[,prev_col])) == 1) prev_col <- NULL
+if( length(unique(metadata[,freq_col])) == 1) freq_col <- NULL
 contamdf <- run_decontam(feature_table, metadata, threshold, prev_col, freq_col, ntc_name) 
 
 contamdf <- as.data.frame(contamdf) %>% rownames_to_column(feature_column)

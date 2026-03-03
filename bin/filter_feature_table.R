@@ -88,7 +88,7 @@ get_abundant_features <- function(mat, cpm_threshold=1000){
   
   # mat - matrix with features as rows and samples as columns
   # cpm_threshold - threshold to filter abundant features
-  features <- rowSums(mat) %>% sort()
+  features <- rowSums(mat, na.rm = TRUE) %>% sort()
   
   abund_features <- features[features > cpm_threshold] %>% names
   
@@ -234,7 +234,9 @@ non_microbial <-  opt[['features-to-drop']]
   non_microbial <- "UNCLASSIFIED|Unclassifed|unclassified|Homo sapien|cannot|uncultured|unidentified"
 }
 
-feature_table <- read_delim(feature_table_file) %>% as.data.frame()
+feature_table <- read_delim(feature_table_file) %>% 
+	            mutate( across(where(is.numeric), function(col) replace_na(col, 0)) ) %>%
+		    as.data.frame()
 feature_name <- colnames(feature_table)[1]
 rownames(feature_table) <- feature_table[,1]
 feature_table <- feature_table[, -1]

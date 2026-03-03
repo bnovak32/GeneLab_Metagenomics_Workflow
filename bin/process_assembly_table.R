@@ -167,15 +167,28 @@ read_input_table <- function(file_name){
 }
 
 
+get_samples <- function(df, sample_names, end_col='species') {
+
+  # Get common samples 
+  cols <- colnames(df)
+  index <- grep(end_col, cols)
+  start <- grep(end_col, cols)+1
+  end <- (length(cols)-index)
+  df_samples <- cols[start:end]
+  sample_names <- intersect(df_samples, sample_names)
+
+  return(sample_names)
+
+}
+
 # Read Assembly-based contig or gene taxonomy annotation table
-read_taxonomy_table <- function(file_name, sample_names){
-  
-  df <- read_input_table(file_name)
+read_taxonomy_table <- function(df, sample_names){
   
   taxonomy_table <- df %>%
     select(domain:species) %>%
     mutate(domain=replace_na(domain, "Unclassified"))
-  
+ 
+  sample_names <- get_samples(df, sample_names) 
   counts_table <- df %>% select(!!sample_names)
   
   taxonomy_table  <- process_taxonomy(taxonomy_table)
@@ -219,13 +232,21 @@ if(any(str_detect(col_names, "gene_calls_identified"))){
 
 
 if(type == "KO"){
+
+  df <- read_input_table(assembly_table)
+  # Get common sample ids
+  sample_order <- get_samples(df, sample_order, "KO_function")
   
-  table2write <- read_input_table(assembly_table) %>% select(KO_ID, !!sample_order)
+  table2write <- df  %>% select(KO_ID, !!sample_order)
   
 }else{
 
 # Deduplicate rows by summing together species values
-table2write <- read_taxonomy_table(assembly_table, sample_order) %>%
+
+  df <- read_input_table(assembly_table)
+  # Get common sample ids
+  sample_order <- get_samples(df, sample_order)
+  table2write <- read_taxonomy_table(df, sample_order) %>%
                select(species, !!sample_order) %>%
                group_by(species) %>%
                summarise(across(everything(), sum)) %>% # Dereplicate
