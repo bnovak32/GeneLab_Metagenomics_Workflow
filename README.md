@@ -58,7 +58,7 @@ The table below details the default maximum resource allocations for individual 
       - 4dii. [Approach 2: Start with single-end FASTQ files as input](#4dii-approach-2-start-with-single-end-fastq-files-as-input)
 
    - 4e. [Monitoring runs on seqera platforms](#4e-monitoring-runs-on-seqera-platforms)
-   - 4f. [Modify parameters and compute resources in the Nextflow config file](#4e-modify-parameters-and-compute-resources-in-the-nextflow-config-file)
+   - 4f. [Modify parameters and compute resources in the Nextflow config file](#4f-modify-parameters-and-compute-resources-in-the-nextflow-config-file)
    
 5. [Workflow Outputs](#5-workflow-outputs)  
    - 5a. [Main outputs](#5a-main-outputs)  
