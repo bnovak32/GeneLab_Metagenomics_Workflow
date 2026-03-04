@@ -231,7 +231,7 @@ non_microbial <-  opt[['features-to-drop']]
   
 }else{
   
-  non_microbial <- "UNCLASSIFIED|Unclassifed|unclassified|Homo sapien|cannot|uncultured|unidentified"
+  non_microbial <- "UNCLASSIFIED|Unclassified|unclassified|Homo sapien|cannot|uncultured|unidentified"
 }
 
 feature_table <- read_delim(feature_table_file) %>% 

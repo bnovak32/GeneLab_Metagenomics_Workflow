@@ -30,7 +30,7 @@ WORKFLOW_DIR='/path/to/workflow_code/'
 # ---- Low biomass
 
 # Input dir
-bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "low_biomass" --input_type "directory"  --input_file input_dir_barcodes.csv --errorStrategy "ignore" --technology "nanopore" --assay_suffix "_GLlblMetag" --input_dir "/path/to/pod5/directory/" --kit_name "SQK-RPB114-24" --isFast5 false'
+bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "low_biomass" --input_type "directory"  --input_file input_dir_barcodes.csv --errorStrategy "ignore" --technology "nanopore" --assay_suffix "_GLlblMetag" --input_dir "/path/to/pod5/directory/" --kit_name "SQK-RPB114-24"'
 
 # Single
 bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "low_biomass" --input_type "single"  --input_file single.csv  --errorStrategy "ignore" --technology "nanopore" --assay_suffix "_GLlblMetag"'
@@ -42,7 +42,7 @@ bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.con
 # ----- Standard
 
 # Input dir
-bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "standard" --input_type "directory"  --input_file input_dir_barcodes.csv --errorStrategy "ignore" --technology "nanopore" --assay_suffix "_GLlMetag" --input_dir "/path/to/pod5/directory/" --kit_name "SQK-RPB114-24" --isFast5 false'
+bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "standard" --input_type "directory"  --input_file input_dir_barcodes.csv --errorStrategy "ignore" --technology "nanopore" --assay_suffix "_GLlMetag" --input_dir "/path/to/pod5/directory/" --kit_name "SQK-RPB114-24"'
 
 # Single
 bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "standard" --input_type "single"  --input_file single.csv  --errorStrategy "ignore" --technology "nanopore" --assay_suffix "_GLlMetag"'

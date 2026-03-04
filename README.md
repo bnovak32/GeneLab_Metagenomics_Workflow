@@ -1,6 +1,6 @@
 # GeneLab Metagenomics Sequencing Data Processing Workflow
 
-> GeneLab, part of NASA's [Open Science Data Repository (OSDR)](https://www.nasa.gov/osdr/), has wrapped each step of the Low biomass [long-read](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Nanopore) and [short-read](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Illumina) metagenomics sequencing data processing pipelines into a Nextflow workflow. This repository contains information about the workflow along with instructions for installation and usage. Exact workflow run info and pipeline version used to process specific datasets hosted on the [OSDR data repository](https://osdr.nasa.gov/bio/repo/) are provided alongside their processed data in OSDR under 'Files' -> 'GeneLab Processed Metagenomics Files' -> 'Processing Info'. 
+> GeneLab, part of NASA's [Open Science Data Repository (OSDR)](https://www.nasa.gov/osdr/), has wrapped each step of the [Low Biomass long-read](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Nanopore), [Low Biomass short-read](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Illumina), [Standard long-read](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics/Metagenomics/Nanopore) and [Standard short-read](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics/Metagenomics/Illumina) metagenomics sequencing data processing pipelines into a Nextflow workflow. This repository contains information about the workflow along with instructions for installation and usage. Exact workflow run info and pipeline version used to process specific datasets hosted on the [OSDR data repository](https://osdr.nasa.gov/bio/repo/) are provided alongside their processed data in OSDR under 'Files' -> 'GeneLab Processed Metagenomics Files' -> 'Processing Info'. 
 
 <br>
 
@@ -14,7 +14,7 @@
 
 ### Implementation Tools
 
-The current GeneLab metagenomics sequencing data processing pipelines, Low biomass [long-read](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Nanopore) and Low biomass [short-read](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Illumina), are implemented as a [Nextflow](https://nextflow.io/) DSL2 workflow and utilizes [Singularity](https://docs.sylabs.io/guides/3.10/user-guide/introduction.html) containers, [Docker](https://docs.docker.com/get-started/) containers, or [conda](https://docs.conda.io/en/latest/) environments to install/run all tools. This workflow is run using the command line interface (CLI) of any unix-based system.  While knowledge of creating workflows in Nextflow is not required to run the workflow as is, [the Nextflow documentation](https://nextflow.io/docs/latest/index.html) is a useful resource for users who want to modify and/or extend this workflow.   
+The current GeneLab metagenomics sequencing data processing pipelines, [Low biomass long-read](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Nanopore), [Low biomass short-read](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Illumina), [Standard long-read](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics/Metagenomics/Nanopore) and [Standard short-read](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics/Metagenomics/Illumina) are implemented as a [Nextflow](https://nextflow.io/) DSL2 workflow and utilizes [Singularity](https://docs.sylabs.io/guides/3.10/user-guide/introduction.html) containers, [Docker](https://docs.docker.com/get-started/) containers, or [conda](https://docs.conda.io/en/latest/) environments to install/run all tools. This workflow is run using the command line interface (CLI) of any unix-based system.  While knowledge of creating workflows in Nextflow is not required to run the workflow as is, [the Nextflow documentation](https://nextflow.io/docs/latest/index.html) is a useful resource for users who want to modify and/or extend this workflow.   
 
 ### Resource Requirements <!-- omit in toc -->
 
@@ -22,9 +22,9 @@ The table below details the default maximum resource allocations for individual 
 
 | CPU Cores | Memory |
 |--------------------|------------------|
-| 10                 | 600 GB           |
+| 10                 | 300 GB           |
 
-> **Note:** These per-process resource allocations are defaults. They can be adjusted by modifying `cpus` and `memory` directives in the configuration file: [`nextflow.config`](nextflow.config).
+> **Note:** These per-process resource allocations are defaults. They can be adjusted by modifying `cpus` and `memory` directives in the  [default.config](config/default.config), [illumina.config](config/illumina.config) and [nanopore.config](config/nanopore.config) configuration files.
 
 <br>
 
@@ -39,17 +39,26 @@ The table below details the default maximum resource allocations for individual 
 3. [Fetch Singularity Images](#3-fetch-singularity-images)  
 
 4. [Run the Workflows](#4-run-the-workflows)  
-   - 4a. [Low Biomass Long Read Workflow](#4a-low-biomass-long-read-workflow)  
-      - 4ai. [Approach 1: Start with pod5 or fast5 files as input](#4ai-approach-1-start-with-pod5-or-fast5-files-as-input)  
+   - 4a. [Standard Long Read Workflow](#4a-standard-long-read-workflow)  
+      - 4ai. [Approach 1: Start with pod5 or fast5 files as input](#4ai-approach-1-start-with-pod5-files-as-input)  
       - 4aii. [Approach 2: Start with multiple FASTQ files per sample as input](#4aii-approach-2-start-with-multiple-fastq-files-per-sample-as-input)  
       - 4aiii. [Approach 3: Start with one FASTQ file per sample as input](#4aiii-approach-3-start-with-one-fastq-file-per-sample-as-input)
-         
-   - 4b. [Low Biomass Short Read Workflow](#4b-low-biomass-short-read-workflow)  
-      - 4bi. [Approach 1: Start with paired-end FASTQ files as input](#4bi-approach-1-start-with-paired-end-fastq-files-as-input)  
-      - 4bii. [Approach 2: Start with single-end FASTQ files as input](#4bii-approach-2-start-with-single-end-fastq-files-as-input)
-         
-   - 4c. [Monitoring runs on seqera platforms](#4c-monitoring-runs-on-seqera-platforms)
-   - 4d. [Modify parameters and compute resources in the Nextflow config file](#4d-modify-parameters-and-compute-resources-in-the-nextflow-config-file)
+
+   - 4b. [Low Biomass Long Read Workflow](#4b-low-biomass-long-read-workflow)  
+      - 4bi. [Approach 1: Start with pod5 or fast5 files as input](#4bi-approach-1-start-with-pod5-files-as-input)  
+      - 4bii. [Approach 2: Start with multiple FASTQ files per sample as input](#4bii-approach-2-start-with-multiple-fastq-files-per-sample-as-input)  
+      - 4biii. [Approach 3: Start with one FASTQ file per sample as input](#4biii-approach-3-start-with-one-fastq-file-per-sample-as-input)
+              
+   - 4c. [Standard Short Read Workflow](#4c-standard-short-read-workflow)  
+      - 4ci. [Approach 1: Start with paired-end FASTQ files as input](#4ci-approach-1-start-with-paired-end-fastq-files-as-input)  
+      - 4cii. [Approach 2: Start with single-end FASTQ files as input](#4cii-approach-2-start-with-single-end-fastq-files-as-input)
+
+   - 4d. [Low Biomass Short Read Workflow](#4d-low-biomass-short-read-workflow)  
+      - 4di. [Approach 1: Start with paired-end FASTQ files as input](#4di-approach-1-start-with-paired-end-fastq-files-as-input)  
+      - 4dii. [Approach 2: Start with single-end FASTQ files as input](#4dii-approach-2-start-with-single-end-fastq-files-as-input)
+
+   - 4e. [Monitoring runs on seqera platforms](#4e-monitoring-runs-on-seqera-platforms)
+   - 4f. [Modify parameters and compute resources in the Nextflow config file](#4e-modify-parameters-and-compute-resources-in-the-nextflow-config-file)
    
 5. [Workflow Outputs](#5-workflow-outputs)  
    - 5a. [Main outputs](#5a-main-outputs)  
@@ -64,6 +73,7 @@ The table below details the default maximum resource allocations for individual 
 #### 1a. Install Nextflow and Conda
 
 Nextflow can be installed either through the [Anaconda bioconda channel](https://anaconda.org/bioconda/nextflow) or as documented on the [Nextflow documentation page](https://www.nextflow.io/docs/latest/getstarted.html).
+
 
 > Note: If you wish to install conda, we recommend installing a Miniforge version appropriate for your system, as documented on the [conda-forge website](https://conda-forge.org/download/), where you can find basic binaries for most systems. More detailed miniforge documentation is available in the [miniforge github repository](https://github.com/conda-forge/miniforge).
 > 
@@ -96,11 +106,13 @@ We recommend installing Singularity on a system wide level as per the associated
 
 ### 2. Download the Workflow Files
 
-All files required for utilizing the GeneLab metagenomics workflow for processing either short- or long-read low biomass sequencing data are available in this repository. To get a copy of the latest workflow version on to your system, clone this repository then `cd` into the repository directory by running the following commands: 
+All files required for utilizing the GeneLab metagenomics workflow for processing either short- or long-read sequencing data are available in this repository. To get a copy of the latest workflow version on to your system, clone this repository then `cd` into the repository directory by running the following commands: 
 
 ```bash
-git clone https://github.com/olabiyi/NF-MetagenomeSeq.git
-cd NF-MetagenomeSeq
+wget https://github.com/nasa/GeneLab_Metagenomics_Workflow/releases/download/v1.0.0/NF_Metagenomics_1.0.0.zip
+
+unzip NF_Metagenomics_1.0.0.zip 
+cd NF_Metagenomics_1.0.0/
 ```
 
 <br>
@@ -113,13 +125,13 @@ Although Nextflow can fetch Singularity images from a url, doing so may cause is
 
 To avoid this issue, run the following command to fetch the Singularity images prior to running the GeneLab metagenomics workflow:
 
-> Note: This command should be run from within the `NF-MetagenomeSeq` directory that was downloaded in [step 2](#2-download-the-workflow-files) above. Depending on your network speed, fetching the images will take ~20 minutes. Approximately 4GB of RAM is needed to download and build the Singularity images.
+> Note: This command should be run from within the `NF_Metagenomics_1.0.0` directory that was downloaded in [step 2](#2-download-the-workflow-files) above. Depending on your network speed, fetching the images will take ~20 minutes. Approximately 4GB of RAM is needed to download and build the Singularity images.
 
 ```bash
-bash ./bin/prepull_singularity.sh nextflow.config
+bash ./bin/prepull_singularity.sh config/*.config
 ```
 
-Once complete, a `singularity` folder containing the Singularity images will be created. Run the following command to export this folder as a Nextflow configuration environment variable to ensure Nextflow can locate the fetched images:
+Once complete, a `singularity` directory containing the Singularity images will be created. Run the following command to export this folder as a Nextflow configuration environment variable to ensure Nextflow can locate the fetched images:
 
 ```bash
 export NXF_SINGULARITY_CACHEDIR=$(pwd)/singularity
@@ -131,34 +143,37 @@ export NXF_SINGULARITY_CACHEDIR=$(pwd)/singularity
 
 ### 4. Run the Workflows
 
+For options and detailed help on how to run the workflow, run the following command:
+
+```bash
+nextflow run main.nf --help
+```
+
 > **Notes:**
-> - All the commands in this step assume that the workflow will be run from within the `NF-MetagenomeSeq` directory that was downloaded in [step 2](#2-download-the-workflow-files) above. They may also be run from a different location by providing the full paths to the launch.sh script, low_biomass_nanopore.nf, low_biomass_illumina.nf, and nextflow.config workflow files in the `NF-MetagenomeSeq` directory.*
+> - All the commands in this step assume that the workflow will be run from within the `NF_Metagenomics_1.0.0` directory that was downloaded in [step 2](#2-download-the-workflow-files) above. They may also be run from a different location by providing full paths to the main.nf, and nextflow.config workflow files in the `NF_Metagenomics_1.0.0` directory.*
 >
 > - Nextflow commands use both single hyphen arguments (e.g. -help) that denote general Nextflow arguments and double hyphen arguments (e.g. --input_file) that denote workflow specific parameters.  Take care to use the proper number of hyphens for each argument.
 
+
 <br>
 
-#### 4a. Low Biomass Long Read Workflow
+#### 4a. Standard Long Read Workflow
 
-The GeneLab Metagenomics Low Biomass Long Read workflow is designed to process data generated from long-read platforms such as [Oxford Nanopore](https://nanoporetech.com/) using the [GeneLab Metagenomics Low Biomass Long Read Pipeline](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Nanopore). Below are 3 different approaches for running the workflow, depending on the input files provided.
+The GeneLab Metagenomics Standard Long Read workflow is designed to process data generated from long-read platforms such as [Oxford Nanopore](https://nanoporetech.com/) using the [GeneLab Metagenomics Standard Long Read Pipeline](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics/Metagenomics/Nanopore). Below are 3 different approaches for running the workflow, depending on the input files provided.
 
-For options and detailed help on how to run the low biomass long read workflow, run the following command:
 
-```bash
-nextflow run low_biomass_nanopore.nf --help
-```
-
-##### 4ai. Approach 1: Start with pod5 or fast5 files as input
+##### 4ai. Approach 1: Start with pod5 files as input
 
 ```bash
-nextflow run low_biomass_nanopore.nf -resume \
+nextflow run main.nf -resume \
     -profile singularity \
+    --sample_type "standard" \
     --input_file input_dir_barcodes.csv \
     --input_type "directory"  \
     --input_dir /path/to/pod5/directory/  \
     --kit_name "SQK-RPB114-24" \
-    --isFast5 false \
-    --errorStrategy "ignore"
+    --errorStrategy "ignore" \
+    --technology "nanopore"
 ```
 
 <br>
@@ -166,11 +181,13 @@ nextflow run low_biomass_nanopore.nf -resume \
 ##### 4aii. Approach 2: Start with multiple FASTQ files per sample as input
 
 ```bash
-nextflow run low_biomass_nanopore.nf -resume \
+nextflow run main.nf -resume \
     -profile singularity \
+    --sample_type "standard" \
     --input_file multiple.csv \
     --input_type "multiple" \
-    --errorStrategy "ignore"
+    --errorStrategy "ignore" \
+    --technology "nanopore"
 ```
 
 <br>
@@ -178,53 +195,105 @@ nextflow run low_biomass_nanopore.nf -resume \
 ##### 4aiii. Approach 3: Start with one FASTQ file per sample as input
 
 ```bash
-nextflow run low_biomass_nanopore.nf -resume \
+nextflow run main.nf -resume \
     -profile singularity \
+    --sample_type "standard" \
     --input_file single.csv \
     --input_type "single" \
-    --errorStrategy "ignore"
+    --errorStrategy "ignore" \
+    --technology "nanopore"
 ```
+
+
+#### 4b. Low Biomass Long Read Workflow
+
+The GeneLab Metagenomics Low Biomass Long Read workflow is designed to process data generated from long-read platforms such as [Oxford Nanopore](https://nanoporetech.com/) using the [GeneLab Metagenomics Low Biomass Long Read Pipeline](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Nanopore). Below are 3 different approaches for running the workflow, depending on the input files provided.
+
+
+##### 4bi. Approach 1: Start with pod5 files as input
+
+```bash
+nextflow run main.nf -resume \
+    -profile singularity \
+    --sample_type "low_biomass" \
+    --input_file input_dir_barcodes.csv \
+    --input_type "directory"  \
+    --input_dir /path/to/pod5/directory/  \
+    --kit_name "SQK-RPB114-24" \
+    --errorStrategy "ignore" \
+    --technology "nanopore"
+```
+
+<br>
+
+##### 4bii. Approach 2: Start with multiple FASTQ files per sample as input
+
+```bash
+nextflow run main.nf -resume \
+    -profile singularity \
+    --sample_type "low_biomass" \
+    --input_file multiple.csv \
+    --input_type "multiple" \
+    --errorStrategy "ignore" \
+    --technology "nanopore"
+```
+
+<br>
+
+##### 4biii. Approach 3: Start with one FASTQ file per sample as input
+
+```bash
+nextflow run main.nf -resume \
+    -profile singularity \
+    --sample_type "low_biomass" \
+    --input_file single.csv \
+    --input_type "single" \
+    --errorStrategy "ignore" \
+    --technology "nanopore"
+```
+
 
 <br>
 
 **Required Parameters For All Long Read Approaches:**
 
 * `-resume` - Resumes  workflow execution using previously cached results
-* `-profile` – Specifies the configuration profile(s) to load (multiple options can be provided as a comma-separated list)
+* `-profile` – Specifies the configuration [profile](config/profiles.config) to load (multiple options can be provided as a comma-separated list)
    * Software environment profile options (choose one):
       * `singularity` - instructs Nextflow to use Singularity container environments
       * `docker` - instructs Nextflow to use Docker container environments
       * `conda` - instructs Nextflow to use conda environments via the conda package manager
-        > *Note: By default, Nextflow will create environments at runtime using the yaml files in the [envs](envs/) folder. You can change this behavior by using the `--conda_*` workflow parameters or by editing the [nextflow.config](nextflow.config) file to specify a centralized conda environments directory via the `conda.cacheDir` parameter.*
+        > *Note: By default, Nextflow will create environments at runtime using the yaml files in the [envs](envs/) folder. You can change this behavior by using the `--conda_*` workflow parameters or by editing the [default](config/default.config) and [nanopore](config/nanopore.config) files to specify a centralized conda environments directory via the `conda.cacheDir` parameter.*
       * `mamba` - instructs Nextflow to use conda environments via the mamba package manager 
    * Other option (can be combined with the software environment option above using a comma, e.g. `-profile slurm,singularity`):
       * `slurm` - instructs Nextflow to use the [Slurm cluster management and job scheduling system](https://slurm.schedmd.com/overview.html) to schedule and run the jobs on a Slurm HPC cluster
-* `low_biomass_nanopore.nf` - Instructs Nextflow to run the Genelab Low Biomass Long Read (Nanopore) workflow. If running in a directory other than `NF-MetagenomeSeq`, replace with the full path to the low_biomass_nanopore.nf workflow file.
-* `--input_dir` - Specifies the path to a directory containing pod5 or fast5 files generated after nanopore sequencing
-* `--kit_name` - Specifies the Oxford nanopore sequencing kit used
-* `--isFast5`  - are the files in the `--input_dir` fast5 files? Set to true or false if the files are fast5 or pod5 files, respectively. 
-* `--errorStrategy "ignore"` - Instruction nextflow to continue processing the dataset even if an error is encountered.
+* `main.nf` - Instructs Nextflow to run the Genelab metagenomics workflow. If running in a directory other than `NF_Metagenomics_1.0.0`, replace with the full path to the main.nf workflow file.
+* `--sample_type` - Specifies the type of sample to be analyzed. One of "standard" or "low_biomass" for standard or low biomass sample type, respectively. 
+* `--input_dir` - Specifies the path to a directory containing pod5 files generated after nanopore sequencing
+* `--kit_name` - Specifies the Oxford nanopore sequencing kit used 
+* `--errorStrategy "ignore"` - Instructs nextflow to continue processing the dataset even if an error is encountered. It is recommended to set this to "ignore" because of very long running process that if when terminated can consume a lot of time and disk space. Set to "terminate" if you'd want to terminate the workflow if an error is encountered.
 * `--input_file *.csv` - Specifies the input csv file containing required metadata about the samples including barcode information and paths to the input file(s) for each sample.
-* `--input_type` - The type of input data/sequences in the `--input_file` when running the nanopore workflow. Values are one of "single", "multiple" or "directory" for single fastq files per sample, multiple fastq files per sample or a Pod5/Fast5 directory, respectively. 
-* > *Note: These input files require specific formatting to be interpreted correctly. Please see the [runsheet documentation](examples/runsheet) in this repository for examples on how to format this file type for each approach.
+* `--input_type` - The type of input data/sequences in the `--input_file` when running the nanopore workflow. Values are one of "single", "multiple" or "directory" for single fastq files per sample, multiple fastq files per sample or a Pod5 directory, respectively. 
+* `--technology "nanopore"` - Specifies the technology type used to generate the sequencing data.
+* > *Note: These input files require specific formatting to be interpreted correctly. Please see the [runsheet documentation](examples/runsheet) in this repository for examples on how to format this file type for each approach.*
 
 <br>
 
-#### 4b. Low Biomass Short Read Workflow
 
-The GeneLab Metagenomics Low Biomass Short Read workflow is designed to process data generated from short-read platforms such as [Illumina](https://www.illumina.com/) using the [GeneLab Metagenomics Low Biomass Short Read Pipeline](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Illumina). Below are 2 different approaches for running the workflow, depending on the input files provided.
 
-For options and detailed help on how to run the low biomass short read workflow, run the following command:
+#### 4c. Standard Short Read Workflow
+
+The GeneLab Metagenomics Standard Short Read workflow is designed to process data generated from short-read platforms such as [Illumina](https://www.illumina.com/) using the [GeneLab Metagenomics Standard Short Read Pipeline](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics/Metagenomics/Illumina). Below are 2 different approaches for running the workflow, depending on the input files provided.
+
+>*NOTE: This workflow assumes that  host reads have already been removed from the datasets. If host reads have not been removed, please run this [Host reads removal workflow](https://github.com/nasa/GeneLab_Data_Processing/tree/DEV_Metagenomics_rmHR_NF_conversion/Metagenomics/Remove_host_reads/Workflow_Documentation/NF_MGRemoveHostReads) on your dataset befor running this workflow.*
+
+
+##### 4ci. Approach 1: Start with paired-end FASTQ files as input
 
 ```bash
-nextflow run low_biomass_illumina.nf --help
-```
-
-##### 4bi. Approach 1: Start with paired-end FASTQ files as input
-
-```bash
-nextflow run low_biomass_illumina.nf -resume \
+nextflow run main.nf -resume \
     -profile singularity  \
+    --sample_type "standard" \
     --input_file PE_file.csv \
     --errorStrategy "ignore" \
     --technology "illumina"
@@ -232,37 +301,75 @@ nextflow run low_biomass_illumina.nf -resume \
 
 <br>
 
-##### 4bii. Approach 2: Start with single-end FASTQ files as input
+##### 4cii. Approach 2: Start with single-end FASTQ files as input
 
 ```bash
-nextflow run low_biomass_illumina.nf -resume \
+nextflow run main.nf -resume \
     -profile singularity \
+    --sample_type "standard" \
     --input_file SE_file.csv \
+    --errorStrategy "ignore" \
+    --technology "illumina"
+```
+
+
+
+
+#### 4d. Low Biomass Short Read Workflow
+
+The GeneLab Metagenomics Low Biomass Short Read workflow is designed to process data generated from short-read platforms such as [Illumina](https://www.illumina.com/) using the [GeneLab Metagenomics Low Biomass Short Read Pipeline](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Illumina). Below are 2 different approaches for running the workflow, depending on the input files provided.
+
+
+##### 4di. Approach 1: Start with paired-end FASTQ files as input
+
+```bash
+nextflow run main.nf -resume \
+    -profile singularity  \
+    --sample_type "low_biomass" \
+    --input_file PE_file.csv \
     --errorStrategy "ignore" \
     --technology "illumina"
 ```
 
 <br>
 
+##### 4dii. Approach 2: Start with single-end FASTQ files as input
+
+```bash
+nextflow run main.nf -resume \
+    -profile singularity \
+    --sample_type "low_biomass" \
+    --input_file SE_file.csv \
+    --errorStrategy "ignore" \
+    --technology "illumina"
+```
+
+
+
+<br>
+
 **Required Parameters For All Short Read Approaches:**
 
-* `-resume` - Resumes  workflow execution using previously cached results
-* `-profile` – Specifies the configuration profile(s) to load (multiple options can be provided as a comma-separated list)
+* `-resume` - Resumes workflow execution using previously cached results
+* `-profile` – Specifies the configuration [profile](config/profiles.config) to load (multiple options can be provided as a comma-separated list)
    * Software environment profile options (choose one):
       * `singularity` - instructs Nextflow to use Singularity container environments
       * `docker` - instructs Nextflow to use Docker container environments
       * `conda` - instructs Nextflow to use conda environments via the conda package manager
-        > *Note: By default, Nextflow will create environments at runtime using the yaml files in the [envs](envs/) folder. You can change this behavior by using the `--conda_*` workflow parameters or by editing the [nextflow.config](nextflow.config) file to specify a centralized conda environments directory via the `conda.cacheDir` parameter.*
+        > *Note: By default, Nextflow will create environments at runtime using the yaml files in the [envs](envs/) folder. You can change this behavior by using the `--conda_*` workflow parameters or by editing the [default](config/default.config) and [illumina](config/illumina.config) files to specify a centralized conda environments directory via the `conda.cacheDir` parameter.*
       * `mamba` - instructs Nextflow to use conda environments via the mamba package manager 
    * Other option (can be combined with the software environment option above using a comma, e.g. `-profile slurm,singularity`):
       * `slurm` - instructs Nextflow to use the [Slurm cluster management and job scheduling system](https://slurm.schedmd.com/overview.html) to schedule and run the jobs on a Slurm HPC cluster
-* `low_biomass_illumina.nf` - Instructs Nextflow to run the Genelab Low Biomass Short Read (Illumina) workflow. If running in a directory other than `NF-MetagenomeSeq`, replace with the full path to the low_biomass_illumina.nf workflow file.
-* `--errorStrategy "ignore"` - Instructs Nextflow to continue processing the dataset even if an error is encountered.
+* `main.nf` - Instructs Nextflow to run the Genelab Metagenomics workflow. If running in a directory other than `NF_Metagenomics_1.0.0`, replace with the full path to the main.nf workflow file.
+* `--sample_type` - Specifies the type of sample to be analyzed. One of "standard" or "low_biomass" for standard and low biomass sample types, respectively. 
+* `--errorStrategy "ignore"` - Instructs nextflow to continue processing the dataset even if an error is encountered. It is recommended to set this to "ignore" because of very long running process that if when terminated can consume a lot of time and disk space. Set to "terminate" if you'd want to terminate the workflow if an error is encountered.
 * `--technology "illumina"` - Specifies the technology type used to generate the sequencing data.
 * `--input_file *.csv` - Specifies the input csv file containing required metadata about the samples including paths to the input file(s) for each sample.
   * > *Note: These input files require specific formatting to be interpreted correctly. Please see the [runsheet documentation](examples/runsheet) in this repository for examples on how to format this file type for each approach.
 
 <br>
+
+
 
 **Additional [Optional] Parameters For All Approaches For Both Long- and Short-Read**
 > *Note: See `nextflow run -h` and [Nextflow's CLI run command documentation](https://nextflow.io/docs/latest/cli.html#run) for more options and details on how to run Nextflow.*
@@ -316,7 +423,9 @@ nextflow run low_biomass_illumina.nf -resume \
 * `--ko_db_dir`  Path to kofam scan database. Example, /path/to/Reference_DBs/kofamscan_db/. Default: null.
 
 **Paths to existing conda environments** to use, otherwise, new ones will be created using the yaml files in envs/ directory. since this directory for the exact packages required in an environment
-* `--conda_qc`Path to a conda environment containing fastqc, multiqc, zip and python. Default: null.
+* `--conda_fastqc` Path to a conda environment containing fastqc. Default: null.
+* `--conda_multiqc`Path to a conda environment containing multiqc. Default: null.
+* `--conda_zip`Path to a conda environment containing zip. Default: null.
 * `--conda_humann3` Path to a conda environment with humann3 installed. Default: null.
 * `--conda_cat` Path to a conda environment containing CAT (Contig annotation tool). Default: null.
 * `--conda_prodigal` Path to a conda environment with prodigal installed. Default: null.
@@ -326,28 +435,29 @@ nextflow run low_biomass_illumina.nf -resume \
 * `--conda_megahit`  Path to a conda environment containing megahit. Default: null.
 * `--conda_bit`  Path to a conda environment with bit installed. Default: null.
 * `--conda_kofamscan` Path to a conda environment containing KOFAM SCAN. Default: null.
-* `--conda_mapping` Path to a conda environment with bowtie and samtools installed. Default: null.
+* `--conda_biowtie2` Path to a conda environment with bowtie2 installed. Default: null.
+* `--conda_minimap2` Path to a conda environment with minimap2 installed. Default: null.
+* `--conda_samtools` Path to a conda environment with samtools installed. Default: null.
 * `--conda_checkm` Path to a conda environment with checkm installed. Default: null.
 * `--conda_kraken2` Path to a conda environment with kraken2 installed. Default: null.  
-* `conda_kaiju` Path to a conda environment with kaiju installed. Default: null.
-* `conda_krona` Path to a conda environment with krona installed. Default: null. 
-* `conda_pavian` Path to a conda environment with R poackage pavian installed. Default: null.
-* `conda_nanoplot` Path to a conda environment with nanoplot installed. Default: null.
-* `conda_krakentools` Path to a conda environment with krakentools installed. Default: null.
-* `conda_filtlong` Path to a conda environment with filtlong installed. Default: null.
-* `conda_porechop` Path to a conda environment with porechop installed. Default: null.
-* `conda_samtools` Path to a conda environment with samtools installed. Default: null. 
-* `conda_dorado` Path to a conda environment with dorado installed. Default: null.
-* `conda_pod5`  Path to a conda environment with pod5 python module installed. Default: null.
-* `conda_spades` Path to a conda environment with spades assembler installed. Default: null.
-* `conda_fastp` Path to a conda environment with fastp installed. Default: null. 
-* `conda_flye` Path to a conda environment with flye installed. Default: null.
-* `conda_medaka` Path to a conda environment with medaka installed. Default: null.
-* `conda_rvis` Path to a conda environment with r visulization packages (tifyverse, pheatmap, htmlwidgets etc.) installed. Default: null.
+* `--conda_kaiju` Path to a conda environment with kaiju installed. Default: null.
+* `--conda_krona` Path to a conda environment with krona installed. Default: null. 
+* `--conda_pavian` Path to a conda environment with R poackage pavian installed. Default: null.
+* `--conda_nanoplot` Path to a conda environment with nanoplot installed. Default: null.
+* `--conda_krakentools` Path to a conda environment with krakentools installed. Default: null.
+* `--conda_filtlong` Path to a conda environment with filtlong installed. Default: null.
+* `--conda_porechop` Path to a conda environment with porechop installed. Default: null.
+* `--conda_samtools` Path to a conda environment with samtools installed. Default: null. 
+* `--conda_dorado` Path to a conda environment with dorado installed. Default: null.
+* `--conda_spades` Path to a conda environment with spades assembler installed. Default: null.
+* `--conda_fastp` Path to a conda environment with fastp installed. Default: null. 
+* `--conda_flye` Path to a conda environment with flye installed. Default: null.
+* `--conda_medaka` Path to a conda environment with medaka installed. Default: null.
+* `--conda_rvis` Path to a conda environment with r visulization packages (tidyverse, pheatmap, htmlwidgets etc.) installed. Default: null.
 
 <br>
 
-#### 4c. Monitoring runs on seqera platforms
+#### 4e. Monitoring runs on seqera platforms
 
 Seqera Platform, previously known as Nextflow Tower, is the centralized command post for data management and workflows. It brings monitoring, logging and observability to distributed workflows and simplifies the deployment of workflows on any cloud, cluster or laptop.
 
@@ -356,22 +466,24 @@ For instructions on how to setup Sequera Platforms please see the documentation 
 ```bash
 export TOWER_ACCESS_TOKEN=eyxxxxxxxxxxxxxxxQ1ZTE=
 # Example command for the Nanopre Approach 3 using Nextflow tower
-nextflow run low_biomass_nanopore.nf -resume \
+nextflow run main.nf -resume \
     -with-tower \
     -profile singularity \
+    --sample_type "low_biomass"
     --input_file single.csv \
     --input_type "single" \
-    --errorStrategy "ignore"
+    --errorStrategy "ignore" \
+    --technology "nanopore"
 ```
 
 > *Note: These helper scripts [launch.sh](launch.sh) and [launch.slurm](launch.slurm) can be used to launch the workflow from anywhere and to submit your run to seqera platforms for workflow monitoring. Please see the scripts on how to run them after setting the required paths, parameters and variables.* 
 <br>
 
-#### 4d. Modify parameters and compute resources in the Nextflow config file
+#### 4f. Modify parameters and compute resources in the Nextflow config file
 
-Additionally, all parameters and workflow resources can be directly specified in the [nextflow.config](nextflow.config) file. For detailed instructions on how to modify and set parameters in the config file, please see the [documentation here](https://www.nextflow.io/docs/latest/config.html).
+Additionally, all parameters and workflow resources can be directly specified by modifying them in the [default](config/default.config),[illumina](config/illumina.config), [nanopore](config/nanopore.config) and [parameters](config/params.config) files . For detailed instructions on how to modify and set parameters in the config files, please see the [documentation here](https://www.nextflow.io/docs/latest/config.html).
 
-Once you've downloaded the workflow template, you can modify the parameters in the `params` scope and cpus/memory requirements in the `process` scope in your downloaded version of the [nextflow.config](nextflow.config) file as needed in order to match your dataset and system setup. Additionally, if necessary, you can modify each variable in the [nextflow.config](nextflow.config) file to be consistent with the study you want to process and the computer you're using for processing.
+Once you've downloaded the workflow template, you can modify the parameters in the `params` scope of the [params.config](config/params.config) file. The cpus/memory requirements can be modified in the `process` scope in the [default.config](config/default.config), [illumina.config](config/illumina.config) and [nanopore.config](config/nanopore.config) files as needed in order to match your dataset and system setup for default, illumina and nanopore configuration settings, respectively. Workflow profiles can be modified by editing the [profiles.config](config/profiles.config) file. Finally, you can modify each variable in the config files above to be consistent with the study you want to process and the computer you're using for processing.
 
 <br>
 
@@ -381,7 +493,11 @@ Once you've downloaded the workflow template, you can modify the parameters in t
 
 #### 5a. Main Outputs
 
+* The outputs from the GeneLab Standard Long Read Metagenomics workflow are documented in the [GL-DPPD-7XXX](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Nanopore/GL-DPPD-7XXX.md) processing pipeline.
+
 * The outputs from the GeneLab Low Biomass Long Read Metagenomics workflow are documented in the [GL-DPPD-7116](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Nanopore/GL-DPPD-7116.md) processing pipeline.
+
+* The outputs from the GeneLab Standard Short Read Metagenomics workflow are documented in the [GL-DPPD-7XXX](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Illumina/GL-DPPD-7XXX.md) processing pipeline.
   
 * The outputs from the GeneLab Low Biomass Short Read Metagenomics workflow are documented in the [GL-DPPD-7117](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Illumina/GL-DPPD-7117.md) processing pipeline.
 
