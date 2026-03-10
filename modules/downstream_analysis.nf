@@ -9,7 +9,7 @@ process METAPHLAN2COUNT {
     label "R_downstream"
 
     input:
-        path(metaphlan_table) // Metaphlan-taxonomy_GLmetagenomics.tsv
+        path(metaphlan_table) // metaphlan-taxonomy_GLmetagenomics.tsv
         path(reads_per_sample) // reads_per_sample.txt
 
     output:
@@ -146,7 +146,7 @@ process DECONTAM  {
         path(feature_table) // kaiju_species_table_GLlbnMetag.csv
 
     output:
-        path("*_decontam_*_results*.tsv"), emit: result // decontam's primary results
+        path("*_decontam_results*.tsv"), emit: result // decontam's primary results
         path("*_decontam_*_table*.tsv"), optional: true, emit: table // decontaminated feature table
         path("versions.txt"), emit: version
 

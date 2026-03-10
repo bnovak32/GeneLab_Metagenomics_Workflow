@@ -198,7 +198,7 @@ opt_parser <- OptionParser(
                   --feature-table 'kaiju_species_table_GLlbnMetag.csv' \\
                   --mode  'across_value' \\
                   --threshold 0.5 \\
-                  --output-file  'kaiju_filtered_species_table_GLlbnMetag.csv' " ,
+                  --output-file  'kaiju_filtered_species_table_GLlbnMetag.tsv' " ,
   description = paste("Author: Olabiyi Aderemi Obayomi",
                       "\nEmail: olabiyi.a.obayomi@nasa.gov",
                       "\n  A script to filter a feature table based on user defined criteria..",

@@ -56,6 +56,9 @@ process NANOPLOT {
         -t ${task.cpus} \\
         --fastq ${reads[0]} \\
         -o .
+    # Rename html report
+    mv ${sample_id}_${prefix}_NanoPlot-report.html \\
+       ${sample_id}_${prefix}_NanoPlot-report${params.assay_suffix}.html
 
     VERSION=`NanoPlot --version 2>&1 | sed 's/^.*NanoPlot //; s/ .*\$//'`
     echo "NanPlot \${VERSION}"  > versions.txt
@@ -155,7 +158,7 @@ process FASTP {
     tuple val(sample_id), path(reads), val(isPaired)
     
     output:
-    tuple val(sample_id), path("*${params.filtered_suffix}"), val(isPaired), emit: reads
+    tuple val(sample_id), path("*fastq.gz"), val(isPaired), emit: reads
     tuple val(sample_id), path("${sample_id}.fastp.json"), emit: json
     tuple val(sample_id), path("${sample_id}.fastp.html"), emit: html
     tuple val(sample_id), path("${sample_id}-fastp.log"), emit: log
@@ -167,8 +170,8 @@ process FASTP {
     """
     if [ ${isPaired} == true ]; then
     
-        fastp --in1 ${reads[0]} --out1 ${out_prefix}${sample_id}${params.filtered_R1_suffix} \\
-          --in2 ${reads[1]} --out2 ${out_prefix}${sample_id}${params.filtered_R2_suffix} \\
+        fastp --in1 ${reads[0]} --out1 ${out_prefix}${sample_id}_R1_filtered${params.assay_suffix}.fastq.gz \\
+          --in2 ${reads[1]} --out2 ${out_prefix}${sample_id}_R2_filtered${params.assay_suffix}.fastq.gz \\
           --qualified_quality_phred  20 \\
           --length_required 50 \\
           --thread ${task.cpus} \\
@@ -182,7 +185,7 @@ process FASTP {
    
     else
 
-        fastp --in1 ${reads[0]} --out1 ${out_prefix}${sample_id}${params.filtered_suffix} \\
+        fastp --in1 ${reads[0]} --out1 ${out_prefix}${sample_id}_filtered${params.assay_suffix}.fastq.gz \\
           --qualified_quality_phred  20 \\
           --length_required 50 \\
           --thread ${task.cpus} \\
@@ -209,7 +212,7 @@ process FILTLONG {
         tuple val(sample_id), path(reads), val(isPaired)
 
     output:
-        tuple val(sample_id), path("*${params.filtered_suffix}"), val(isPaired), emit: reads
+        tuple val(sample_id), path("${sample_id}_filtered.fastq.gz"), val(isPaired), emit: reads
         tuple val(sample_id), path("${sample_id}-filtlong.log"), emit: log
         path("versions.txt"), emit: version
 
@@ -219,7 +222,7 @@ process FILTLONG {
         --min_length 200 \\
         --min_mean_q 8 \\
         ${reads[0]} 2> >(tee ${sample_id}-filtlong.log >&2) \\
-        | gzip -n > ${sample_id}${params.filtered_suffix}
+        | gzip -n > ${sample_id}_filtered.fastq.gz
 
     VERSION=\$(filtlong --version | sed -e "s/Filtlong v//g")
     echo "filtlong \${VERSION}"  > versions.txt

@@ -255,4 +255,9 @@ if(type == "KO"){
 
 }
 
-write_tsv(x = table2write, file = glue("{prefix}{level}-level-{type}{suffix}.tsv"))
+
+# type - taxonomy or KO
+# level - Contig or Gene
+
+if(type == "KO"){ type <- "KO-function" }
+write_tsv(x = table2write, file = glue("{prefix}Combined-{tolower(level)}-level-{type}{suffix}.tsv"))

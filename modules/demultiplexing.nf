@@ -67,6 +67,7 @@ process DORADO_DEMUX {
        dorado demux \\
            --output-dir demultiplexed/ \\
            --emit-fastq \\
+           --emit-summary \\
            --kit-name ${kit_name} \\
            ${basecalled}
 

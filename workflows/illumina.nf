@@ -57,7 +57,7 @@ workflow illumina {
 
 
     // Quality check and trim the input reads
-    raw_qc(Channel.of("raw"), params.multiqc_config,reads_ch)
+    raw_qc(Channel.of("HRrm"), params.multiqc_config,reads_ch)
 
     //NODECONTAM_MAP2GENOME(params.custome_genome, Channel.of("no_decontam"), reads_ch)
     FASTP(Channel.of('false'), reads_ch) // no ployG trimming

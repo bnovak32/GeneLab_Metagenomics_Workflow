@@ -7,7 +7,7 @@
 # E-mail: obadbotanist@yahoo.com
 # Created: January 2026
 # example: Rscript run_decontam.R \
-#                  --feature-table 'kaiju_species_table_GLlbnMetag.csv' \
+#                  --feature-table 'kaiju_species_table_GLlbnMetag.tsv' \
 #                  --feature-column 'Species' \
 #                  --metadata-table 'mapping/metadata.csv' \
 #                  --samples-column 'Sample_ID' \
@@ -239,18 +239,38 @@ metadata <- metadata[samples,]
 feature_table <- feature_table[,samples]
 
 # Run decontam
-# Assign prev and freq column names to NULL if the values in the supplied columns arrent unique
+# Assign prev and freq column names to NULL if the values in the supplied columns aren't unique
 if( length(unique(metadata[,prev_col])) == 1) prev_col <- NULL
 if( length(unique(metadata[,freq_col])) == 1) freq_col <- NULL
 contamdf <- run_decontam(feature_table, metadata, threshold, prev_col, freq_col, ntc_name) 
 
 contamdf <- as.data.frame(contamdf) %>% rownames_to_column(feature_column)
 
-type <- "species"
-if(method == "gene-function")  { type <- "KO"}
+# Combined-contig-level-taxonomy
+# Combined-gene-level-KO-function
+# Combined-gene-level-taxonomy
 
+type <- "species"
+if(method == "gene-function")  {
+       
+	type <- "KO" 
+        name <- "Combined-gene-level-KO-function"
+
+}else if( method == "gene-taxonomy") {
+
+        name <- "Combined-gene-level-taxonomy"
+
+}else if( method == "contig-taxonomy") {
+
+       name <- "Combined-contig-level-taxonomy"
+
+}else{
+
+      name <- method
+
+}
 # Write decontaminated feature table and decontam's primary results
-outfile <- glue("{prefix}{method}_decontam_{type}_results{suffix}.tsv")
+outfile <- glue("{prefix}{name}_decontam_results{suffix}.tsv")
 write_tsv(x = contamdf, file = outfile)
 
 
@@ -275,7 +295,7 @@ decontaminated_table <- feature_table %>%
 rownames(decontaminated_table) <- decontaminated_table[[feature_column]]
 decontaminated_table <- decontaminated_table[,-1] %>% as.matrix
 
-outfile <- glue("{prefix}{method}_decontam_{type}_table{suffix}.tsv")
+outfile <- glue("{prefix}{name}_decontam_{type}_table{suffix}.tsv")
 write_tsv(x = decontaminated_table, file = outfile)
 
 }else{

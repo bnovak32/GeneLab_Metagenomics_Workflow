@@ -173,14 +173,14 @@ workflow assembly_based {
         GT_ASSEMBLY_TABLE(gene_taxonomy_ch, MAKE_COMBINED_GENE_LEVEL_TABLES.out.norm_taxonomy_coverages, 
                           SUMMARIZE_ASSEMBLIES.out.summary)
         unfilt_gene_taxonomy_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
-                                               prefix:  'NoFilter-Combined-gene-level-taxonomy']) 
+                                               prefix:  'Combined-gene-level-taxonomy_unfiltered']) 
         GT_UNFILTERED_HEATMAP(unfilt_gene_taxonomy_heatmap_meta, GT_ASSEMBLY_TABLE.out.table, metadata)
         // Filtered - filter out species less than 1000 CPM across samples
         filt_gene_taxonomy_meta = Channel.of([mode: 'values_sum', filter_threshold : 1000,
-                            output_file: "Filter-Combined-gene-level-taxonomy${params.assay_suffix}.tsv"])
+                            output_file: "Combined-gene-level-taxonomy_filtered${params.assay_suffix}.tsv"])
         GT_FILTER_RARE(filt_gene_taxonomy_meta, GT_ASSEMBLY_TABLE.out.table)
         filt_gene_taxonomy_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
-                                             prefix:  'Filter-Combined-gene-level-taxonomy'])
+                                             prefix:  'Combined-gene-level-taxonomy_filtered'])
         GT_FILTERED_HEATMAP(filt_gene_taxonomy_heatmap_meta, GT_FILTER_RARE.out.table, metadata)
         // Decontaminate with decontam
         decontam_gene_taxonomy_meta = Channel.of([feature: 'species', samples: 'sample_id',
@@ -190,7 +190,7 @@ workflow assembly_based {
 
         GT_DECONTAM(decontam_gene_taxonomy_meta, metadata, GT_FILTER_RARE.out.table)
         decontam_gene_taxonomy_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
-                                                  prefix:  'Decontam-Combined-gene-level-taxonomy'])        
+                                                  prefix:  'Combined-gene-level-taxonomy_decontam'])        
         GT_DECONTAM_HEATMAP(decontam_gene_taxonomy_heatmap_meta, GT_FILTER_RARE.out.table, metadata)
 
        // ---------------------- Gene functions
@@ -199,15 +199,15 @@ workflow assembly_based {
        GF_ASSEMBLY_TABLE(gene_function_ch, MAKE_COMBINED_GENE_LEVEL_TABLES.out.norm_function_coverages,
                          SUMMARIZE_ASSEMBLIES.out.summary)
        unfilt_gene_function_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
-                                        prefix:  'NoFilter-Combined-gene-level-KO'])
+                                        prefix:  'Combined-gene-level-KO-function_unfiltered'])
        GF_UNFILTERED_HEATMAP(unfilt_gene_function_heatmap_meta, GF_ASSEMBLY_TABLE.out.table, metadata)
 
        // Filtered - filter out KO_ID less than 1000 CPM across samples
        filt_gene_function_meta = Channel.of([mode: 'values_sum', filter_threshold : 1000,
-                            output_file: "Filter-Combined-gene-level-KO${params.assay_suffix}.tsv"])
+                            output_file: "Combined-gene-level-KO-function_filtered${params.assay_suffix}.tsv"])
        GF_FILTER_RARE(filt_gene_function_meta, GF_ASSEMBLY_TABLE.out.table)
        filt_gene_function_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
-                                             prefix:  'Filter-Combined-gene-level-KO'])
+                                             prefix:  'Combined-gene-level-KO-function_filtered'])
        GF_FILTERED_HEATMAP(filt_gene_function_heatmap_meta, GF_FILTER_RARE.out.table, metadata)
        // Decontaminate with decontam
        decontam_gene_function_meta = Channel.of([feature: 'KO_ID', samples: 'sample_id',
@@ -216,7 +216,7 @@ workflow assembly_based {
                                    ntc_name: 'true']) 
        GF_DECONTAM(decontam_gene_function_meta, metadata, GF_FILTER_RARE.out.table)
        decontam_gene_function_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
-                                                  prefix:  'Decontam-Combined-gene-level-KO'])
+                                                  prefix:  'Combined-gene-level-KO-function_decontam'])
        GF_DECONTAM_HEATMAP(decontam_gene_function_heatmap_meta, GF_FILTER_RARE.out.table, metadata)
 
    
@@ -234,14 +234,14 @@ workflow assembly_based {
        contig_ch = Channel.of(['taxonomy', 'Contig'])
        CONTIG_ASSEMBLY_TABLE(contig_ch, MAKE_COMBINED_CONTIG_TAX_TABLES.out.norm_taxonomy, SUMMARIZE_ASSEMBLIES.out.summary)
        unfilt_contig_heatmap_meta = Channel.of([group: "group", samples: 'sample_id', 
-                                        prefix:  'NoFilter-Combined-contig-level-taxonomy'])
+                                        prefix:  'Combined-contig-level-taxonomy_unfiltered'])
        CONTIG_UNFILTERED_HEATMAP(unfilt_contig_heatmap_meta, CONTIG_ASSEMBLY_TABLE.out.table, metadata)
        // Filtered - filter at 1000 CPM
        filt_contig_meta = Channel.of([mode: 'values_sum', filter_threshold : 1000, 
-                            output_file: "Filter-Combined-contig-level-taxonomy${params.assay_suffix}.tsv"])
+                            output_file: "Combined-contig-level-taxonomy_filtered${params.assay_suffix}.tsv"])
        CONTIG_FILTER_RARE(filt_contig_meta, CONTIG_ASSEMBLY_TABLE.out.table)
        filt_contig_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
-                                             prefix:  'Filter-Combined-contig-level-taxonomy'])
+                                             prefix:  'Combined-contig-level-taxonomy_filtered'])
        CONTIG_FILTERED_HEATMAP(filt_contig_heatmap_meta, CONTIG_FILTER_RARE.out.table, metadata)
        // Decontaminated - using decontam threshold of 0.5 sice it was more likely to detect contaminats than 0.1.
        decontam_contig_meta = Channel.of([feature: 'species', samples: 'sample_id',
@@ -250,7 +250,7 @@ workflow assembly_based {
                                    ntc_name: 'true'])
        CONTIG_DECONTAM(decontam_contig_meta, metadata, CONTIG_FILTER_RARE.out.table)
        decontam_contig_heatmap_meta = Channel.of([group: "group", samples: 'sample_id', 
-                                                  prefix:  'Decontam-Combined-contig-level-taxonomy'])
+                                                  prefix:  'Combined-contig-level-taxonomy_decontam'])
        CONTIG_DECONTAM_HEATMAP(decontam_contig_heatmap_meta, CONTIG_DECONTAM.out.table, metadata)
 
 

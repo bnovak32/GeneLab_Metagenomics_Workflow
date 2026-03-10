@@ -22,7 +22,7 @@ process COMBINE_GENE_ANNOTS_TAX_AND_COVERAGE {
                path(annotations), path(gene_tax), path(contig_tax),
                path(aa), path(nt), path(assembly)
     output:
-        tuple val(sample_id), path("${sample_id}-gene-coverage-annotation-and-tax.tsv")
+        tuple val(sample_id), path("${sample_id}-gene-coverage-annotation-and-tax${params.assay_suffix}.tsv")
     script:
         """
         # Only running if the assembly produced anything 
@@ -41,7 +41,7 @@ process COMBINE_GENE_ANNOTS_TAX_AND_COVERAGE {
                   cut -f 2- ) > ${sample_id}-gene-header.tmp
 
             cat ${sample_id}-gene-header.tmp ${sample_id}-gene.tmp \\
-                > ${sample_id}-gene-coverage-annotation-and-tax.tsv
+                > ${sample_id}-gene-coverage-annotation-and-tax${params.assay_suffix}.tsv
 
             rm -rf ${sample_id}-gene.tmp ${sample_id}-gene-header.tmp
            
@@ -49,7 +49,7 @@ process COMBINE_GENE_ANNOTS_TAX_AND_COVERAGE {
         else
 
             printf "gene_ID\\tcoverage\\tKO_ID\\tKO_function\\ttaxid\\tdomain\\tphylum\\tclass\\torder\\tfamily\\tgenus\\tspecies\\n" \\
-            > ${sample_id}-gene-coverage-annotation-and-tax.tsv
+            > ${sample_id}-gene-coverage-annotation-and-tax${params.assay_suffix}.tsv
             
         fi
         """
@@ -106,7 +106,7 @@ process COMBINE_CONTIG_TAX_AND_COVERAGE {
                path(gene_tax), path(contig_tax),
                path(aa), path(nt), path(assembly)        
     output:
-        tuple val(sample_id), path("${sample_id}-contig-coverage-and-tax.tsv")
+        tuple val(sample_id), path("${sample_id}-contig-coverage-and-tax${params.assay_suffix}.tsv")
     script:
         """
         # Only running if the assembly produced anything
@@ -123,7 +123,7 @@ process COMBINE_CONTIG_TAX_AND_COVERAGE {
                       > ${sample_id}-contig-header.tmp
 
                 cat ${sample_id}-contig-header.tmp ${sample_id}-contig.tmp \\
-                > ${sample_id}-contig-coverage-and-tax.tsv
+                > ${sample_id}-contig-coverage-and-tax${params.assay_suffix}.tsv
 
                 rm -rf ${sample_id}-contig.tmp ${sample_id}-contig-header.tmp
 
@@ -139,7 +139,7 @@ process COMBINE_CONTIG_TAX_AND_COVERAGE {
                       > ${sample_id}-contig.tmp
 
                 cat <( printf "contig_ID\\tcoverage\\ttaxid\\tdomain\\tphylum\\tclass\\torder\\tfamily\\tgenus\\tspecies\\n" ) \\
-                    ${sample_id}-contig.tmp > ${sample_id}-contig-coverage-and-tax.tsv
+                    ${sample_id}-contig.tmp > ${sample_id}-contig-coverage-and-tax${params.assay_suffix}.tsv
                 rm -rf ${sample_id}-contig-p1.tmp ${sample_id}-tax-col.tmp ${sample_id}-contig.tmp
 
             fi
@@ -147,7 +147,7 @@ process COMBINE_CONTIG_TAX_AND_COVERAGE {
         else
 
             printf "contig_ID\\tcoverage\\ttaxid\\tdomain\\tphylum\\tclass\\torder\\tfamily\\tgenus\\tspecies\\n" \\
-              > ${sample_id}-contig-coverage-and-tax.tsv
+              > ${sample_id}-contig-coverage-and-tax${params.assay_suffix}.tsv
 
         fi
         """

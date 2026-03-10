@@ -91,7 +91,7 @@ process KRONA_REPORT {
         path(krona_files)
 
     output:
-        path("${prefix}-report.html"), emit: html
+        path("${prefix}-report${params.assay_suffix}.html"), emit: html
         path("versions.txt"), emit: version
 
     script:
@@ -102,7 +102,7 @@ process KRONA_REPORT {
     basename -a -s '.krona' \${FILES[*]} | sort -uV  > sample_names.txt
     KTEXT_FILES=(\$(paste -d',' "krona_files.txt" "sample_names.txt"))
     
-    ktImportText  -o ${prefix}-report.html \${KTEXT_FILES[*]}
+    ktImportText  -o ${prefix}-report${params.assay_suffix}.html \${KTEXT_FILES[*]}
 
     VERSION=`echo \$(ktImportText 2>&1) | sed 's/^.*KronaTools //g; s/- ktImportText.*\$//g'`
     echo "krona \${VERSION}" > versions.txt

@@ -19,6 +19,7 @@ if(params.technology == "illumina"){
 
 // Kraken2
 include { KRAKEN_CLASSIFY; KRAKEN2TABLE } from "./assign_taxonomy.nf"
+include { MULTIQC as KRAKEN_MULTIQC; ZIP_MULTIQC as KRAKEN_ZIP_MULTIQC } from "./quality_assessment.nf"
 include { BARPLOT as KRAKEN_UNFILTERED_BARPLOT } from "./downstream_analysis.nf"
 include { FILTER_RARE as KRAKEN_FILTER_RARE; BARPLOT as KRAKEN_FILTERED_BARPLOT } from "./downstream_analysis.nf"
 include { DECONTAM as KRAKEN_DECONTAM; BARPLOT as KRAKEN_DECONTAM_BARPLOT } from "./downstream_analysis.nf"
@@ -91,9 +92,9 @@ process COMBINE_READ_BASED_PROCESSING_TABLES {
         path(path_coverages)
         path(utilities_path)
     output:
-        path("${params.additional_filename_prefix}gene-families-initial.tsv"), emit: gene_families 
-        path("${params.additional_filename_prefix}pathway-abundances-initial.tsv"), emit: path_abundances
-        path("${params.additional_filename_prefix}pathway-coverages-initial.tsv"), emit: path_coverages
+        path("${params.additional_filename_prefix}gene-families.tsv"), emit: gene_families 
+        path("${params.additional_filename_prefix}pathway-abundances.tsv"), emit: path_abundances
+        path("${params.additional_filename_prefix}pathway-coverages.tsv"), emit: path_coverages
         path("versions.txt"), emit: version
     script:
         """
@@ -109,9 +110,9 @@ process COMBINE_READ_BASED_PROCESSING_TABLES {
         cp ${path_abundances} path-abundance-results/
         cp ${path_coverages} path-coverage-results/
 
-        humann_join_tables -i gene-family-results/ -o ${params.additional_filename_prefix}gene-families-initial.tsv > /dev/null 2>&1
-        humann_join_tables -i path-abundance-results/ -o ${params.additional_filename_prefix}pathway-abundances-initial.tsv > /dev/null 2>&1
-        humann_join_tables -i path-coverage-results/ -o ${params.additional_filename_prefix}pathway-coverages-initial.tsv > /dev/null 2>&1
+        humann_join_tables -i gene-family-results/ -o ${params.additional_filename_prefix}gene-families.tsv > /dev/null 2>&1
+        humann_join_tables -i path-abundance-results/ -o ${params.additional_filename_prefix}pathway-abundances.tsv > /dev/null 2>&1
+        humann_join_tables -i path-coverage-results/ -o ${params.additional_filename_prefix}pathway-coverages.tsv > /dev/null 2>&1
 
         humann3 --version  > versions.txt
         """
@@ -148,26 +149,26 @@ process SPLIT_READ_BASED_PROCESSING_TABLES {
 
         # Gene Families
         humann_split_stratified_table -i ${gene_families} -o temp_processing/ > /dev/null 2>&1
-        mv temp_processing/${params.additional_filename_prefix}gene-families-initial_stratified.tsv \\
+        mv temp_processing/${params.additional_filename_prefix}gene-families_stratified.tsv \\
            ${params.additional_filename_prefix}Gene-families-grouped-by-taxa${params.assay_suffix}.tsv
         
-        mv temp_processing/${params.additional_filename_prefix}gene-families-initial_unstratified.tsv \\
+        mv temp_processing/${params.additional_filename_prefix}gene-families_unstratified.tsv \\
            ${params.additional_filename_prefix}Gene-families${params.assay_suffix}.tsv
 
         # Pathway Abundance
         humann_split_stratified_table -i ${path_abundances} -o temp_processing/ > /dev/null 2>&1
-        mv temp_processing/${params.additional_filename_prefix}pathway-abundances-initial_stratified.tsv \\
+        mv temp_processing/${params.additional_filename_prefix}pathway-abundances_stratified.tsv \\
            ${params.additional_filename_prefix}Pathway-abundances-grouped-by-taxa${params.assay_suffix}.tsv
 
-        mv temp_processing/${params.additional_filename_prefix}pathway-abundances-initial_unstratified.tsv \\
+        mv temp_processing/${params.additional_filename_prefix}pathway-abundances_unstratified.tsv \\
            ${params.additional_filename_prefix}Pathway-abundances${params.assay_suffix}.tsv
 
         # Pathway Coverage
         humann_split_stratified_table -i ${path_coverages} -o temp_processing/ > /dev/null 2>&1
-        mv temp_processing/${params.additional_filename_prefix}pathway-coverages-initial_stratified.tsv \\
+        mv temp_processing/${params.additional_filename_prefix}pathway-coverages_stratified.tsv \\
            ${params.additional_filename_prefix}Pathway-coverages-grouped-by-taxa${params.assay_suffix}.tsv
 
-        mv temp_processing/${params.additional_filename_prefix}pathway-coverages-initial_unstratified.tsv \\
+        mv temp_processing/${params.additional_filename_prefix}pathway-coverages_unstratified.tsv \\
            ${params.additional_filename_prefix}Pathway-coverages${params.assay_suffix}.tsv
 
         humann3 --version  > versions.txt
@@ -249,15 +250,15 @@ process COMBINE_READ_BASED_PROCESSING_TAXONOMY {
     input:
         path(metaphlan_bugs_list_files)
     output:
-        path("${params.additional_filename_prefix}Metaphlan-taxonomy${params.assay_suffix}.tsv"), emit: taxonomy
+        path("${params.additional_filename_prefix}metaphlan-taxonomy${params.assay_suffix}.tsv"), emit: taxonomy
         path("versions.txt"), emit: version
     script:
         """
         merge_metaphlan_tables.py ${metaphlan_bugs_list_files} \\
-                         > ${params.additional_filename_prefix}Metaphlan-taxonomy${params.assay_suffix}.tsv 2> /dev/null
+                         > ${params.additional_filename_prefix}metaphlan-taxonomy${params.assay_suffix}.tsv 2> /dev/null
 
         # Removing redundant text from headers 
-        sed -i 's/_metaphlan_bugs_list//g' ${params.additional_filename_prefix}Metaphlan-taxonomy${params.assay_suffix}.tsv
+        sed -i 's/_metaphlan_bugs_list//g' ${params.additional_filename_prefix}metaphlan-taxonomy${params.assay_suffix}.tsv
 
         metaphlan --version > versions.txt
         """
@@ -292,22 +293,24 @@ workflow read_based {
             SETUP_KRAKEN.out.version | mix(software_versions_ch) | set{software_versions_ch}
         }
         kraken_reports = KRAKEN_CLASSIFY.out.report.map{sample_id, report -> report}.collect()
+        KRAKEN_MULTIQC(Channel.of('kraken2'), params.multiqc_config, kraken_reports)
+        KRAKEN_ZIP_MULTIQC(Channel.of('kraken2'), KRAKEN_MULTIQC.out.data)
         KRAKEN2TABLE(kraken_reports)
         KRAKEN2KRONA(KRAKEN_CLASSIFY.out.report)
         // Unfiltered
         unfilt_kraken_barplot_meta = Channel.of([group: "group",
                                feature: 'Species',
                                samples: 'sample_id',
-                               prefix:  'kraken2_NoFilter_species'])
+                               prefix:  'kraken2_unfiltered_species'])
         KRAKEN_UNFILTERED_BARPLOT(unfilt_kraken_barplot_meta, KRAKEN2TABLE.out.table, metadata)
         // Filtered - drop species with relative abundance less than 0.5% across samples
         filt_kraken_meta = Channel.of([mode: 'across_samples', filter_threshold : 0.5,
-                            output_file: "kraken2_Filtered_taxon_counts${params.assay_suffix}.tsv"])
+                            output_file: "kraken2_filtered_species_table${params.assay_suffix}.tsv"])
         KRAKEN_FILTER_RARE(filt_kraken_meta, KRAKEN2TABLE.out.table)
         filt_kraken_barplot_meta = Channel.of([group: "group",
                                feature: 'Species',
                                samples: 'sample_id',
-                               prefix:  'kraken2_Filter_species'])
+                               prefix:  'kraken2_filtered_species'])
         KRAKEN_FILTERED_BARPLOT(filt_kraken_barplot_meta, KRAKEN_FILTER_RARE.out.table, metadata)
         // Decontaminate with decontam
         decontam_kraken_meta = Channel.of([feature: 'Species', samples: 'sample_id',
@@ -343,16 +346,16 @@ workflow read_based {
         unfilt_kaiju_barplot_meta = Channel.of([group: "group",
                                feature: 'Species',
                                samples: 'sample_id',
-                               prefix:  'kaiju_NoFilter_species'])
+                               prefix:  'kaiju_unfiltered_species'])
         KAIJU_UNFILTERED_BARPLOT(unfilt_kaiju_barplot_meta, KAIJU2SPECIES_TABLE.out.table, metadata)
         // Filtered - drop species with relative abundance less than 0.5% across samples
         filt_kaiju_meta = Channel.of([mode: 'across_samples', filter_threshold : 0.5,
-                            output_file: "kaiju_Filtered_taxon_counts${params.assay_suffix}.tsv"])
+                            output_file: "kaiju_filtered_species_table${params.assay_suffix}.tsv"])
         KAIJU_FILTER_RARE(filt_kaiju_meta, KAIJU2SPECIES_TABLE.out.table)
         filt_kaiju_barplot_meta = Channel.of([group: "group",
                                feature: 'Species',
                                samples: 'sample_id',
-                               prefix:  'kaiju_Filter_species'])
+                               prefix:  'kaiju_filtered_species'])
         KAIJU_FILTERED_BARPLOT(filt_kaiju_barplot_meta, KAIJU_FILTER_RARE.out.table, metadata)
         // Decontaminate with decontam
         decontam_kaiju_meta = Channel.of([feature: 'Species', samples: 'sample_id',
@@ -415,16 +418,16 @@ workflow read_based {
         unfilt_metaphlan_barplot_meta = Channel.of([group: "group",
                                feature: 'Species',
                                samples: 'sample_id',
-                               prefix:  'metaplan_NoFilter_species'])
+                               prefix:  'metaplan_unfiltered_species'])
         METAPHLAN_UNFILTERED_BARPLOT(unfilt_metaphlan_barplot_meta, METAPHLAN2COUNT.out.table, metadata)
         // Filtered - drop species with relative abundance less than 0.5% across samples
         filt_metaphlan_meta = Channel.of([mode: 'across_samples', filter_threshold : 0.5,
-                            output_file: "metaphlan_Filtered_taxon_counts${params.assay_suffix}.tsv"])
+                            output_file: "metaphlan_filtered_species_table${params.assay_suffix}.tsv"])
         METAPHLAN_FILTER_RARE(filt_metaphlan_meta, METAPHLAN2COUNT.out.table)
         filt_metaphlan_barplot_meta = Channel.of([group: "group",
                                feature: 'Species',
                                samples: 'sample_id',
-                               prefix:  'metaplan_Filter_species'])
+                               prefix:  'metaplan_filtered_species'])
         METAPHLAN_FILTERED_BARPLOT(filt_metaphlan_barplot_meta, METAPHLAN_FILTER_RARE.out.table, metadata)
         // Decontaminate with decontam
         decontam_metaphlan_meta = Channel.of([feature: 'Species', samples: 'sample_id',
@@ -444,6 +447,8 @@ workflow read_based {
         KAIJU_DECONTAM.out.version | mix(software_versions_ch) | set{software_versions_ch}
         KAIJU_DECONTAM_BARPLOT.out.version | mix(software_versions_ch) | set{software_versions_ch} 
         KRAKEN_CLASSIFY.out.version | mix(software_versions_ch) | set{software_versions_ch}
+        KRAKEN_MULTIQC.out.version | mix(software_versions_ch) | set{software_versions_ch}
+        KRAKEN_ZIP_MULTIQC.out.version | mix(software_versions_ch) | set{software_versions_ch}
         KRAKEN2TABLE.out.version | mix(software_versions_ch) | set{software_versions_ch}
         KRAKEN2KRONA.out.version | mix(software_versions_ch) | set{software_versions_ch}
         KRAKEN_REPORT.out.version  | mix(software_versions_ch) | set{software_versions_ch}

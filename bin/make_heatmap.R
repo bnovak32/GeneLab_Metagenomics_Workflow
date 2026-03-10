@@ -11,7 +11,7 @@
 #                  --feature-table 'Gene_function_table_filtered_GLMetagenomics.csv' \
 #                  --group-column 'Description' \
 #                  --samples-column 'sample_id' \
-#                  --output-prefix  'filtered-kaiju_species' \
+#                  --output-prefix  'Combined-gene-level-KO-function' \
 #                  --assay-suffix   '_GLMetagenomics'
 
 ###############################################################################
@@ -66,7 +66,7 @@ opt_parser <- OptionParser(
                   --metadata-table 'metadata.csv' \\
                   --feature-table 'Gene_function_table_filtered_GLMetagenomics.csv' \\
                   --group-column 'Description' \\
-                  --output-prefix  'filtered-kaiju_species'" ,
+                  --output-prefix  'Combined-gene-level-KO-function'" ,
   description = paste("Author: Olabiyi Aderemi Obayomi",
                       "\nEmail: olabiyi.a.obayomi@nasa.gov",
                       "\n  A script to create a heatmap.",

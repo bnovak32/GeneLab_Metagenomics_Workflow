@@ -469,7 +469,7 @@ export TOWER_ACCESS_TOKEN=eyxxxxxxxxxxxxxxxQ1ZTE=
 nextflow run main.nf -resume \
     -with-tower \
     -profile singularity \
-    --sample_type "low_biomass"
+    --sample_type "low_biomass" \
     --input_file single.csv \
     --input_type "single" \
     --errorStrategy "ignore" \
