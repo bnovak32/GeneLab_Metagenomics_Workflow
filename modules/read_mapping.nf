@@ -71,7 +71,7 @@ process LONG_MAPPING {
     input:
         tuple val(sample_id), path(assembly), path(reads), val(isPaired)
     output:
-        tuple val(sample_id), path("${sample_id}.sam"), path("${sample_id}-mapping-info.txt"), emit: sam
+        tuple val(sample_id), path("${sample_id}.sam"), path("${sample_id}-mapping-info${params.assay_suffix}.txt"), emit: sam
         path("versions.txt"), emit: version
     script:
         """
@@ -79,13 +79,13 @@ process LONG_MAPPING {
             if [ -s ${assembly} ]; then
 
                minimap2 -ax map-ont -t ${task.cpus} ${assembly} ${reads[0]} \\
-                     > ${sample_id}.sam  2> ${sample_id}-mapping-info.txt
+                     > ${sample_id}.sam  2> ${sample_id}-mapping-info${params.assay_suffix}.txt
                         
      
             else
 
                 touch ${sample_id}.sam
-                echo "Mapping not performed for ${sample_id} because the assembly didn't produce anything."  > ${sample_id}-mapping-info.txt
+                echo "Mapping not performed for ${sample_id} because the assembly didn't produce anything."  > ${sample_id}-mapping-info${params.assay_suffix}.txt
                 printf "Mapping not performed for ${sample_id} because the assembly didn't produce anything.\\n"
 
             fi
