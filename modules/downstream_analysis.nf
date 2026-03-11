@@ -108,7 +108,7 @@ process ASSEMBLY_TABLE {
         path(summary_table) // 'assembly-summaries_GLmetagenomics.tsv'
 
     output:
-       path("${params.additional_filename_prefix}${level}-level*.tsv"), emit: table
+       path("*.tsv"), emit: table
        path("versions.txt"), emit: version
 
     script:
