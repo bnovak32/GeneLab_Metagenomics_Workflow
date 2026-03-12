@@ -12,7 +12,6 @@ process GENERATE_ASSEMBLY_PROCESSING_OVERVIEW_TABLE {
 
     input:
         path(sample_IDs_file)
-        path(MAGs_overview)
         path(MAGs_dir)
         path(assemblies)
         path(genes_aa)
