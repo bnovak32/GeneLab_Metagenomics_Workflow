@@ -293,8 +293,9 @@ workflow assembly_based {
 
         bam_files = read_mapping_ch.map{sample_id, bam -> file("${bam}")}.collect()
         // Summarize Assembly-based analysis
-        GENERATE_ASSEMBLY_PROCESSING_OVERVIEW_TABLE(sample_ids_ch, summarize_mags.out.MAGs_overview,
-                                                    summarize_mags.out.MAGs_dir, assemblies_ch,
+        GENERATE_ASSEMBLY_PROCESSING_OVERVIEW_TABLE(sample_ids_ch,
+                                                    summarize_mags.out.MAGs_dir, 
+                                                    assemblies_ch,
                                                     genes_aa_ch,
                                                     metabat_assembly_depth_files_ch,
                                                     bins_ch,
