@@ -238,14 +238,6 @@ samples <- intersect(colnames(feature_table), rownames(metadata))
 metadata <- metadata[samples,]
 feature_table <- feature_table[,samples]
 
-# Run decontam
-# Assign prev and freq column names to NULL if the values in the supplied columns aren't unique
-if( length(unique(metadata[,prev_col])) == 1) prev_col <- NULL
-if( length(unique(metadata[,freq_col])) == 1) freq_col <- NULL
-contamdf <- run_decontam(feature_table, metadata, threshold, prev_col, freq_col, ntc_name) 
-
-contamdf <- as.data.frame(contamdf) %>% rownames_to_column(feature_column)
-
 # Combined-contig-level-taxonomy
 # Combined-gene-level-KO-function
 # Combined-gene-level-taxonomy
@@ -269,6 +261,36 @@ if(method == "gene-function")  {
       name <- method
 
 }
+
+# Run decontam
+# Assign prev and freq column names to NULL if the values in the supplied columns aren't unique
+if( length(unique(metadata[,prev_col])) == 1) prev_col <- NULL
+if( length(unique(metadata[,freq_col])) == 1) freq_col <- NULL
+
+# Error if values in both prevalence and frequency columns are not different between samples within each column 
+#i.e no difference between negative control(s) and other samples
+if(is.null(freq_col) && is.null(prev_col)){
+
+   text2write <- "Values in both NTC and concentration columns are not unique between samples within each column.\nTherefore, feature decontamination with decontam cannot be performed."
+
+
+   file_name <- glue("{prefix}{name}_decontam_failure.txt")
+   
+   
+   cat(text2write, file=file_name)
+   
+   
+   contamdf <- data.frame(x=rownames(feature_table),freq=NA,
+		       prev=NA, p.freq=NA, p.prev=NA, p=NA, contaminant=FALSE)
+   colnames(contamdf)[1] <- feature_column
+
+}else{
+
+    contamdf <- run_decontam(feature_table, metadata, threshold, prev_col, freq_col, ntc_name) 
+    contamdf <- as.data.frame(contamdf) %>% rownames_to_column(feature_column)
+
+}
+
 # Write decontaminated feature table and decontam's primary results
 outfile <- glue("{prefix}{name}_decontam_results{suffix}.tsv")
 write_tsv(x = contamdf, file = outfile)

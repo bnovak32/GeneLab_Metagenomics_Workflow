@@ -148,6 +148,10 @@ process DECONTAM  {
     output:
         path("*_decontam_results*.tsv"), emit: result // decontam's primary results
         path("*_decontam_*_table*.tsv"), optional: true, emit: table // decontaminated feature table
+        /* A failure text file generated if the values in both prevalence and frequency columns 
+           are not different between samples within each column. 
+           i.e no difference between negative control(s) and other samples */
+        path("*_decontam_failure.txt"), optional: true, emit: failure 
         path("versions.txt"), emit: version
 
     script:
