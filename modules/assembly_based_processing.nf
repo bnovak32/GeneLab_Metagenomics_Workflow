@@ -191,7 +191,7 @@ workflow assembly_based {
         GT_DECONTAM(decontam_gene_taxonomy_meta, metadata, GT_FILTER_RARE.out.table)
         decontam_gene_taxonomy_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
                                                   prefix:  'Combined-gene-level-taxonomy_decontam'])        
-        GT_DECONTAM_HEATMAP(decontam_gene_taxonomy_heatmap_meta, GT_FILTER_RARE.out.table, metadata)
+        GT_DECONTAM_HEATMAP(decontam_gene_taxonomy_heatmap_meta, GT_DECONTAM.out.table, metadata)
 
        // ---------------------- Gene functions
        gene_function_ch = Channel.of(['KO', 'Gene'])
@@ -217,7 +217,7 @@ workflow assembly_based {
        GF_DECONTAM(decontam_gene_function_meta, metadata, GF_FILTER_RARE.out.table)
        decontam_gene_function_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
                                                   prefix:  'Combined-gene-level-KO-function_decontam'])
-       GF_DECONTAM_HEATMAP(decontam_gene_function_heatmap_meta, GF_FILTER_RARE.out.table, metadata)
+       GF_DECONTAM_HEATMAP(decontam_gene_function_heatmap_meta, GF_DECONTAM.out.table, metadata)
 
    
         combined_cov_ch = COMBINE_CONTIG_TAX_AND_COVERAGE(coverage_ch
