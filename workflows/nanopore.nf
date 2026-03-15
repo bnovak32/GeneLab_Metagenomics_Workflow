@@ -16,16 +16,15 @@ include { nano_quality_check as filtered_qc } from "../modules/quality_assessmen
 include { nano_quality_check as trimmed_qc } from "../modules/quality_assessment.nf"
 include { nano_quality_check as nohost_qc } from "../modules/quality_assessment.nf"
 
-if(params.sample_type == "low_biomass"){
-
-include { nano_quality_check as noblank_qc } from "../modules/quality_assessment.nf"
-include { nano_quality_check as nohum_qc } from "../modules/quality_assessment.nf"
-
-// Remove contaminant
-include { nano_remove_contaminants as remove_contaminants } from "../modules/remove_contaminant.nf"
 // Remove human reads
 include { remove_host as remove_human } from "../modules/remove_host.nf"
+include { nano_quality_check as nohum_qc } from "../modules/quality_assessment.nf"
 
+if(params.sample_type == "low_biomass"){
+
+   // Remove contaminant
+   include { nano_remove_contaminants as remove_contaminants } from "../modules/remove_contaminant.nf"
+   include { nano_quality_check as noblank_qc } from "../modules/quality_assessment.nf"
 }
 
 // Remove host
@@ -232,18 +231,20 @@ workflow nanopore {
     filtered_qc.out.versions | mix(software_versions_ch) | set{software_versions_ch}
     trimmed_qc.out.versions | mix(software_versions_ch) | set{software_versions_ch}
 
-    // By default trimmed reads are reads after quality filtering and trimming with filtlong and porechop
-    trimmed_reads = trimmed_ch
     // Get the number of reads per sample after read filtering
     // relative abundance to count calcultaion for metaphalan results
     reads_per_sample = trimmed_qc.out.reads_per_sample
 
-    if(sample_type == "low_biomass"){
-
-    // Remove human reads and quality check (remove_contaminants.out.clean_reads, remove_host.out.clean_reads)
+    // Remove human reads and quality check
     remove_human("HRrm", "human", params.human_db_url, null, params.human_db_dir, trimmed_ch)
     nohum_qc(Channel.of("HRrm"), params.multiqc_config, remove_human.out.clean_reads,remove_human.out.logs)
     remove_human.out.versions | mix(software_versions_ch) | set{software_versions_ch}
+
+    // By default trimmed reads are reads after quality filtering, trimming with filtlong 
+    // and porechop and human reads rexmoved with kraken2
+    trimmed_reads = remove_human.out.clean_reads
+
+    if(sample_type == "low_biomass"){
 
     // Remove contaminants and quality ckeck
     remove_contaminants(file_ch, remove_human.out.clean_reads)

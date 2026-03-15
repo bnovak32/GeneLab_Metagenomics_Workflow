@@ -38,7 +38,8 @@ option_list <- list(
               metavar="path"),
     
   make_option(c("-f", "--feature-column"), type="character", default=NULL, 
-              help="Feature column name in feature table ['Species', 'species', 'KO_ID'].
+              help="Feature column name in feature table 
+	      ['Species', 'species', 'KO_ID', 'Pathway', 'KO', 'Uniref90'].
               Default: empty string",
               metavar="Feature_Column"),
  
@@ -76,7 +77,8 @@ option_list <- list(
               help="Taxonomy or functional method used to generate the input 
               feature table. The supplied string will be added to output file names
               ['kaiju', 'kraken2', 'metaphlan', 'contig-taxonomy',
-               'gene-taxonomy', 'gene-function']. Default: empty string.",
+               'gene-taxonomy', 'gene-function','Pathway-abundances', 
+	       'Gene-families-KO', 'Gene-families-uniref' ]. Default: empty string.",
               metavar=""),
   
   make_option(c("-o", "--output-prefix"), type="character", default="", 
@@ -215,7 +217,8 @@ freq_col <- opt[["frequency-column"]] # "input_conc_ng"
 prev_col <- opt[["prevalence-column"]] # "NTC"
 threshold <- opt[["threshold"]] # 0.5
 ntc_name <- opt[["ntc_name"]] # "true"
-# "kaiju", "kraken2", "metaphlan", "contig-taxonomy", "gene-taxonomy", "gene-function"
+# "kaiju", "kraken2", "metaphlan", "contig-taxonomy", "gene-taxonomy",
+# "gene-function", "Pathway-abundances", "Gene-families-KO", "Gene-families-uniref"
 method <- opt[["classification-method"]] # 'kaiju'
 feature_column <- opt[["feature-column"]] # 'Species'
 prefix <- opt[["output-prefix"]]

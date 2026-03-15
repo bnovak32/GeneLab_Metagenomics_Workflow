@@ -88,6 +88,16 @@ get_abundant_features <- function(mat, cpm_threshold=1000){
   
   # mat - matrix with features as rows and samples as columns
   # cpm_threshold - threshold to filter abundant features
+  
+  # Filtered out unassigned functions
+  unassigned <- "UNMAPPED|UNGROUPED|UNINTEGRATED|Not annotated"
+  mat  <-  mat %>%
+    as.data.frame %>%
+    rownames_to_column("Feature") %>%
+    filter(str_detect(Feature, unassigned, negate = TRUE))
+  rownames(mat) <- mat$Feature
+  mat  <- mat[,-1]	
+  
   features <- rowSums(mat, na.rm = TRUE) %>% sort()
   
   abund_features <- features[features > cpm_threshold] %>% names

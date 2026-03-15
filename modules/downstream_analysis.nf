@@ -129,6 +129,37 @@ process ASSEMBLY_TABLE {
 }
 
 
+process HUMANN_TABLE {
+
+    tag "processing your ${type} table..."
+    label "R_downstream"
+
+
+    input:
+        val(type) // 'pathway', 'uniref' or  'KO'
+        path(feature_table) // 'Combined-contig-level-taxonomy-coverages-CPM_GLmetagenomics.tsv'
+
+    output:
+       path("*.tsv"), emit: table
+       path("versions.txt"), emit: version
+
+    script:
+        """
+          process_humann_table.R \\
+                  --table '${feature_table}' \\
+                  --type '${type}' \\
+                  --output-prefix '${params.additional_filename_prefix}' \\
+                  --assay-suffix '${params.assay_suffix}'
+
+          Rscript -e "VERSIONS=sprintf('tidyverse %s\\nglue %s\\n',  \\
+                                    packageVersion('tidyverse'), \\
+                                    packageVersion('glue')); \\
+                    write(x=VERSIONS, file='versions.txt', append=TRUE)"
+        """
+}
+
+
+
 process DECONTAM  { 
 
     tag "Decontaminating ${feature_table} with decontam..."

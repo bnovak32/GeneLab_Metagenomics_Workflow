@@ -66,11 +66,6 @@ if (params.help) {
   println("	   5g should be sufficient for most assemblies, but if that rule is failing, this may need to be increased.Default: '5g' .")
   println("	 --block_size [int] Block size variable for CAT/diamond, lower value means less RAM usage; see https://github.com/bbuchfink/diamond/wiki/3.-Command-line-options#memory--performance-options. Default: 4.")
   println()
-  println("File Suffixes:")
-  println("      --filtered_suffix [STRING]  Specifies the suffix for naming quality filtered reads. Only applicable when input reads are single-end. Default: _filtered.fastq.gz.")  
-  println("      --filtered_R1_suffix [STRING]  Specifies the suffix for naming quality filtered forward reads. Default: _R1_filtered.fastq.gz.")
-  println("      --filtered_R2_suffix [STRING]  Specifies the suffix for naming quality filtered reverse reads. Default: _R2_filtered.fastq.gz.")
-  println()
   println("Output directories:")
   println("      --raw_reads_dir [PATH] Specifies where the fastqc report of the raw reads will be published. Default: ../Raw_Sequence_Data/.")
   println("      --fastqc_out_dir [PATH] Specifies where multiqc outputs will be published. Default: ../FastQC_Outputs/.")
@@ -149,19 +144,12 @@ log.info """${c_blue}
          GLDS Raw File Pattern: ${params.RawFilePattern}         
          Workflow : ${params.workflow}
          Nextflow Directory publishing mode: ${params.publishDir_mode}
-         Swift 1S Libraries: ${params.swift_1S}
          Nextflow Error strategy: ${params.errorStrategy}
-         BBDUK Adapters: ${params.adapters}
          Use GTDBTK Scratch Location: ${params.use_gtdbtk_scratch_location}
          MultiQC configuration file: ${params.multiqc_config}
          Megahit Maximum Memory: ${params.max_mem}
          Pile-up Memory: ${params.pileup_mem}
          CAT block size: ${params.block_size}
-
-         File Suffixes:
-         Filtered Reads Suffix (if single-end): ${params.filtered_suffix}
-         Filtered Forward Reads Suffix: ${params.filtered_R1_suffix}
-         Filtered Reverse Reads Suffix: ${params.filtered_R2_suffix}
 
          MAG Parameters:
          Minimum completion: ${params.min_est_comp}
@@ -170,24 +158,15 @@ log.info """${c_blue}
          Use Reduced Tree: ${params.reduced_tree}
  
          Output Directories:
-         Raw reads: ${params.raw_reads_dir}
-         FastQC: ${params.fastqc_out_dir}
+         Raw reads: ${params.merged_dir}
          Filtered Reads: ${params.filtered_reads_dir}
          Assembly-based Analysis: ${params.assembly_based_dir}
-         Assemblies: ${params.assemblies_dir}
-         Predicted Genes: ${params.genes_dir}
-         Contigs Taxonomy and Annotation: ${params.annotations_and_tax_dir}
-         Read mapping: ${params.mapping_dir}
-         Assemblies Summary: ${params.combined_output_dir}
-         Bins: ${params.bins_dir}
-         Meta Assembled Genomes (MAGs): ${params.MAGs_dir}
          Read-based Analysis: ${params.read_based_dir}
 
          Genelab Assay Suffix: ${params.assay_suffix}
          Additional Filename Prefix: ${params.additional_filename_prefix}
 
          Conda Environments:
-         qc: ${params.conda_qc}
          humann3: ${params.conda_humann3}
          CAT: ${params.conda_cat}
          prodigal: ${params.conda_prodigal}
@@ -197,7 +176,6 @@ log.info """${c_blue}
          megahit: ${params.conda_megahit}
          bit: ${params.conda_bit}
          kofamscan: ${params.conda_kofamscan}
-         mapping: ${params.conda_mapping}
          checkm: ${params.conda_checkm}         
 
          Databases:
@@ -351,7 +329,7 @@ workflow {
 
         error("""${c_back_bright_red}INPUT ERROR!
               You must specify a recognized technology by passing one of
-              'illumina' or  'nanaopore' to  the --technology parameter.
+              'illumina' or  'nanopore' to  the --technology parameter.
               'illumina' - Illumina short reads.
               'nanopore' - Oxford nanopore long reads.
               ${c_reset}""")
@@ -406,7 +384,8 @@ workflow.onComplete {
 
     if ( workflow.success ) {
 
-    println("FastQC outputs location: ${params.fastqc_out_dir}")
+    println("Merged/Raw outputs location: ${params.merged_dir}")
+    println("Filtered outputs location: ${params.filtered_dir}")
     println("Read-based Analysis: ${params.read_based_dir}")
     println("Assembly-based Analysis: ${params.assembly_based_dir}")
     println("Software versions location: ${params.metadata_dir}")
