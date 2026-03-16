@@ -183,7 +183,7 @@ dev.off()
 sorted_features <- rowSums(feature_table) %>% sort(decreasing = TRUE)
 
 # Plot only top 50 features as it is often difficult to visualize all features at once
-if(length(sorted_features >= 50)) { 
+if(length(sorted_features) >= 50) { 
   
   top50 <- sorted_features[1:50]
 

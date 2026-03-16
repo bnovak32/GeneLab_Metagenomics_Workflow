@@ -288,5 +288,12 @@ if( opt[['mode']] == "values_sum"){
 }
 
 #GLDS-XXX_metagenomics-lowbiomass-longread_kaiju_filtered_taxon_counts_GLlbnMetag.tsv
+if(nrow(table2write) == 0 ){
 
-write_tsv(x = table2write, file = opt[['output-file']])
+	stop(glue("No feature left after filtering at {threshold}!!! Consider reducing the {threshold} threshold to something smaller after looking in {feature_table_file}."))
+
+}else{
+
+    write_tsv(x = table2write, file = opt[['output-file']])
+
+}
