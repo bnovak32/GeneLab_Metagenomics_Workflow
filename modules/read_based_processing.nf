@@ -410,8 +410,8 @@ workflow read_based {
         unfilt_uniref_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
                                                prefix:  'Gene-families-uniref_unfiltered']) 
         GFU_UNFILTERED_HEATMAP(unfilt_uniref_heatmap_meta, GFU_HUMANN_TABLE.out.table, metadata)
-        // Filtered - filter out uniref less than 1000 CPM across samples
-        filt_uniref_meta = Channel.of([mode: 'values_sum', filter_threshold : 1000,
+        // Filtered - filter out uniref less than 500 CPM across samples
+        filt_uniref_meta = Channel.of([mode: 'values_sum', filter_threshold : 500,
                             output_file: "Gene-families-uniref_filtered${params.assay_suffix}.tsv"])
         GFU_FILTER_RARE(filt_uniref_meta, GFU_HUMANN_TABLE.out.table)
         filt_uniref_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
@@ -424,8 +424,8 @@ workflow read_based {
         unfilt_KO_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
                                                prefix:  'Gene-families-KO_unfiltered'])
         GKO_UNFILTERED_HEATMAP(unfilt_KO_heatmap_meta, GKO_HUMANN_TABLE.out.table, metadata)
-        // Filtered - filter out KO less than 1000 CPM across samples
-        filt_KO_meta = Channel.of([mode: 'values_sum', filter_threshold : 1000,
+        // Filtered - filter out KO less than 500 CPM across samples
+        filt_KO_meta = Channel.of([mode: 'values_sum', filter_threshold : 500,
                             output_file: "Gene-families-KO_filtered${params.assay_suffix}.tsv"])
         GKO_FILTER_RARE(filt_KO_meta, GKO_HUMANN_TABLE.out.table)
         filt_KO_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
@@ -438,8 +438,8 @@ workflow read_based {
         unfilt_pathway_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
                                                prefix:  'Pathway-abundances_unfiltered'])
         PATH_UNFILTERED_HEATMAP(unfilt_pathway_heatmap_meta, PATH_HUMANN_TABLE.out.table, metadata)
-        // Filtered - filter out pathways less than 1000 CPM across samples
-        filt_pathway_meta = Channel.of([mode: 'values_sum', filter_threshold : 1000,
+        // Filtered - filter out pathways less than 500 CPM across samples
+        filt_pathway_meta = Channel.of([mode: 'values_sum', filter_threshold : 500,
                             output_file: "Pathway-abundances_filtered${params.assay_suffix}.tsv"])
         PATH_FILTER_RARE(filt_pathway_meta, PATH_HUMANN_TABLE.out.table)
         filt_pathway_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
