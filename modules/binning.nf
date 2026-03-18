@@ -15,7 +15,7 @@ process METABAT_BINNING {
     input:
         tuple val(sample_id), path(assembly), path(bam) 
     output:
-        tuple val(sample_id), path("${sample_id}-metabat-assembly-depth.tsv"), emit: depth
+        tuple val(sample_id), path("${sample_id}-metabat-assembly-depth${params.assay_suffix}.tsv"), emit: depth
         tuple val(sample_id), path("${sample_id}-bin*"), emit: bins, optional: true
         path("versions.txt"), emit: version
     script:
@@ -24,7 +24,7 @@ process METABAT_BINNING {
         if [ -s ${assembly} ]; then
 
             jgi_summarize_bam_contig_depths \\
-                    --outputDepth ${sample_id}-metabat-assembly-depth.tsv \\
+                    --outputDepth ${sample_id}-metabat-assembly-depth${params.assay_suffix}.tsv \\
                     --percentIdentity 97 \\
                     --minContigLength 1000 \\
                     --minContigDepth 1.0  \\
@@ -37,7 +37,7 @@ process METABAT_BINNING {
                 metabat2  \\
                     --inFile ${assembly} \\
                     --outFile ${sample_id}-bin \\
-                    --abdFile ${sample_id}-metabat-assembly-depth.tsv \\
+                    --abdFile ${sample_id}-metabat-assembly-depth${params.assay_suffix}.tsv \\
                     -t ${task.cpus}
 
             else
@@ -60,7 +60,7 @@ process METABAT_BINNING {
 
         else
 
-            touch ${sample_id}-metabat-assembly-depth.tsv
+            touch ${sample_id}-metabat-assembly-depth${params.assay_suffix}.tsv
             printf "Binning not performed because the assembly didn't produce anything.\\n" 
         fi
         echo metabat2 \$(metabat2 --help 2>&1 | head -n 2 | tail -n 1| sed 's/.*\\:\\([0-9]*\\.[0-9]*\\).*/\\1/') > versions.txt

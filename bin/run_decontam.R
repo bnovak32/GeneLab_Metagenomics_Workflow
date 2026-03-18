@@ -7,7 +7,7 @@
 # E-mail: obadbotanist@yahoo.com
 # Created: January 2026
 # example: Rscript run_decontam.R \
-#                  --feature-table 'kaiju_species_table_GLlbnMetag.csv' \
+#                  --feature-table 'kaiju_species_table_GLlbnMetag.tsv' \
 #                  --feature-column 'Species' \
 #                  --metadata-table 'mapping/metadata.csv' \
 #                  --samples-column 'Sample_ID' \
@@ -38,7 +38,8 @@ option_list <- list(
               metavar="path"),
     
   make_option(c("-f", "--feature-column"), type="character", default=NULL, 
-              help="Feature column name in feature table ['Species', 'species', 'KO_ID'].
+              help="Feature column name in feature table 
+	      ['Species', 'species', 'KO_ID', 'Pathway', 'KO', 'Uniref90'].
               Default: empty string",
               metavar="Feature_Column"),
  
@@ -76,7 +77,8 @@ option_list <- list(
               help="Taxonomy or functional method used to generate the input 
               feature table. The supplied string will be added to output file names
               ['kaiju', 'kraken2', 'metaphlan', 'contig-taxonomy',
-               'gene-taxonomy', 'gene-function']. Default: empty string.",
+               'gene-taxonomy', 'gene-function','Pathway-abundances', 
+	       'Gene-families-KO', 'Gene-families-uniref' ]. Default: empty string.",
               metavar=""),
   
   make_option(c("-o", "--output-prefix"), type="character", default="", 
@@ -163,6 +165,7 @@ run_decontam <- function(feature_table, metadata, contam_threshold=0.1,
       )
       )
     sub_metadata[, freq_col] <- as.numeric(sub_metadata[,freq_col])
+    sub_metadata[, prev_col] <- tolower(sub_metadata[,prev_col])
     
   }
   
@@ -214,7 +217,8 @@ freq_col <- opt[["frequency-column"]] # "input_conc_ng"
 prev_col <- opt[["prevalence-column"]] # "NTC"
 threshold <- opt[["threshold"]] # 0.5
 ntc_name <- opt[["ntc_name"]] # "true"
-# "kaiju", "kraken2", "metaphlan", "contig-taxonomy", "gene-taxonomy", "gene-function"
+# "kaiju", "kraken2", "metaphlan", "contig-taxonomy", "gene-taxonomy",
+# "gene-function", "Pathway-abundances", "Gene-families-KO", "Gene-families-uniref"
 method <- opt[["classification-method"]] # 'kaiju'
 feature_column <- opt[["feature-column"]] # 'Species'
 prefix <- opt[["output-prefix"]]
@@ -237,16 +241,61 @@ samples <- intersect(colnames(feature_table), rownames(metadata))
 metadata <- metadata[samples,]
 feature_table <- feature_table[,samples]
 
-# Run decontam
-contamdf <- run_decontam(feature_table, metadata, threshold, prev_col, freq_col, ntc_name) 
-
-contamdf <- as.data.frame(contamdf) %>% rownames_to_column(feature_column)
+# Combined-contig-level-taxonomy
+# Combined-gene-level-KO-function
+# Combined-gene-level-taxonomy
 
 type <- "species"
-if(method == "gene-function")  { type <- "KO"}
+if(method == "gene-function")  {
+       
+	type <- "KO" 
+        name <- "Combined-gene-level-KO-function"
+
+}else if( method == "gene-taxonomy") {
+
+        name <- "Combined-gene-level-taxonomy"
+
+}else if( method == "contig-taxonomy") {
+
+       name <- "Combined-contig-level-taxonomy"
+
+}else{
+
+      name <- method
+
+}
+
+# Run decontam
+# Assign prev and freq column names to NULL if the values in the supplied columns aren't unique
+if( length(unique(metadata[,prev_col])) == 1) prev_col <- NULL
+if( length(unique(metadata[,freq_col])) == 1) freq_col <- NULL
+
+# Error if values in both prevalence and frequency columns are not different between samples within each column 
+#i.e no difference between negative control(s) and other samples
+if(is.null(freq_col) && is.null(prev_col)){
+
+   text2write <- "Values in both NTC and concentration columns are not unique between samples within each column.\nTherefore, feature decontamination with decontam cannot be performed."
+
+
+   file_name <- glue("{prefix}{name}_decontam_failure.txt")
+   
+   
+   cat(text2write, file=file_name)
+   
+   
+   contamdf <- data.frame(x=rownames(feature_table),freq=NA,
+		       prev=NA, p.freq=NA, p.prev=NA, p=NA, contaminant=FALSE)
+   colnames(contamdf)[1] <- feature_column
+
+}else{
+
+    contamdf <- run_decontam(feature_table, metadata, threshold, prev_col, freq_col, ntc_name) 
+    contamdf <- as.data.frame(contamdf) %>% rownames_to_column(feature_column)
+
+}
 
 # Write decontaminated feature table and decontam's primary results
-outfile <- glue("{prefix}{method}_decontam_{type}_results{suffix}.tsv")
+outfile <- glue("{prefix}{name}_decontam_results{suffix}.tsv")
 write_tsv(x = contamdf, file = outfile)
 
 
@@ -271,7 +320,7 @@ decontaminated_table <- feature_table %>%
 rownames(decontaminated_table) <- decontaminated_table[[feature_column]]
 decontaminated_table <- decontaminated_table[,-1] %>% as.matrix
 
-outfile <- glue("{prefix}{method}_decontam_{type}_table{suffix}.tsv")
+outfile <- glue("{prefix}{name}_decontam_{type}_table{suffix}.tsv")
 write_tsv(x = decontaminated_table, file = outfile)
 
 }else{

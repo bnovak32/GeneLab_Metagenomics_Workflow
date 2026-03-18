@@ -17,7 +17,7 @@ process CALL_GENES {
         tuple val(sample_id), path(assembly) 
     output:
         // Amino acids, nucleotides and gff
-        tuple val(sample_id), path("${sample_id}-genes.faa"), path("${sample_id}-genes.fasta"), path("${sample_id}-genes.gff"), emit: genes
+        tuple val(sample_id), path("${sample_id}-genes.faa"), path("${sample_id}-genes.fasta"), path("${sample_id}-genes${params.assay_suffix}.gff"), emit: genes
         path("versions.txt"), emit: version
     script:
         """
@@ -26,11 +26,11 @@ process CALL_GENES {
 
             prodigal -q -c -p meta -a ${sample_id}-genes.faa \\
                      -d ${sample_id}-genes.fasta \\
-                     -f gff -o ${sample_id}-genes.gff \\
+                     -f gff -o ${sample_id}-genes${params.assay_suffix}.gff \\
                      -i ${assembly} 
         else
 
-            touch ${sample_id}-genes.faa ${sample_id}-genes.fasta ${sample_id}-genes.gff
+            touch ${sample_id}-genes.faa ${sample_id}-genes.fasta ${sample_id}-genes${params.assay_suffix}.gff
             printf "Gene-calling not performed because the assembly didn't produce anything.\\n"
 
         fi
@@ -49,20 +49,20 @@ process REMOVE_LINEWRAPS {
         tuple val(sample_id), path(aa), path(nt), path(gff)
    
     output:
-        tuple val(sample_id), path("${sample_id}-genes.faa"), path("${sample_id}-genes.fasta"), emit: genes
+        tuple val(sample_id), path("${sample_id}-genes${params.assay_suffix}.faa"), path("${sample_id}-genes${params.assay_suffix}.fasta"), emit: genes
         path("versions.txt"), emit: version
     script:
         """
          if [ -s ${aa} ] && [ -s ${nt} ]; then
             # Removing line-wraps
             bit-remove-wraps ${aa} > ${sample_id}-genes.faa.tmp 2> /dev/null && \\
-            mv ${sample_id}-genes.faa.tmp ${sample_id}-genes.faa
+            mv ${sample_id}-genes.faa.tmp ${sample_id}-genes${params.assay_suffix}.faa
             
             bit-remove-wraps ${nt} > ${sample_id}-genes.fasta.tmp 2> /dev/null && \\
-            mv ${sample_id}-genes.fasta.tmp ${sample_id}-genes.fasta
+            mv ${sample_id}-genes.fasta.tmp ${sample_id}-genes${params.assay_suffix}.fasta
         else
 
-            touch ${sample_id}-genes.faa ${sample_id}-genes.fasta
+            touch ${sample_id}-genes${params.assay_suffix}.faa ${sample_id}-genes${params.assay_suffix}.fasta
             printf "Line wrapping not performed because gene-calling wasn't performed on ${sample_id}.\\n"
         fi 
         bit-version |grep "Bioinformatics Tools"|sed -E 's/^\\s+//' > versions.txt
@@ -75,7 +75,6 @@ process REMOVE_LINEWRAPS {
 process KO_ANNOTATION {
 
     tag "Running KO annotation of ${sample_id}-s predicted amino acids.."
-    //label "contig_annotation"
     
     input:
        tuple val(sample_id), path(assembly), path(aa), path(nt)

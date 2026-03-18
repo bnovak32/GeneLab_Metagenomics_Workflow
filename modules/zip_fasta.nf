@@ -24,7 +24,7 @@ process ZIP_FASTA {
 
             mkdir -p \${SAMPLE}-\${TYPE}s && \\
             cp -f \${SAMPLE}-\${TYPE}*.fasta \${SAMPLE}-\${TYPE}s && \\
-            zip -r \${SAMPLE}-\${TYPE}s.zip \${SAMPLE}-\${TYPE}s
+            zip -r \${SAMPLE}-\${TYPE}s${params.assay_suffix}.zip \${SAMPLE}-\${TYPE}s
 
            }
 

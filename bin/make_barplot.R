@@ -195,7 +195,7 @@ feature_column <- opt[["feature-column"]] # 'Species'
 prefix <-  opt[["output-prefix"]] # "filtered-kaiju_species"
 suffix <- opt[["assay-suffix"]]
 facet_by <- reformulate(opt[["group-column"]]) # 'Description'
-
+group_column <- opt[["group-column"]] # 'group'
 
 # Prepare feature table
 feature_table <- read_delim(feature_table_file) %>%  as.data.frame()
@@ -215,8 +215,14 @@ metadata <- read_delim(metdata_file) %>% as.data.frame()
 row.names(metadata) <- metadata[,samples_column]
 
 abund_table <- count_to_rel_abundance(feature_table)
+
+metadata <- metadata %>% 
+	       mutate(!!sym(group_column) := str_wrap(!!sym(group_column) %>%
+						      str_replace_all("_", " "), width=10)
+	       )
+
 p <- make_plot(abund_table , metadata, colors2use, publication_format, samples_column) +
-     facet_wrap(facet_by, nrow=1, scales = "free_x") + 
+     facet_wrap(facet_by, nrow=1, scales = "free_x", labeller = label_wrap_gen(width=10)) + 
      theme(axis.text.x = element_text(angle = 90))
 
 static_plot <- p

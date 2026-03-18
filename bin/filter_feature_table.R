@@ -88,7 +88,17 @@ get_abundant_features <- function(mat, cpm_threshold=1000){
   
   # mat - matrix with features as rows and samples as columns
   # cpm_threshold - threshold to filter abundant features
-  features <- rowSums(mat) %>% sort()
+  
+  # Filtered out unassigned functions
+  unassigned <- "UNMAPPED|UNGROUPED|UNINTEGRATED|Not annotated"
+  mat  <-  mat %>%
+    as.data.frame %>%
+    rownames_to_column("Feature") %>%
+    filter(str_detect(Feature, unassigned, negate = TRUE))
+  rownames(mat) <- mat$Feature
+  mat  <- mat[,-1]	
+  
+  features <- rowSums(mat, na.rm = TRUE) %>% sort()
   
   abund_features <- features[features > cpm_threshold] %>% names
   
@@ -198,7 +208,7 @@ opt_parser <- OptionParser(
                   --feature-table 'kaiju_species_table_GLlbnMetag.csv' \\
                   --mode  'across_value' \\
                   --threshold 0.5 \\
-                  --output-file  'kaiju_filtered_species_table_GLlbnMetag.csv' " ,
+                  --output-file  'kaiju_filtered_species_table_GLlbnMetag.tsv' " ,
   description = paste("Author: Olabiyi Aderemi Obayomi",
                       "\nEmail: olabiyi.a.obayomi@nasa.gov",
                       "\n  A script to filter a feature table based on user defined criteria..",
@@ -231,10 +241,12 @@ non_microbial <-  opt[['features-to-drop']]
   
 }else{
   
-  non_microbial <- "UNCLASSIFIED|Unclassifed|unclassified|Homo sapien|cannot|uncultured|unidentified"
+  non_microbial <- "UNCLASSIFIED|Unclassified|unclassified|Homo sapien|cannot|uncultured|unidentified"
 }
 
-feature_table <- read_delim(feature_table_file) %>% as.data.frame()
+feature_table <- read_delim(feature_table_file) %>% 
+	            mutate( across(where(is.numeric), function(col) replace_na(col, 0)) ) %>%
+		    as.data.frame()
 feature_name <- colnames(feature_table)[1]
 rownames(feature_table) <- feature_table[,1]
 feature_table <- feature_table[, -1]
@@ -276,5 +288,12 @@ if( opt[['mode']] == "values_sum"){
 }
 
 #GLDS-XXX_metagenomics-lowbiomass-longread_kaiju_filtered_taxon_counts_GLlbnMetag.tsv
+if(nrow(table2write) == 0 ){
 
-write_tsv(x = table2write, file = opt[['output-file']])
+	stop(glue("No feature left after filtering at {threshold}!!! Consider reducing the {threshold} threshold to something smaller after looking in {feature_table_file}."))
+
+}else{
+
+    write_tsv(x = table2write, file = opt[['output-file']])
+
+}

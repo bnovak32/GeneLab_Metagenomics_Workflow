@@ -89,6 +89,7 @@ process POLISH_ASSEMBLY {
 
     output:
     tuple val(sample_id), path("${sample_id}_polished.fasta"), emit: contigs
+    tuple val(sample_id), path("${sample_id}-medaka.log"), emit: log
     path("versions.txt"), emit: version
 
     script:
@@ -100,12 +101,12 @@ process POLISH_ASSEMBLY {
             -t ${task.cpus} \\
             -i ${reads} \\
             -d ${assembly} \\
-            -o .
+            -o .  >  ${sample_id}-medaka.log
 
     else 
 
         printf "${sample_id}\\tNo contig assembled, hence, contig polishing wasn't performed.\\n"
-        touch consensus.fasta
+        touch consensus.fasta ${sample_id}-medaka.log
     
    fi
     mv consensus.fasta ${sample_id}_polished.fasta
@@ -119,17 +120,14 @@ process SPADES {
 
     tag "Assembling ${sample_id}-s reads.."
 
-    conda "${projectDir}/envs/spades.yaml"
-    container 'quay.io/biocontainers/spades:4.1.0--haf24da9_0'
-
     input:
         tuple val(sample_id), path(reads), val(isPaired) 
         val(type) // illumina or pacbio or nanopore
 
     output:
     tuple val(sample_id), path('*.scaffolds.fa'), optional:true, emit: scaffolds
-    tuple val(sample_id), path('*.warnings.log'), optional:true, emit: warnings
-    tuple val(sample_id), path('*.spades.log'), emit: log
+    tuple val(sample_id), path('*warnings.log'), optional:true, emit: warnings
+    tuple val(sample_id), path('*spades.log'), emit: log
     path("versions.txt"), emit: version
 
     script:
@@ -166,14 +164,14 @@ process SPADES {
 
 
     # Renaming output files    
-    mv spades.log ${sample_id}.spades.log
+    mv spades.log ${sample_id}-spades.log
 
     if [ -f scaffolds.fasta ]; then
         mv scaffolds.fasta ${sample_id}.scaffolds.fa
     fi
 
     if [ -f warnings.log ]; then
-        mv warnings.log ${sample_id}.warnings.log
+        mv warnings.log ${sample_id}-warnings.log
     fi
 
  
@@ -194,18 +192,18 @@ process RENAME_HEADERS {
     input:
         tuple val(sample_id), path(assembly)
     output:
-        tuple val(sample_id), path("${sample_id}-assembly.fasta"), emit: contigs
+        tuple val(sample_id), path("${sample_id}-assembly${params.assay_suffix}.fasta"), emit: contigs
         path("versions.txt"), emit: version
         path("Failed-assemblies.tsv"), optional: true, emit: failed_assembly
     script:
         """
         bit-rename-fasta-headers -i ${assembly} \\
                                  -w c_${sample_id} \\
-                                 -o ${sample_id}-assembly.fasta
+                                 -o ${sample_id}-assembly${params.assay_suffix}.fasta
 
         # Checking the assembly produced anything (megahit can run, produce 
         # the output fasta, but it will be empty if no contigs were assembled)
-        if [ ! -s ${sample_id}-assembly.fasta ]; then
+        if [ ! -s ${sample_id}-assembly${params.assay_suffix}.fasta ]; then
             printf "${sample_id}\\tNo contigs assembled\\n" > Failed-assemblies.tsv
         fi
         bit-version |grep "Bioinformatics Tools"|sed -E 's/^\\s+//' > versions.txt

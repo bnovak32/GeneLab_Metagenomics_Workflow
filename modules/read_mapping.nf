@@ -15,7 +15,7 @@ process MAPPING {
     input:
         tuple val(sample_id), path(assembly), path(reads), val(isPaired)
     output:
-        tuple val(sample_id), path("${sample_id}.sam"), path("${sample_id}-mapping-info.txt"), emit: sam
+        tuple val(sample_id), path("${sample_id}.sam"), path("${sample_id}-mapping-info${params.assay_suffix}.txt"), emit: sam
         path("versions.txt"), emit: version
     script:
         """
@@ -26,12 +26,12 @@ process MAPPING {
                 bowtie2-build ${assembly} ${sample_id}-index 
                 bowtie2 --mm -q --threads ${task.cpus} \\
                         -x ${sample_id}-index  -1 ${reads[0]} -2 ${reads[1]} \\
-                        --no-unal > ${sample_id}.sam  2> ${sample_id}-mapping-info.txt 
+                        --no-unal > ${sample_id}.sam  2> ${sample_id}-mapping-info${params.assay_suffix}.txt 
             rm ${sample_id}-index*
             else
 
                 touch ${sample_id}.sam
-                echo "Mapping not performed for ${sample_id} because the assembly didn't produce anything." > ${sample_id}-mapping-info.txt
+                echo "Mapping not performed for ${sample_id} because the assembly didn't produce anything." > ${sample_id}-mapping-info${params.assay_suffix}.txt
                 printf "Mapping not performed for ${sample_id} because the assembly didn't produce anything.\\n"
 
             fi
@@ -44,13 +44,13 @@ process MAPPING {
                 bowtie2-build ${assembly} ${sample_id}-index 
                 bowtie2 --mm -q --threads ${task.cpus} \\
                         -x ${sample_id}-index -r ${reads[0]} \\
-                        --no-unal > ${sample_id}.sam  2> ${sample_id}-mapping-info.txt
+                        --no-unal > ${sample_id}.sam  2> ${sample_id}-mapping-info${params.assay_suffix}.txt
                         
                 rm ${sample_id}-index*
             else
 
                 touch ${sample_id}.sam
-                echo "Mapping not performed for ${sample_id} because the assembly didn't produce anything."  > ${sample_id}-mapping-info.txt
+                echo "Mapping not performed for ${sample_id} because the assembly didn't produce anything."  > ${sample_id}-mapping-info${params.assay_suffix}.txt
                 printf "Mapping not performed for ${sample_id} because the assembly didn't produce anything.\\n"
 
             fi
@@ -71,7 +71,7 @@ process LONG_MAPPING {
     input:
         tuple val(sample_id), path(assembly), path(reads), val(isPaired)
     output:
-        tuple val(sample_id), path("${sample_id}.sam"), path("${sample_id}-mapping-info.txt"), emit: sam
+        tuple val(sample_id), path("${sample_id}.sam"), path("${sample_id}-mapping-info${params.assay_suffix}.txt"), emit: sam
         path("versions.txt"), emit: version
     script:
         """
@@ -79,13 +79,13 @@ process LONG_MAPPING {
             if [ -s ${assembly} ]; then
 
                minimap2 -ax map-ont -t ${task.cpus} ${assembly} ${reads[0]} \\
-                     > ${sample_id}.sam  2> ${sample_id}-mapping-info.txt
+                     > ${sample_id}.sam  2> ${sample_id}-mapping-info${params.assay_suffix}.txt
                         
      
             else
 
                 touch ${sample_id}.sam
-                echo "Mapping not performed for ${sample_id} because the assembly didn't produce anything."  > ${sample_id}-mapping-info.txt
+                echo "Mapping not performed for ${sample_id} because the assembly didn't produce anything."  > ${sample_id}-mapping-info${params.assay_suffix}.txt
                 printf "Mapping not performed for ${sample_id} because the assembly didn't produce anything.\\n"
 
             fi
@@ -106,18 +106,18 @@ process SAM_TO_BAM {
     input:
         tuple val(sample_id), path(sam), path(mapping_info)
     output:
-        tuple val(sample_id), path("${sample_id}.bam"), emit: bam
+        tuple val(sample_id), path("${sample_id}${params.assay_suffix}.bam"), emit: bam
         path("versions.txt"), emit: version
     script:
         """
         # Only running if the assembly produced anything
         if [ -s ${sam} ]; then
 
-            samtools sort -@ ${task.cpus} ${sam} > ${sample_id}.bam 2> /dev/null
+            samtools sort -@ ${task.cpus} ${sam} > ${sample_id}${params.assay_suffix}.bam 2> /dev/null
 
         else
 
-            touch ${sample_id}.bam
+            touch ${sample_id}${params.assay_suffix}.bam
             printf "Sorting and converting not performed for ${sample_id} because read mapping didn't produce anything.\\n"
 
         fi

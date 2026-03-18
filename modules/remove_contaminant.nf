@@ -17,7 +17,7 @@ process SPADES {
         val(type) // illumina or pacbio or nanopore
 
     output:
-        path('blank-scaffolds.fasta'), optional:true, emit: assembly
+        path('blank-assembly.fasta'), optional:true, emit: assembly
         path('blank-warnings.log'), optional:true, emit: warnings
         path('blank-assembly.log'), emit: log
         path("versions.txt"), emit: version
@@ -63,7 +63,7 @@ process SPADES {
 
 
     # Renaming output files
-    mv scaffolds.fasta blank-scaffolds.fasta
+    mv scaffolds.fasta blank-assembly.fasta
     mv spades.log blank-assembly.log
 
     [ -f warnings.log ] && mv warnings.log blank-warnings.log
@@ -159,7 +159,7 @@ process REMOVE_CONTAMINANT {
         tuple val(sample_id), path(reads), val(isPaired)
 
     output:
-        tuple val(sample_id), path("*_decontam*.fastq.gz"), val(isPaired), emit: reads
+        tuple val(sample_id), path("*.fastq.gz"), val(isPaired), emit: reads
         tuple val(sample_id), path("${sample_id}-mapping-info.txt"), emit: info
         path("versions.txt"), emit: version
 
@@ -173,16 +173,16 @@ process REMOVE_CONTAMINANT {
         [ -z "\${INDEX}" ] && echo "Bowtie2 index files not found" 1>&2 && exit 1
 
         bowtie2 -p ${task.cpus} -x \${INDEX} --very-sensitive-local \\
-               ${input} ${sample_id}_decontam.fastq.gz \\
+               ${input} ${sample_id}_decontam${params.assay_suffix}.fastq.gz \\
                > ${sample_id}.sam 2> ${sample_id}-mapping-info.txt 
 
         # Rename Fastq Files
-        if [ -f ${sample_id}_decontam.fastq.1.gz ]; then
-            mv ${sample_id}_decontam.fastq.1.gz ${sample_id}_decontam_R1.fastq.gz
+        if [ -f ${sample_id}_decontam${params.assay_suffix}.fastq.1.gz ]; then
+            mv ${sample_id}_decontam${params.assay_suffix}.fastq.1.gz ${sample_id}_R1_decontam${params.assay_suffix}.fastq.gz
         fi
 
-        if [ -f ${sample_id}_decontam.fastq.2.gz ]; then
-            mv ${sample_id}_decontam.fastq.2.gz ${sample_id}_decontam_R2.fastq.gz
+        if [ -f ${sample_id}_decontam${params.assay_suffix}.fastq.2.gz ]; then
+            mv ${sample_id}_decontam${params.assay_suffix}.fastq.2.gz ${sample_id}_R2_decontam${params.assay_suffix}.fastq.gz
         fi
 
 
@@ -298,7 +298,7 @@ workflow nano_remove_contaminants {
        - Remove unmapped reads/contaminants using samtools fastq
        */
        MAPPING_TO_CONTAMINANT.out.sam.map{ sample_id, sam, mapping_info ->
-                         tuple([sample_id: sample_id, suffix: '_decontam', isPaired: 'false'],
+                         tuple([sample_id: sample_id, suffix: "_decontam${params.assay_suffix}", isPaired: 'false'],
                                 sam, mapping_info)
                   }.set{mod_sam_ch}
 
@@ -317,7 +317,7 @@ workflow nano_remove_contaminants {
 
     emit:
        clean_reads = NANO_REMOVE_CONTAMINANT.out.reads
-       logs = log_ch
-       versions = software_versions_ch
+       logs        = log_ch
+       versions    = software_versions_ch
 
 }

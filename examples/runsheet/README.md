@@ -10,20 +10,21 @@
 
 ## Jump To:
 
-- [Low Biomass Long Read Runsheet Info](#low-biomass-long-read-examples)
-- [Low Biomass Short Read Runsheet Info](#low-biomass-short-read-examples)
+- [Long Read Runsheet Info](#long-read-examples)
+- [Short Read Runsheet Info](#short-read-examples)
 
 <br> 
 
-## Low Biomass Long Read Examples
+## Long Read Examples
 
-1. Example runsheet for Approach 1: Start with pod5 or fast5 files as input | [input_dir_barcodes.csv](input_dir_barcodes.csv)
+1. Example runsheet for Approach 1: Start with pod5 files as input | [input_dir_barcodes.csv](input_dir_barcodes.csv)
 2. Example runsheet for Approach 2: Start with multiple FASTQ files per sample as input | [multiple.csv](multiple.csv)
 3. Example runsheet for Approach 3: Start with one FASTQ file per sample as input | [single.csv](single.csv)
 
 <br> 
 
-## Low Biomass Long Read Required Columns
+## Long Read Required Columns
+> *Note: NTC and concentration columns are only required for low biomass datasets
 
 ### Approach 1: Start with pod5 or fast5 files as input
 > *Note: There should be one row per sample. See the [input_dir_barcodes.csv](input_dir_barcodes.csv) as an example.*
@@ -69,14 +70,15 @@
 
 <br>
 
-## Low Biomass Short Read Examples
+## Short Read Examples
 
 1. Example runsheet for Approach 1: Start with paired-end FASTQ files as input | [PE_file.csv](PE_file.csv)
 2. Example runsheet for Approach 2: Start with single-end FASTQ files as input | [SE_file.csv](SE_file.csv)
 
 <br> 
 
-## Low Biomass Short Read Required Columns
+## Short Read Required Columns
+> *Note: NTC and concentration columns are only required for low biomass datasets
 
 ### Approach 1: Start with paired-end FASTQ files as input
 > *Note: There should be one row per sample. See the [PE_file.csv](PE_file.csv) as an example.*

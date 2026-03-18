@@ -14,11 +14,9 @@ params.help = false
 **************************************************/
 if (params.help) {
   println()
-  println("Nextflow Metagenomics Nanopore Consensus Pipeline: $workflow.manifest.version")
+  println("Nextflow Metagenomics Illumina Consensus Pipeline: $workflow.manifest.version")
   println("USAGE:")
-  println("Example 1: Submit and run jobs with slurm in singularity containers with FAST5 files in an input directory to be demultiplexed.")
-  println("   > nextflow run low_biomass_nanopore.nf -resume -profile slurm,singularity --input_file input_dir_barcodes.csv")
-  println("Example 2: Submit and run jobs with slurm in singularity containers.")
+  println("Example 1: Submit and run jobs with slurm in singularity containers.")
   println("   > nextflow run main.nf -resume -profile slurm,singularity --input_file PE_file.csv")
   println()
   println("Example 2: : Submit and run jobs with slurm in conda environments.")
@@ -67,11 +65,6 @@ if (params.help) {
   println("	   passed as the -Xmx parameter, 20g means 20 gigs of RAM, 20m means 20 megabytes.")
   println("	   5g should be sufficient for most assemblies, but if that rule is failing, this may need to be increased.Default: '5g' .")
   println("	 --block_size [int] Block size variable for CAT/diamond, lower value means less RAM usage; see https://github.com/bbuchfink/diamond/wiki/3.-Command-line-options#memory--performance-options. Default: 4.")
-  println()
-  println("File Suffixes:")
-  println("      --filtered_suffix [STRING]  Specifies the suffix for naming quality filtered reads. Only applicable when input reads are single-end. Default: _filtered.fastq.gz.")  
-  println("      --filtered_R1_suffix [STRING]  Specifies the suffix for naming quality filtered forward reads. Default: _R1_filtered.fastq.gz.")
-  println("      --filtered_R2_suffix [STRING]  Specifies the suffix for naming quality filtered reverse reads. Default: _R2_filtered.fastq.gz.")
   println()
   println("Output directories:")
   println("      --raw_reads_dir [PATH] Specifies where the fastqc report of the raw reads will be published. Default: ../Raw_Sequence_Data/.")
@@ -151,19 +144,12 @@ log.info """${c_blue}
          GLDS Raw File Pattern: ${params.RawFilePattern}         
          Workflow : ${params.workflow}
          Nextflow Directory publishing mode: ${params.publishDir_mode}
-         Swift 1S Libraries: ${params.swift_1S}
          Nextflow Error strategy: ${params.errorStrategy}
-         BBDUK Adapters: ${params.adapters}
          Use GTDBTK Scratch Location: ${params.use_gtdbtk_scratch_location}
          MultiQC configuration file: ${params.multiqc_config}
          Megahit Maximum Memory: ${params.max_mem}
          Pile-up Memory: ${params.pileup_mem}
          CAT block size: ${params.block_size}
-
-         File Suffixes:
-         Filtered Reads Suffix (if single-end): ${params.filtered_suffix}
-         Filtered Forward Reads Suffix: ${params.filtered_R1_suffix}
-         Filtered Reverse Reads Suffix: ${params.filtered_R2_suffix}
 
          MAG Parameters:
          Minimum completion: ${params.min_est_comp}
@@ -172,24 +158,15 @@ log.info """${c_blue}
          Use Reduced Tree: ${params.reduced_tree}
  
          Output Directories:
-         Raw reads: ${params.raw_reads_dir}
-         FastQC: ${params.fastqc_out_dir}
+         Raw reads: ${params.merged_dir}
          Filtered Reads: ${params.filtered_reads_dir}
          Assembly-based Analysis: ${params.assembly_based_dir}
-         Assemblies: ${params.assemblies_dir}
-         Predicted Genes: ${params.genes_dir}
-         Contigs Taxonomy and Annotation: ${params.annotations_and_tax_dir}
-         Read mapping: ${params.mapping_dir}
-         Assemblies Summary: ${params.combined_output_dir}
-         Bins: ${params.bins_dir}
-         Meta Assembled Genomes (MAGs): ${params.MAGs_dir}
          Read-based Analysis: ${params.read_based_dir}
 
          Genelab Assay Suffix: ${params.assay_suffix}
          Additional Filename Prefix: ${params.additional_filename_prefix}
 
          Conda Environments:
-         qc: ${params.conda_qc}
          humann3: ${params.conda_humann3}
          CAT: ${params.conda_cat}
          prodigal: ${params.conda_prodigal}
@@ -199,7 +176,6 @@ log.info """${c_blue}
          megahit: ${params.conda_megahit}
          bit: ${params.conda_bit}
          kofamscan: ${params.conda_kofamscan}
-         mapping: ${params.conda_mapping}
          checkm: ${params.conda_checkm}         
 
          Databases:
@@ -217,32 +193,12 @@ log.info """${c_blue}
          ${c_reset}"""
 }
 
-// Create GLDS runsheet
-include { GET_RUNSHEET } from "./modules/create_runsheet.nf"
+// Illumina workflow
+include { illumina } from "./workflows/illumina.nf"
 
-// Demxultiplexing
-include {FAST52POD5; DORADO_BASECALLER; DORADO_DEMUX} from "./modules/demultiplexing.nf"
-// Split fastq concatenation
-include {CAT_FASTQ_FILES; CAT_FASTQ_DIR} from "./modules/demultiplexing.nf"
+// Nanopore workflow
+include { nanopore } from "./workflows/nanopore.nf"
 
-// Read quality check and filtering
-include { nano_quality_check as raw_qc; FILTLONG ; PORECHOP} from "./modules/quality_assessment.nf"
-include { nano_quality_check as filtered_qc } from "./modules/quality_assessment.nf"
-include { nano_quality_check as trimmed_qc } from "./modules/quality_assessment.nf"
-include { nano_quality_check as noblank_qc } from "./modules/quality_assessment.nf"
-include { nano_quality_check as nohost_qc } from "./modules/quality_assessment.nf"
-include { nano_quality_check as nohum_qc } from "./modules/quality_assessment.nf"
-
-// Remove contaminant
-include { nano_remove_contaminants as remove_contaminants } from "./modules/remove_contaminant.nf"
-
-// Remove host
-include { remove_host } from "./modules/remove_host.nf"
-include { remove_host as remove_human } from "./modules/remove_host.nf"
-
-// Custom genome mapping
-include { LONG_MAP2GENOME  as FILTERED_MAP2GENOME} from "./modules/genome_mapping.nf"
-include { LONG_MAP2GENOME  as DECONTAMED_MAP2GENOME} from "./modules/genome_mapping.nf"
 
 // Read-based workflow
 include { read_based } from "./modules/read_based_processing.nf"
@@ -276,6 +232,7 @@ workflow run_read_based_analysis {
         versions =  software_versions_ch
 
 }
+
 
 // Workflow to perform assembly-based analysis
 workflow run_assembly_based_analysis {
@@ -313,8 +270,10 @@ def deleteWS(string){
 
 }
 
-// Main workflow
+
+
 workflow {
+
 
     // Sanity check : Test input requirement
     if (!params.accession &&  !params.input_file){
@@ -327,6 +286,7 @@ workflow {
         
      // Software Version Capturing - runsheet
      software_versions_ch = Channel.empty()
+
      // Parse file input
        if(params.accession){
 
@@ -343,198 +303,57 @@ workflow {
            .set{file_ch}
       }
 
-     //---------------------------- Parse input file -------------------------------------------//
-     if(params.input_type == 'single'){
 
-        // One fastq file per sample
-        file_ch.map{
-                row -> tuple("${row.sample_id}", [file("${row.forward}", checkIfExists: true)], deleteWS(row.paired))
-                }.set{reads_ch}
-     
-     }else if(params.input_type == 'multiple'){
 
-         // Multiple fastq files per sample i.e Fastq files have been split but not concatenated per sample
+    if( params.technology == "illumina" ) {
 
-        // Read multiple fastq files per sample to keep unique sample ids and a list of fastq files per sample
-        file_ch.map{ row ->
-            def meta = [id: row.sample_id]
-            [meta, [file(row.forward, checkIfExists: true)]]
-        }.groupTuple() // group by map ids i.e sample_id
-         .map { meta, reads -> [ meta.id, reads.flatten() ] } // [sample_id, [reads]]
-         .set{read_ch}
+         illumina(params.sample_type, file_ch)
 
-         // Get distinct sample metedata
-         file_ch.map{
-                row -> tuple( "${row.sample_id}", deleteWS(row.group),
-                                deleteWS(row.NTC), deleteWS(row.concentration),
-                                deleteWS(row.paired) )
-                }
-                .distinct()
-                .set{meta_ch}
+         clean_reads      = illumina.out.clean_reads
+         reads_per_sample = illumina.out.reads_per_sample
+         metadata         = illumina.out.metadata
+         illumina.out.software_versions | mix(software_versions_ch) | set{software_versions_ch}
 
-         // Concatenate multiple fastq to one fastq per sample
-         CAT_FASTQ_FILES(read_ch)
 
-         CAT_FASTQ_FILES.out.reads
-            .join(meta_ch)
-            .set{concated_files_ch}
+    }else if(  params.technology == "nanopore" ) {
 
-        header = Channel.of(["sample_id", "forward", "group", "NTC", "concentration", "paired"]) 
 
-        header.concat(concated_files_ch)
-              .map{ sample_id, forward, group, NTC, concentration, paired ->
-                   "${sample_id},${forward},${group},${deleteWS(NTC)},${concentration},${paired}"
-              }
-              .collectFile(name: "${launchDir}/samples_file.csv", newLine: true, sort:false)
-              .splitCsv(header:true)
-              .set{InFile_ch}
-
-        InFile_ch.map{ row -> 
-                    tuple( row.sample_id, [file(row.forward, checkIfExists: true)], deleteWS(row.paired))
-                }.set{reads_ch}
-
-        CAT_FASTQ_FILES.out.version | mix(software_versions_ch) | set{software_versions_ch}
-
-     }else if(params.input_type == 'directory'){
-
-         // Directory containing FAST5 or POD5 files
-         pod5_dir   = Channel.fromPath(params.input_dir, checkIfExists: true)
+         nanopore(params.input_type, params.sample_type, file_ch)
  
-        // Convert FAST5 to POD5
-        if(params.isFast5){
+         clean_reads      = nanopore.out.clean_reads
+         reads_per_sample = nanopore.out.reads_per_sample
+         metadata         = nanopore.out.metadata
+         nanopore.out.software_versions | mix(software_versions_ch) | set{software_versions_ch}
 
-             input_dir   = Channel.fromPath(params.input_dir, checkIfExists: true)
-             FAST52POD5(input_dir)
-
-             pod5_dir = FAST52POD5.out.pod5_dir
-         }
-         // Basecall, demultiplex and concatenate demultiplexed fastq files
-         DORADO_BASECALLER(pod5_dir, params.kit_name)
-         DORADO_DEMUX(DORADO_BASECALLER.out.bam, params.kit_name)
-
-         // Create 2-colum file to remame barcode names to sample names
-         // sample_id to barcode_id column in --input_file
-        
-        file_ch.map{  row ->
-                   "${row.sample_id},${row.barcode_id}"
-              }
-              .collectFile(name: "sample2barcode_file.csv", newLine: true, sort:false)
-              .set{sample2barcode}
-
-         CAT_FASTQ_DIR(sample2barcode, DORADO_DEMUX.out.demux_dir)
-         
-        // Read-in runsheet generated fromm conactenating fastq files above
-        CAT_FASTQ_DIR.out.runsheet.splitCsv(header:true)
-           .map{
-                row -> tuple( "${row.sample_id}", [file("${row.forward}", checkIfExists: true)])
-                }.set{runsheet_ch}
-
-         // Read input file into tuples
-         file_ch.map{
-                row -> tuple( "${row.sample_id}", deleteWS(row.group),
-                                deleteWS(row.NTC), deleteWS(row.concentration),
-                                deleteWS(row.paired) )
-                }.set{InFile_ch}
-
-        // Merge the genearted fastq files with their corresponding metadata
-        runsheet_ch.join(InFile_ch)
-                    .map{sample_id, forward, group, NTC, concentration, paired -> 
-                    tuple(sample_id, forward, paired)
-                }.set{reads_ch}
-
-        DORADO_BASECALLER.out.version | mix(software_versions_ch) | set{software_versions_ch}
-        DORADO_DEMUX.out.version | mix(software_versions_ch) | set{software_versions_ch}
-        CAT_FASTQ_DIR.out.version | mix(software_versions_ch) | set{software_versions_ch}
-
-     }else{
+    }else{
 
         error("""${c_back_bright_red}INPUT ERROR!
-              You must specify a recognized input type by passing one of
-              'single', 'multiple' or 'directory' to --input_type parameter.
-              'single' -  One fastq file per sample.
-              'multiple' - Multiple fastq files per sample.
-              'directory' - Directory containing FAST5 or POD5 files.
+              You must specify a recognized technology by passing one of
+              'illumina' or  'nanopore' to  the --technology parameter.
+              'illumina' - Illumina short reads.
+              'nanopore' - Oxford nanopore long reads.
               ${c_reset}""")
 
-     }
-    
-    // Quality check  input reads
-    raw_qc(Channel.of("raw"), params.multiqc_config,reads_ch,Channel.empty())
+    }
 
-    // Filter input reads based on length and quality then quality check the filtered reads
-    FILTLONG(reads_ch)
-    filtered_qc(Channel.of("filtered"), params.multiqc_config, FILTLONG.out.reads, FILTLONG.out.log)
-
-    // Trim off primers and adapters using porechop
-    PORECHOP(FILTLONG.out.reads)
-    trimmed_ch = PORECHOP.out.reads
-    trimmed_qc(Channel.of("trimmed"), params.multiqc_config, trimmed_ch, PORECHOP.out.log)
-    // Map trimmed reads to a custom genome with bbmap
-    //FILTERED_MAP2GENOME(params.custome_genome, Channel.of("trimmed"), trimmed_ch)
-    
-    // Quality check software capturing
-    raw_qc.out.versions | mix(software_versions_ch) | set{software_versions_ch}
-    //FILTERED_MAP2GENOME.out.version | mix(software_versions_ch) | set{software_versions_ch}
-    filtered_qc.out.versions | mix(software_versions_ch) | set{software_versions_ch}
-    trimmed_qc.out.versions | mix(software_versions_ch) | set{software_versions_ch}
-
-    // Remove human reads and quality check (remove_contaminants.out.clean_reads, remove_host.out.clean_reads)
-    remove_human("HRrm", "human", params.human_db_url, null, params.human_db_dir, trimmed_ch)
-    nohum_qc(Channel.of("HRrm"), params.multiqc_config, remove_human.out.clean_reads,remove_human.out.logs)
-    remove_human.out.versions | mix(software_versions_ch) | set{software_versions_ch}
-
-    // Remove contaminants and quality ckeck
-    remove_contaminants(file_ch, remove_human.out.clean_reads)
-    noblank_qc(Channel.of("decontam"), params.multiqc_config,
-               remove_contaminants.out.clean_reads, remove_contaminants.out.logs)
-    remove_contaminants.out.versions | mix(software_versions_ch) | set{software_versions_ch}
-    noblank_qc.out.versions | mix(software_versions_ch) | set{software_versions_ch}
-
-    // Remove host reads and quality check
-    remove_host("HostRM", params.host_name, params.host_url, params.host_fasta,
-                params.host_db_dir, remove_contaminants.out.clean_reads)
-    nohost_qc(Channel.of("HostRM"), params.multiqc_config, remove_host.out.clean_reads,remove_host.out.logs)
-    remove_host.out.versions | mix(software_versions_ch) | set{software_versions_ch}
- 
-    //DECONTAMED_MAP2GENOME(params.custome_genome, Channel.of("decontamed"), remove_contaminants.out.clean_reads)
-    //DECONTAMED_MAP2GENOME.out.version | mix(software_versions_ch) | set{software_versions_ch}
-
-    // Prepare metadata
-    meta_header = Channel.of(["sample_id", "group", "NTC", "concentration"])
-    file_ch.map{
-                row -> tuple( "${row.sample_id}", row.group, deleteWS(row.NTC), row.concentration )
-                }
-                .distinct()
-                .set{body}
-
-    meta_header.concat(body)
-              .map{ sample_id, group, NTC, concentration ->
-                   "${sample_id},${group},${NTC},${concentration}"
-              }
-              .collectFile(name: "metadata_file.txt", newLine: true, sort:false)
-              .set{metadata}
-
-     // Get the number of reads per sample after removing contaminats and host reads for 
-     // relative abundance to count calcultaion for metaphalan results
-     reads_per_sample = nohost_qc.out.reads_per_sample
 
     // Run the analysis based on selection i.e, read-based, assembly-based or both
     // it will run both by default
     if(params.workflow == 'read-based'){
            
-          run_read_based_analysis(reads_per_sample, metadata, remove_host.out.clean_reads)
+          run_read_based_analysis(reads_per_sample, metadata, clean_reads)
           
           run_read_based_analysis.out.versions | mix(software_versions_ch) | set{software_versions_ch}
           
     }else if(params.workflow == 'assembly-based') {
 
-          run_assembly_based_analysis(metadata, file_ch, remove_host.out.clean_reads)
+          run_assembly_based_analysis(metadata, file_ch, clean_reads)
           run_assembly_based_analysis.out.versions | mix(software_versions_ch) | set{software_versions_ch}
 
     }else{
 
-          run_read_based_analysis(reads_per_sample, metadata, remove_host.out.clean_reads)
-          run_assembly_based_analysis(metadata, file_ch, remove_host.out.clean_reads)
+          run_read_based_analysis(reads_per_sample, metadata, clean_reads)
+          run_assembly_based_analysis(metadata, file_ch, clean_reads)
 
           run_read_based_analysis.out.versions | mix(software_versions_ch) | set{software_versions_ch}
           run_assembly_based_analysis.out.versions | mix(software_versions_ch) | set{software_versions_ch}
@@ -544,7 +363,7 @@ workflow {
      // Software Version Capturing - combining all captured sofware versions
      nf_version = "Nextflow Version ".concat("${nextflow.version}")
      nextflow_version_ch = Channel.value(nf_version)
-     workflow_version = "MGNanopore ".concat("${workflow.manifest.version}")
+     workflow_version = "Metagenomics ".concat("${workflow.manifest.version}")
      workflow_version_ch =  Channel.value(workflow_version)
 
      //  Write software versions to file
@@ -557,8 +376,6 @@ workflow {
 
 }
 
-
-
 workflow.onComplete {
 
     println("${c_bright_green}Pipeline completed at: $workflow.complete")
@@ -567,7 +384,8 @@ workflow.onComplete {
 
     if ( workflow.success ) {
 
-    println("FastQC outputs location: ${params.fastqc_out_dir}")
+    println("Merged/Raw outputs location: ${params.merged_dir}")
+    println("Filtered outputs location: ${params.filtered_dir}")
     println("Read-based Analysis: ${params.read_based_dir}")
     println("Assembly-based Analysis: ${params.assembly_based_dir}")
     println("Software versions location: ${params.metadata_dir}")
@@ -576,3 +394,4 @@ workflow.onComplete {
     }
 
 }
+

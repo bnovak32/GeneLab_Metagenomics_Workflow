@@ -7,10 +7,9 @@ process METAPHLAN2COUNT {
 
     tag "Processing metaphlan count table..."
     label "R_downstream"
-    label "read_based_outputs"
 
     input:
-        path(metaphlan_table) // Metaphlan-taxonomy_GLmetagenomics.tsv
+        path(metaphlan_table) // metaphlan-taxonomy_GLmetagenomics.tsv
         path(reads_per_sample) // reads_per_sample.txt
 
     output:
@@ -38,8 +37,6 @@ process KAIJU2SPECIES_TABLE  {
 
     tag "Processing kaiju species table..."
     label "R_downstream"
-    label "read_based_outputs"
-
 
     input:
         path(merged_table) // merged_kaiju_table.tsv
@@ -103,7 +100,6 @@ process ASSEMBLY_TABLE {
   
     tag "processing your ${level} ${type} table..."
     label "R_downstream"
-    label "combine_outputs"
 
 
     input:
@@ -112,7 +108,7 @@ process ASSEMBLY_TABLE {
         path(summary_table) // 'assembly-summaries_GLmetagenomics.tsv'
 
     output:
-       path("${params.additional_filename_prefix}${level}-level*.tsv"), emit: table
+       path("*.tsv"), emit: table
        path("versions.txt"), emit: version
 
     script:
@@ -133,6 +129,37 @@ process ASSEMBLY_TABLE {
 }
 
 
+process HUMANN_TABLE {
+
+    tag "processing your ${type} table..."
+    label "R_downstream"
+
+
+    input:
+        val(type) // 'pathway', 'uniref' or  'KO'
+        path(feature_table) // 'Combined-contig-level-taxonomy-coverages-CPM_GLmetagenomics.tsv'
+
+    output:
+       path("*.tsv"), emit: table
+       path("versions.txt"), emit: version
+
+    script:
+        """
+          process_humann_table.R \\
+                  --table '${feature_table}' \\
+                  --type '${type}' \\
+                  --output-prefix '${params.additional_filename_prefix}' \\
+                  --assay-suffix '${params.assay_suffix}'
+
+          Rscript -e "VERSIONS=sprintf('tidyverse %s\\nglue %s\\n',  \\
+                                    packageVersion('tidyverse'), \\
+                                    packageVersion('glue')); \\
+                    write(x=VERSIONS, file='versions.txt', append=TRUE)"
+        """
+}
+
+
+
 process DECONTAM  { 
 
     tag "Decontaminating ${feature_table} with decontam..."
@@ -150,8 +177,12 @@ process DECONTAM  {
         path(feature_table) // kaiju_species_table_GLlbnMetag.csv
 
     output:
-        path("*_decontam_*_results*.tsv"), emit: result // decontam's primary results
+        path("*_decontam_results*.tsv"), emit: result // decontam's primary results
         path("*_decontam_*_table*.tsv"), optional: true, emit: table // decontaminated feature table
+        /* A failure text file generated if the values in both prevalence and frequency columns 
+           are not different between samples within each column. 
+           i.e no difference between negative control(s) and other samples */
+        path("*_decontam_failure.txt"), optional: true, emit: failure 
         path("versions.txt"), emit: version
 
     script:
@@ -187,7 +218,6 @@ process BARPLOT {
 
     tag "Making your bar plot..."
     label "R_downstream"
-    label "read_based_outputs"
 
     input:
       val(meta)
@@ -201,6 +231,8 @@ process BARPLOT {
 
     script:
         """
+        # To fix Fontconfig error: No writable cache directories
+        #mkdir -p cache/fontconfig/ && export FONTCONFIG_CACHE=cache/fontconfig/
         make_barplot.R \\
                   --metadata-table '${metadata}' \\
                   --feature-table '${feature_table}' \\
@@ -225,7 +257,6 @@ process HEATMAP {
 
     tag "Making your heatmap..."
     label "R_downstream"
-    label "combine_outputs"
 
 
     input:

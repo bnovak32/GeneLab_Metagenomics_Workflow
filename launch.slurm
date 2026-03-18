@@ -25,21 +25,42 @@ echo $HOSTNAME
 
 WORKFLOW_DIR='/path/to/workflow_code/'
 
-# -------------- Nanopore
+# ---------------------------------------------------------------------------- Nanopore ---------------------------------------------------------------------------------------- #
 
-# input dir
-bash ./launch.sh processing ${WORKFLOW_DIR}/low_biomass_nanopore.nf ${WORKFLOW_DIR}/nextflow.config '--input_type "directory"  --input_file input_dir_barcodes.csv --errorStrategy "ignore" --assay_suffix "_GLlblMetag" --input_dir "/path/to/pod5/directory/" --kit_name "SQK-RPB114-24" --isFast5 false '
+# ---- Low biomass
 
-# single
-bash ./launch.sh processing ${WORKFLOW_DIR}/low_biomass_nanopore.nf ${WORKFLOW_DIR}/nextflow.config '--input_type "single"  --input_file single.csv  --errorStrategy "ignore" --assay_suffix "_GLlblMetag"'
+# Input dir
+bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "low_biomass" --input_type "directory"  --input_file input_dir_barcodes.csv --errorStrategy "ignore" --technology "nanopore" --assay_suffix "_GLlblMetag" --input_dir "/path/to/pod5/directory/" --kit_name "SQK-RPB114-24"'
 
-# multiple
-bash ./launch.sh processing ${WORKFLOW_DIR}/low_biomass_nanopore.nf ${WORKFLOW_DIR}/nextflow.config '--input_type "multiple" --input_file multiple.csv  --errorStrategy "ignore" --assay_suffix "_GLlblMetag" '
+# Single
+bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "low_biomass" --input_type "single"  --input_file single.csv  --errorStrategy "ignore" --technology "nanopore" --assay_suffix "_GLlblMetag"'
+
+# Multiple
+bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "low_biomass" --input_type "multiple" --input_file multiple.csv  --errorStrategy "ignore" --technology "nanopore" --assay_suffix "_GLlblMetag"'
 
 
-# -------------- Illumina
-bash ./launch.sh processing ${WORKFLOW_DIR}/low_biomass_illumina.nf ${WORKFLOW_DIR}/nextflow.config '--input_file sub_PE_file.csv --errorStrategy "ignore"  --technology "illumina" --assay_suffix "_GLlbsMetag"'
+# ----- Standard
 
+# Input dir
+bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "standard" --input_type "directory"  --input_file input_dir_barcodes.csv --errorStrategy "ignore" --technology "nanopore" --assay_suffix "_GLlMetag" --input_dir "/path/to/pod5/directory/" --kit_name "SQK-RPB114-24"'
+
+# Single
+bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "standard" --input_type "single"  --input_file single.csv  --errorStrategy "ignore" --technology "nanopore" --assay_suffix "_GLlMetag"'
+
+# Multiple
+bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "standard" --input_type "multiple" --input_file multiple.csv  --errorStrategy "ignore" --technology "nanopore" --assay_suffix "_GLlMetag"'
+
+
+# ------------------------------------------------------------------------------- Illumina ----------------------------------------------------------------------------------------- #
+
+# ---- Low biomass
+
+bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "low_biomass" --input_file sub_PE_file.csv --errorStrategy "ignore"  --technology "illumina" --assay_suffix "_GLlbsMetag"'
+
+
+# ---- Standard
+
+bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "standard" --input_file sub_PE_file.csv --errorStrategy "ignore"  --technology "illumina" --assay_suffix "_GLsMetag"'
 
 
 

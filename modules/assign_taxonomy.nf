@@ -46,13 +46,12 @@ process KRAKEN2TABLE {
 
 
     tag "Creating a species table from multiple kraken reports.."
-    label "read_based_outputs"
 
     input:
         path(reports)
 
     output:
-        path("${params.additional_filename_prefix}merged_kraken_table${params.assay_suffix}.tsv"), emit: table
+        path("${params.additional_filename_prefix}kraken2_species_table${params.assay_suffix}.tsv"), emit: table
         path ("versions.txt"), emit: version
 
     script:
@@ -62,6 +61,13 @@ process KRAKEN2TABLE {
                --output-prefix '${params.additional_filename_prefix}' \\
                --assay-suffix '${params.assay_suffix}'
 
+     if [ -f ${params.additional_filename_prefix}merged_kraken_table${params.assay_suffix}.tsv ]; then
+
+          mv ${params.additional_filename_prefix}merged_kraken_table${params.assay_suffix}.tsv \\
+             ${params.additional_filename_prefix}kraken2_species_table${params.assay_suffix}.tsv
+  
+     fi
+    
      Rscript -e "VERSIONS=sprintf('pavian %s\\n', packageVersion('pavian')); \\
                     write(x=VERSIONS, file='versions.txt', append=TRUE)"
     """
@@ -108,7 +114,6 @@ process KAIJU2TABLE {
  
     tag "Merging kaiju reports in a ${taxon_level} table.."
     label "kaiju"
-    label "read_based_outputs"
 
     input:
         path(DB)
@@ -116,7 +121,7 @@ process KAIJU2TABLE {
         path(reports) // _kaiju.out
 
     output:
-        path("${params.additional_filename_prefix}merged_kaiju_table${params.assay_suffix}.tsv"), emit: table
+        path("${params.additional_filename_prefix}merged_kaiju_table.tsv"), emit: table
         path("versions.txt"), emit: version
 
     script:
@@ -130,12 +135,12 @@ process KAIJU2TABLE {
             -n \${NAMES} \\
             -p  \\
             -r ${taxon_level} \\
-            -o ${params.additional_filename_prefix}merged_kaiju_table${params.assay_suffix}.tsv \\
+            -o ${params.additional_filename_prefix}merged_kaiju_table.tsv \\
              \${kaiju_out_FILES[*]}
 
     # Convert the file names to sample names
-    sed -i -E 's/.+\\/(.+)_kaiju\\.out/\\1/g' ${params.additional_filename_prefix}merged_kaiju_table${params.assay_suffix}.tsv && \\
-    sed -i -E 's/file/sample/' ${params.additional_filename_prefix}merged_kaiju_table${params.assay_suffix}.tsv
+    sed -i -E 's/.+\\/(.+)_kaiju\\.out/\\1/g' ${params.additional_filename_prefix}merged_kaiju_table.tsv && \\
+    sed -i -E 's/file/sample/' ${params.additional_filename_prefix}merged_kaiju_table.tsv
     VERSION=`echo \$( kaiju -h 2>&1 | sed -n 1p | sed 's/^.*Kaiju //' )`
     echo "kaiju \${VERSION}"  > versions.txt
     """

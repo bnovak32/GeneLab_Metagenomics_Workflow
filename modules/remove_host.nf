@@ -25,7 +25,7 @@ process BUILD_HOSTDB {
         tuple val(host_name), val(host_url) , path(host_fasta)
 
     output:
-        path("kraken2-${host_name}-db/"), emit: krakendb_dir
+        path("kraken2_${host_name}_db/"), emit: krakendb_dir
         path("versions.txt"), emit: version
 
     script:
@@ -36,7 +36,7 @@ process BUILD_HOSTDB {
              echo "Downloading and unpacking database from ${host_url}"
              wget -O ${host_name}.tar.gz --timeout=3600 --tries=0 --continue  ${host_url}
 
-             mkdir kraken2-${host_name}-db/ && tar -zxvf ${host_name}.tar.gz -C kraken2-${host_name}-db/ && \\
+             mkdir kraken2_${host_name}_db/ && tar -zxvf ${host_name}.tar.gz -C kraken2_${host_name}_db/ && \\
 
             # Cleaning up
             [ -f  ${host_name}.tar.gz ] && rm -rf  ${host_name}.tar.gz
@@ -54,25 +54,25 @@ process BUILD_HOSTDB {
             fi
 
             # Install taxonomy
-            kraken2-build --download-taxonomy --db kraken2-${host_name}-db/
+            kraken2-build --download-taxonomy --db kraken2_${host_name}_db/
             # Add sequence to your database's genomic library
             kraken2-build --add-to-library ${host_fasta} \\
-                          --db kraken2-${host_name}-db/ --no-masking
+                          --db kraken2_${host_name}_db/ --no-masking
             # Once your library is finalized, you need to build the database
-            kraken2-build --build --db kraken2-${host_name}-db/
+            kraken2-build --build --db kraken2_${host_name}_db/
 
         # Build reference from named host e.g human
         elif [ "${host_name}" != 'null' ];then
 
             echo "Build kraken reference from ${host_name}"
             kraken2-build --download-library ${host_name} \\
-                          --db kraken2-${host_name}-db/ \\
+                          --db kraken2_${host_name}_db/ \\
                           --threads ${task.cpus} --no-masking
             kraken2-build --download-taxonomy \\
-                          --db kraken2-${host_name}-db/
-            kraken2-build --build --db kraken2-${host_name}-db/ \\
+                          --db kraken2_${host_name}_db/
+            kraken2-build --build --db kraken2_${host_name}_db/ \\
                           --threads ${task.cpus}
-            kraken2-build --clean --db kraken2-${host_name}-db/
+            kraken2-build --clean --db kraken2_${host_name}_db/
 
 
         else
@@ -101,8 +101,8 @@ process REMOVE_HOST {
         tuple val(sample_id), path(reads), val(isPaired)
 
     output:
-        tuple val(sample_id), path("*_${host_suffix}.fastq.gz"), val(isPaired), emit: reads
-        tuple val(sample_id), path("*-kraken2-report_${host_suffix}.tsv"), emit: report
+        tuple val(sample_id), path("*_${host_suffix}${params.assay_suffix}.fastq.gz"), val(isPaired), emit: reads
+        tuple val(sample_id), path("*-kraken2-report.tsv"), emit: report
         path("versions.txt"), emit: version
 
     script:
@@ -112,29 +112,29 @@ process REMOVE_HOST {
         kraken2 --db ${HOST_DB} --gzip-compressed \\
             --threads ${task.cpus} \\
             --use-names --paired \\
-            --output ${sample_id}-kraken2-output_${host_suffix}.txt \\
-            --report ${sample_id}-kraken2-report_${host_suffix}.tsv \\
+            --output ${sample_id}-kraken2-output.txt \\
+            --report ${sample_id}-kraken2-report.tsv \\
             --unclassified-out ${sample_id}_R#.fastq ${reads[0]} ${reads[1]}
 
         # Rename and gzip output files
-        mv  ${sample_id}_R_1.fastq ${sample_id}_R1_${host_suffix}.fastq && \\
-        gzip ${sample_id}_R1_${host_suffix}.fastq
+        mv  ${sample_id}_R_1.fastq ${sample_id}_R1_${host_suffix}${params.assay_suffix}.fastq && \\
+        gzip ${sample_id}_R1_${host_suffix}${params.assay_suffix}.fastq
 
-        mv  ${sample_id}_R_2.fastq ${sample_id}_R2_${host_suffix}.fastq && \\
-        gzip ${sample_id}_R2_${host_suffix}.fastq
+        mv  ${sample_id}_R_2.fastq ${sample_id}_R2_${host_suffix}${params.assay_suffix}.fastq && \\
+        gzip ${sample_id}_R2_${host_suffix}${params.assay_suffix}.fastq
 
     else
 
         # Single end
         kraken2 --db ${HOST_DB} --gzip-compressed \\
             --threads ${task.cpus} --use-names \\
-            --output ${sample_id}-kraken2-output_${host_suffix}.txt \\
-            --report ${sample_id}-kraken2-report_${host_suffix}.tsv \\
+            --output ${sample_id}-kraken2-output.txt \\
+            --report ${sample_id}-kraken2-report.tsv \\
             --unclassified-out ${sample_id}.fastq ${reads[0]}
 
 	# Rename and gzip output file	 
-        mv ${sample_id}.fastq ${sample_id}_${host_suffix}.fastq && \\
-        gzip ${sample_id}_${host_suffix}.fastq
+        mv ${sample_id}.fastq ${sample_id}_${host_suffix}${params.assay_suffix}.fastq && \\
+        gzip ${sample_id}_${host_suffix}${params.assay_suffix}.fastq
 
     fi
 
