@@ -176,17 +176,16 @@ publication_format <- theme_bw() +
         legend.text = element_text(size = 14,face ='bold', color = 'black'),
         strip.text =  element_text(size = 14,face ='bold', color = 'black'))
 
-
-custom_palette <- c("#A6CEE3","#1F78B4","#B2DF8A","#33A02C","#FB9A99","#E31A1C","#FDBF6F", "#FF7F00",
-                    "#CAB2D6","#6A3D9A","#FF00FFFF","#B15928","#000000","#FFC0CBFF","#8B864EFF","#F0027F",
-                    "#666666","#1B9E77", "#E6AB02","#A6761D","#FFFF00FF","#FFFF99","#00FFFFFF",
-                    "#B2182B","#FDDBC7","#D1E5F0","#CC0033","#FF00CC","#330033",
-                    "#999933","#FF9933","#FFFAFAFF",colors()) 
-# remove white colors
-colors2use <- custom_palette[-c(21:23,
-                                    grep(pattern = "white|snow|azure|gray|#FFFAFAFF|aliceblue",
-                                         x = custom_palette, ignore.case = TRUE))]
-
+# Remove white colors based in there RGB values
+cols <- colors()
+rgb_vals <- col2rgb(cols) / 255  # normalize to 0–1
+is_whitish <- colMeans(rgb_vals) > 0.8 # define "whitish"
+# keep only NON-whitish colors
+filtered_cols <- cols[!is_whitish]
+colors2use  <- c("#A6CEE3","#1F78B4","#B2DF8A","#33A02C","#FB9A99","#E31A1C","#FDBF6F", "#FF7F00",
+                 "#CAB2D6","#6A3D9A","#FF00FFFF","#B15928","#000000","#FFC0CBFF","#8B864EFF","#F0027F",
+                 "#666666","#1B9E77", "#E6AB02","#00FFFFFF", "#B2182B","#FDDBC7","#D1E5F0","#CC0033",
+		 "#FF00CC","#330033", "#999933","#FF9933","#FFFAFAFF", filtered_cols)
 
 feature_table_file <- opt[["feature-table"]] # 'kaiju_species_table_GLlbnMetag.csv'
 metdata_file <- opt[["metadata-table"]] # "metadata.csv"
