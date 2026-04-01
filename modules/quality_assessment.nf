@@ -165,7 +165,7 @@ process FASTP {
     path("versions.txt"), emit: version   
     
     script:
-        def polyG = trimPolyG == 'true' ? "--trim_poly_g": ""
+        def polyG = trimPolyG == 'true' ? "--trim_poly_g": "-G"
         def out_prefix = trimPolyG == 'true' ? "" : "temp_"
     """
     if [ ${isPaired} == true ]; then
