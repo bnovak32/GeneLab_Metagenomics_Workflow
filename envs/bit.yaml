@@ -4,4 +4,4 @@ channels:
     - defaults
     - astrobiomike
 dependencies:
-    - bit=1.8.53
+    - bit=1.13.15

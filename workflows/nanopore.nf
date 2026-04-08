@@ -228,6 +228,7 @@ workflow nanopore {
     // Quality check software capturing
     raw_qc.out.versions | mix(software_versions_ch) | set{software_versions_ch}
     //FILTERED_MAP2GENOME.out.version | mix(software_versions_ch) | set{software_versions_ch}
+    FILTLONG.out.version | mix(software_versions_ch) | set{software_versions_ch}
     filtered_qc.out.versions | mix(software_versions_ch) | set{software_versions_ch}
     trimmed_qc.out.versions | mix(software_versions_ch) | set{software_versions_ch}
 

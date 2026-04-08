@@ -5,4 +5,4 @@ channels:
     - defaults 
     - astrobiomike
 dependencies:
-    - genelab-utils==1.3.22=py312_1
+    - genelab-utils==1.3.39

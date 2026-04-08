@@ -115,8 +115,15 @@ if(opt[["samples-column"]] == "Sample Name") {
 library(glue)
 library(plotly)
 library(htmlwidgets)
-library(tidyverse)
-
+library(tibble)
+library(tidyr)
+library(dplyr)
+library(purrr)
+library(readr)
+library(stringr)
+library(magrittr)
+library(ggplot2)
+library(scales)
 
 
 # Convert species count matrix to relative abundance matrix

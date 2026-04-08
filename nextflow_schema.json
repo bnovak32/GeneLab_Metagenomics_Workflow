@@ -1,0 +1,710 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/nasa/GeneLab_Metagenomics_Workflow/blob/main/nextflow_schema.json",
+  "title": "GeneLab Metagenomics Workflow",
+  "description": "Metagenomics workflow for pipeline documents GL-DPPD-7107-A, GL-DPPD-7116, and GL-DPPD-7117",
+  "type": "object",
+  "definitions": {
+    "input_output_options": {
+      "title": "Input/Output Options",
+      "type": "object",
+      "fa_icon": "fas fa-file-import",
+      "description": "Define where the pipeline should find input data and save output data",
+      "required": ["technology"],
+      "properties": {
+        "technology": {
+          "type": "string",
+          "description": "Sequencing technology used",
+          "enum": ["illumina", "nanopore"],
+          "fa_icon": "fas fa-dna",
+          "help_text": "Specify which sequencing technology was used to generate the data"
+        },
+        "sample_type": {
+          "type": "string",
+          "description": "Type of sample being analyzed",
+          "enum": ["standard", "low_biomass"],
+          "fa_icon": "fas fa-vial",
+          "help_text": "Specify if samples are standard or low biomass (affects decontamination steps)"
+        },
+        "input_file": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Path to input CSV file with sample information",
+          "fa_icon": "fas fa-file-csv",
+          "help_text": "A 3-column (single-end) or 4-column (paired-end) CSV file. See SE_file.csv and PE_file.csv for examples."
+        },
+        "accession": {
+          "type": "string",
+          "description": "GeneLab or OSD accession number",
+          "pattern": "^(GLDS|OSD)-[0-9]+$",
+          "fa_icon": "fas fa-tag",
+          "help_text": "If provided, will download data from GeneLab/OSD. Overrides input_file parameter."
+        },
+        "RawFilePattern": {
+          "type": "string",
+          "description": "Pattern to filter files when downloading from GeneLab/OSD",
+          "fa_icon": "fas fa-filter",
+          "help_text": "Comma-separated list of patterns, e.g., 'fastq.gz,NxtaFlex,metagenomics,raw'"
+        },
+        "workflow": {
+          "type": "string",
+          "default": "both",
+          "description": "Which workflow to run",
+          "enum": ["read-based", "assembly-based", "both"],
+          "fa_icon": "fas fa-project-diagram",
+          "help_text": "Run read-based analysis, assembly-based analysis, or both"
+        }
+      }
+    },
+    "nanopore_specific_options": {
+      "title": "Nanopore-Specific Options",
+      "type": "object",
+      "fa_icon": "fas fa-microscope",
+      "description": "Options specific to Oxford Nanopore sequencing data",
+      "properties": {
+        "input_type": {
+          "type": "string",
+          "description": "Type of nanopore input",
+          "enum": ["single", "multiple", "directory"],
+          "fa_icon": "fas fa-folder-open",
+          "help_text": "Format of nanopore input data"
+        },
+        "input_dir": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Directory containing POD5 files for demultiplexing",
+          "fa_icon": "fas fa-folder"
+        },
+        "kit_name": {
+          "type": "string",
+          "description": "Nanopore sequencing kit name",
+          "fa_icon": "fas fa-box",
+          "help_text": "Example: SQK-RPB114-24"
+        }
+      }
+    },
+    "directory_options": {
+      "title": "Output Directory Options",
+      "type": "object",
+      "fa_icon": "fas fa-folder-tree",
+      "description": "Configure output directory locations",
+      "properties": {
+        "merged_dir": {
+          "type": "string",
+          "default": "../Merged_Sequence_Data/",
+          "description": "Directory for merged/raw sequence data",
+          "fa_icon": "fas fa-folder"
+        },
+        "filtered_dir": {
+          "type": "string",
+          "default": "../Filtered_Sequence_Data/",
+          "description": "Directory for filtered sequence data",
+          "fa_icon": "fas fa-folder"
+        },
+        "trimmed_dir": {
+          "type": "string",
+          "default": "../Trimmed_Sequence_Data/",
+          "description": "Directory for trimmed sequence data",
+          "fa_icon": "fas fa-folder"
+        },
+        "human_removed_dir": {
+          "type": "string",
+          "default": "../HR-removed_Sequence_Data/",
+          "description": "Directory for human-read removed data",
+          "fa_icon": "fas fa-folder"
+        },
+        "decontaminated_dir": {
+          "type": "string",
+          "default": "../Decontaminated_Sequence_Data/",
+          "description": "Directory for decontaminated sequence data",
+          "fa_icon": "fas fa-folder"
+        },
+        "host_removed_dir": {
+          "type": "string",
+          "default": "../HostRM-removed_Sequence_Data/",
+          "description": "Directory for host-removed sequence data",
+          "fa_icon": "fas fa-folder"
+        },
+        "assembly_based_dir": {
+          "type": "string",
+          "default": "../Assembly-based_Processing/",
+          "description": "Directory for assembly-based analysis outputs",
+          "fa_icon": "fas fa-folder"
+        },
+        "read_based_dir": {
+          "type": "string",
+          "default": "../Read-based_Processing/",
+          "description": "Directory for read-based analysis outputs",
+          "fa_icon": "fas fa-folder"
+        },
+        "genelab_dir": {
+          "type": "string",
+          "default": "../GeneLab/",
+          "description": "Directory for GeneLab-specific outputs",
+          "fa_icon": "fas fa-folder"
+        },
+        "logs_dir": {
+          "type": "string",
+          "default": "../Logs/",
+          "description": "Directory for log files",
+          "fa_icon": "fas fa-folder"
+        },
+        "metadata_dir": {
+          "type": "string",
+          "default": "../Metadata/",
+          "description": "Directory for metadata files",
+          "fa_icon": "fas fa-folder"
+        }
+      }
+    },
+    "database_options": {
+      "title": "Database Options",
+      "type": "object",
+      "fa_icon": "fas fa-database",
+      "description": "Paths to reference databases and download URLs",
+      "properties": {
+        "DB_ROOT": {
+          "type": "string",
+          "default": "../Reference_DBs",
+          "description": "Root directory for all reference databases",
+          "format": "directory-path",
+          "fa_icon": "fas fa-database",
+          "help_text": "Must be a full path (not relative). Databases will be downloaded here if not found."
+        },
+        "cat_db": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to CAT (Contig Annotation Tool) database",
+          "fa_icon": "fas fa-database",
+          "help_text": "Example: /path/to/Reference_DBs/CAT_prepare_20210107/"
+        },
+        "CAT_DB_LINK": {
+          "type": "string",
+          "default": "https://tbb.bio.uu.nl/bastiaan/CAT_prepare/CAT_prepare_20210107.tar.gz",
+          "description": "URL for CAT database download",
+          "format": "uri",
+          "fa_icon": "fas fa-download"
+        },
+        "cat_taxonomy_dir": {
+          "type": "string",
+          "default": "2021-01-07_taxonomy/",
+          "description": "CAT taxonomy directory (appended to cat_db path)",
+          "fa_icon": "fas fa-folder"
+        },
+        "cat_db_sub_dir": {
+          "type": "string",
+          "default": "2021-01-07_CAT_database/",
+          "description": "CAT database subdirectory (appended to cat_db path)",
+          "fa_icon": "fas fa-folder"
+        },
+        "ko_db_dir": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to KOFAM Scan database",
+          "fa_icon": "fas fa-database",
+          "help_text": "Example: /path/to/Reference_DBs/kofamscan_db/"
+        },
+        "metaphlan_db_dir": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to MetaPhlAn4 database",
+          "fa_icon": "fas fa-database",
+          "help_text": "Example: /path/to/Reference_DBs/metaphlan4-db/"
+        },
+        "chocophlan_dir": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to HUMAnN3 ChocoPhlAn database",
+          "fa_icon": "fas fa-database",
+          "help_text": "Example: /path/to/Reference_DBs/humann3-db/chocophlan/"
+        },
+        "uniref_dir": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to HUMAnN3 UniRef database",
+          "fa_icon": "fas fa-database",
+          "help_text": "Example: /path/to/Reference_DBs/humann3-db/uniref/"
+        },
+        "utilities_dir": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to HUMAnN3 utilities database",
+          "fa_icon": "fas fa-database",
+          "help_text": "Example: /path/to/Reference_DBs/humann3-db/utility_mapping/"
+        },
+        "gtdbtk_db_dir": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to GTDB-Tk database",
+          "fa_icon": "fas fa-database",
+          "help_text": "Example: /path/to/Reference_DBs/GTDB-tk-ref-db/"
+        },
+        "GTDBTK_LINK": {
+          "type": "string",
+          "default": "https://data.gtdb.ecogenomic.org/releases/release226/226.0/auxillary_files/gtdbtk_package/full_package/gtdbtk_r226_data.tar.gz",
+          "description": "URL for GTDB-Tk database download",
+          "format": "uri",
+          "fa_icon": "fas fa-download"
+        },
+        "krakendb_dir": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to Kraken2 database",
+          "fa_icon": "fas fa-database",
+          "help_text": "Example: /path/to/Reference_DBs/kraken2_pluspfp_20250714/"
+        },
+        "krakendb_url": {
+          "type": "string",
+          "default": "https://genome-idx.s3.amazonaws.com/kraken/k2_pluspfp_20251015.tar.gz",
+          "description": "URL for Kraken2 database download",
+          "format": "uri",
+          "fa_icon": "fas fa-download"
+        },
+        "kaijudb_dir": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to Kaiju database",
+          "fa_icon": "fas fa-database",
+          "help_text": "Example: /path/to/Reference_DBs/kaiju_nr_euk_20250422/"
+        },
+        "kaijudb_name": {
+          "type": "string",
+          "default": "nr_euk",
+          "description": "Name of Kaiju database to use",
+          "enum": ["nr", "nr_euk", "refseq", "refseq_nr", "refseq_ref", "progenomes", "fungi", "viruses", "plasmids", "rvdb"],
+          "fa_icon": "fas fa-tag"
+        },
+        "human_db_dir": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to Kraken2 human database",
+          "fa_icon": "fas fa-database",
+          "help_text": "Example: /path/to/Reference_DBs/kraken2-human-db/"
+        },
+        "human_db_url": {
+          "type": "string",
+          "default": "https://zenodo.org/records/8339700/files/k2_Human_20230629.tar.gz?download=1",
+          "description": "URL for human database download",
+          "format": "uri",
+          "fa_icon": "fas fa-download"
+        },
+        "host_db_dir": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to custom host database",
+          "fa_icon": "fas fa-database"
+        },
+        "custome_genome": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Path to custom genome FASTA file",
+          "fa_icon": "fas fa-file",
+          "pattern": "\\.(fasta|fa|fna)$"
+        }
+      }
+    },
+    "host_removal_options": {
+      "title": "Host Removal Options",
+      "type": "object",
+      "fa_icon": "fas fa-user-slash",
+      "description": "Options for removing host/contaminant sequences",
+      "properties": {
+        "host_name": {
+          "type": "string",
+          "description": "Name of host organism for database building",
+          "fa_icon": "fas fa-tag",
+          "help_text": "Example: 'human', 'mouse', etc."
+        },
+        "host_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to download prebuilt host Kraken2 database",
+          "fa_icon": "fas fa-download",
+          "help_text": "See https://benlangmead.github.io/aws-indexes/k2 for prebuilt databases"
+        },
+        "host_fasta": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Path to host genome FASTA for custom database building",
+          "fa_icon": "fas fa-file",
+          "pattern": "\\.(fasta|fa|fna)$"
+        }
+      }
+    },
+    "assembly_options": {
+      "title": "Assembly Options",
+      "type": "object",
+      "fa_icon": "fas fa-puzzle-piece",
+      "description": "Parameters for genome assembly",
+      "properties": {
+        "max_mem": {
+          "type": "number",
+          "default": 100000000000,
+          "description": "Maximum memory for MEGAHIT assembler (bytes)",
+          "fa_icon": "fas fa-memory",
+          "help_text": "Can be proportion (e.g., 0.5) or absolute bytes (e.g., 100e9 = 100GB)"
+        }
+      }
+    },
+    "binning_options": {
+      "title": "Binning & MAG Options",
+      "type": "object",
+      "fa_icon": "fas fa-box-open",
+      "description": "Parameters for genome binning and MAG generation",
+      "properties": {
+        "min_est_comp": {
+          "type": "integer",
+          "default": 90,
+          "description": "Minimum estimated MAG completion (%)",
+          "minimum": 0,
+          "maximum": 100,
+          "fa_icon": "fas fa-percent"
+        },
+        "max_est_redund": {
+          "type": "integer",
+          "default": 10,
+          "description": "Maximum estimated MAG redundancy (%)",
+          "minimum": 0,
+          "maximum": 100,
+          "fa_icon": "fas fa-percent"
+        },
+        "max_est_strain_het": {
+          "type": "integer",
+          "default": 50,
+          "description": "Maximum estimated MAG strain heterogeneity (%)",
+          "minimum": 0,
+          "maximum": 100,
+          "fa_icon": "fas fa-percent"
+        },
+        "reduced_tree": {
+          "type": "string",
+          "default": "True",
+          "description": "Use reduced tree in CheckM (limits RAM to 16GB)",
+          "enum": ["True", "False"],
+          "fa_icon": "fas fa-tree",
+          "help_text": "See https://github.com/Ecogenomics/CheckM/wiki/Genome-Quality-Commands#tree"
+        },
+        "use_gtdbtk_scratch_location": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use disk space instead of RAM for GTDB-Tk",
+          "fa_icon": "fas fa-hdd",
+          "help_text": "Can reduce memory usage. See https://ecogenomics.github.io/GTDBTk/faq.html"
+        }
+      }
+    },
+    "annotation_options": {
+      "title": "Annotation Options",
+      "type": "object",
+      "fa_icon": "fas fa-tags",
+      "description": "Parameters for functional annotation",
+      "properties": {
+        "pileup_mem": {
+          "type": "string",
+          "default": "5g",
+          "description": "Memory for BBMap pileup.sh (calculating coverage)",
+          "pattern": "^[0-9]+(g|m)$",
+          "fa_icon": "fas fa-memory",
+          "help_text": "Format: '5g' = 5GB, '500m' = 500MB"
+        },
+        "block_size": {
+          "type": "integer",
+          "default": 4,
+          "description": "Block size for CAT/DIAMOND (lower = less RAM)",
+          "minimum": 1,
+          "fa_icon": "fas fa-cube",
+          "help_text": "See https://github.com/bbuchfink/diamond/wiki/3.-Command-line-options"
+        }
+      }
+    },
+    "conda_environments": {
+      "title": "Conda Environment Paths",
+      "type": "object",
+      "fa_icon": "fab fa-python",
+      "description": "Paths to existing conda environments (optional - will be created if not provided)",
+      "properties": {
+        "conda_bbmap": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to BBMap conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_bit": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to BIT conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_bowtie2": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to Bowtie2 conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_cat": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to CAT conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_checkm": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to CheckM conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_dorado": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to Dorado conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_fastp": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to fastp conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_fastqc": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to FastQC conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_filtlong": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to Filtlong conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_flye": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to Flye conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_genelab": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to GeneLab utilities conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_gtdbtk": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to GTDB-Tk conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_humann3": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to HUMAnN3 conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_kaiju": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to Kaiju conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_kegg_decoder": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to KEGG Decoder conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_kofamscan": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to KOFAM Scan conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_kraken2": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to Kraken2 conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_krakentools": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to KrakenTools conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_krona": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to Krona conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_minimap2": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to Minimap2 conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_medaka": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to Medaka conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_megahit": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to MEGAHIT conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_metabat": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to MetaBAT conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_multiqc": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to MultiQC conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_nanoplot": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to NanoPlot conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_pavian": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to Pavian conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_porechop": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to Porechop conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_prodigal": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to Prodigal conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_rvis": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to R visualization conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_samtools": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to SAMtools conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_spades": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to SPAdes conda environment",
+          "fa_icon": "fas fa-folder"
+        },
+        "conda_zip": {
+          "type": "string",
+          "format": "directory-path",
+          "description": "Path to zip conda environment",
+          "fa_icon": "fas fa-folder"
+        }
+      }
+    },
+    "advanced_options": {
+      "title": "Advanced Options",
+      "type": "object",
+      "fa_icon": "fas fa-cogs",
+      "description": "Advanced configuration options",
+      "properties": {
+        "publishDir_mode": {
+          "type": "string",
+          "default": "link",
+          "description": "Nextflow publishDir mode",
+          "enum": ["copy", "link", "symlink"],
+          "fa_icon": "fas fa-link",
+          "help_text": "How Nextflow handles output file publishing"
+        },
+        "errorStrategy": {
+          "type": "string",
+          "default": "terminate",
+          "description": "Nextflow error handling strategy",
+          "enum": ["terminate", "finish", "ignore", "retry"],
+          "fa_icon": "fas fa-exclamation-triangle",
+          "help_text": "See https://www.nextflow.io/docs/latest/process.html#errorstrategy"
+        },
+        "multiqc_config": {
+          "type": "string",
+          "default": "config/multiqc.config",
+          "description": "Path to MultiQC config file",
+          "format": "file-path",
+          "fa_icon": "fas fa-file-code"
+        },
+        "assay_suffix": {
+          "type": "string",
+          "default": "",
+          "description": "GeneLab assay suffix",
+          "fa_icon": "fas fa-tag",
+          "help_text": "Examples: _GLmetagenomics, _GLlbsMetag, _GLlblMetag"
+        },
+        "additional_filename_prefix": {
+          "type": "string",
+          "default": "",
+          "description": "Additional prefix for output files",
+          "fa_icon": "fas fa-tag",
+          "help_text": "Include separator at end if adding one, e.g. 'Swift1S_'"
+        },
+        "debug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show parameter information at workflow start",
+          "fa_icon": "fas fa-bug"
+        },
+        "help": {
+          "type": "boolean",
+          "default": false,
+          "description": "Display help message",
+          "fa_icon": "fas fa-question-circle"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "#/definitions/input_output_options"
+    },
+    {
+      "$ref": "#/definitions/nanopore_specific_options"
+    },
+    {
+      "$ref": "#/definitions/directory_options"
+    },
+    {
+      "$ref": "#/definitions/database_options"
+    },
+    {
+      "$ref": "#/definitions/host_removal_options"
+    },
+    {
+      "$ref": "#/definitions/assembly_options"
+    },
+    {
+      "$ref": "#/definitions/binning_options"
+    },
+    {
+      "$ref": "#/definitions/annotation_options"
+    },
+    {
+      "$ref": "#/definitions/conda_environments"
+    },
+    {
+      "$ref": "#/definitions/advanced_options"
+    }
+  ]
+}

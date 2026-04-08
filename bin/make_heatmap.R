@@ -101,7 +101,13 @@ if(is.null(opt[["group-column"]])) {
 
 library(glue)
 library(pheatmap)
-library(tidyverse)
+library(tibble)
+library(tidyr)
+library(dplyr)
+library(purrr)
+library(readr)
+library(stringr)
+library(magrittr)
 
 
 # Remove white colors based in there RGB values

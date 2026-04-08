@@ -55,8 +55,13 @@ option_list <- list(
               help="Print out version number and exit.", metavar = "boolean")
 )
 
-
-library(tidyverse)
+library(tibble)
+library(tidyr)
+library(dplyr)
+library(purrr)
+library(readr)
+library(stringr)
+library(magrittr)
 library(glue)
 
 opt_parser <- OptionParser(

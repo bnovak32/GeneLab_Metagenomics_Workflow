@@ -4,4 +4,4 @@ channels:
     - bioconda
     - defaults
 dependencies:
-    - cat=5.2.3
+    - cat=5.3

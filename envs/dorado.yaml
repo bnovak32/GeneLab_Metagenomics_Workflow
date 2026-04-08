@@ -1,6 +1,6 @@
 name: dorado
 channels:
   - conda-forge
-  - hcc
+  - yangmingsi
 dependencies:
-  - dorado=0.7.2
+  - dorado=1.3.0

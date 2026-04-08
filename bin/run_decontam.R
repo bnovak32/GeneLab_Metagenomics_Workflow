@@ -143,7 +143,13 @@ if(opt[["samples-column"]] == "Sample Name") {
 library(decontam)
 library(phyloseq)
 library(glue)
-library(tidyverse)
+library(tibble)
+library(tidyr)
+library(dplyr)
+library(purrr)
+library(readr)
+library(stringr)
+library(magrittr)
 
 # Feature table decontamination with decontam
 run_decontam <- function(feature_table, metadata, contam_threshold=0.1,
