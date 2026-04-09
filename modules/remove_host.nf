@@ -107,9 +107,10 @@ process REMOVE_HOST {
 
     script:
     """
+        DB=`find -L ${HOST_DB} -name '*.k2d' |head -n 1|xargs -I {} dirname {}`
         if [ ${isPaired} == 'true' ]; then
 
-        kraken2 --db ${HOST_DB} --gzip-compressed \\
+        kraken2 --db \${DB} --gzip-compressed \\
             --threads ${task.cpus} \\
             --use-names --paired \\
             --output ${sample_id}-kraken2-output.txt \\
@@ -126,7 +127,7 @@ process REMOVE_HOST {
     else
 
         # Single end
-        kraken2 --db ${HOST_DB} --gzip-compressed \\
+        kraken2 --db \${DB} --gzip-compressed \\
             --threads ${task.cpus} --use-names \\
             --output ${sample_id}-kraken2-output.txt \\
             --report ${sample_id}-kraken2-report.tsv \\
