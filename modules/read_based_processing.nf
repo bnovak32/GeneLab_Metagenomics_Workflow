@@ -373,7 +373,7 @@ workflow read_based {
         if(chocophlan_dir && uniref_dir && metaphlan_dir && utilities_dir){
             HUMANN(filtered_reads, chocophlan_dir, uniref_dir, metaphlan_dir)
         }else{
-            make_humann_db()
+            make_humann_db(params.metaphlan_index)
             HUMANN(filtered_reads, make_humann_db.out.chocophlan_dir, 
                    make_humann_db.out.uniref_dir,
                    make_humann_db.out.metaphlan_db_dir) 
