@@ -218,7 +218,7 @@ overview_table <-  read_input_table(assembly_summary) %>%
     where( ~all(!is.na(.)) )
   )
 
-col_names <- names(overview_table) %>% str_remove_all("-assembly")
+col_names <- names(overview_table) %>% str_remove_all("-assembly.*")
 
 if(any(str_detect(col_names, "gene_calls_identified"))){
  # Input file is an Assembly passed processing overview file

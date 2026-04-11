@@ -212,7 +212,7 @@ process SETUP_METAPHLAN {
     label "db_setup"
 
     input: 
-        val(index) // mpa_vJun23_CHOCOPhlAn_202307
+        val(index) // mpa_vJun23_CHOCOPhlAnSGB_202307
     output:
         path("metaphlan4-db/"), emit: metaphlan_db_dir
         path("metaphlan4-db/METAPHLAN4_DB_SETUP"), emit: completion_indicator

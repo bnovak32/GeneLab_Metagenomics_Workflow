@@ -132,6 +132,7 @@ process ASSEMBLY_TABLE {
 
     script:
         """
+
           process_assembly_table.R \\
                   --assembly-table '${feature_table}' \\
                   --assembly-summary '${summary_table}' \\
@@ -150,6 +151,7 @@ process ASSEMBLY_TABLE {
                                    packageVersion('magrittr'), \\
                                    packageVersion('glue')); \\
                     write(x=VERSIONS, file='versions.txt', append=TRUE)"
+
         """
 }
 
