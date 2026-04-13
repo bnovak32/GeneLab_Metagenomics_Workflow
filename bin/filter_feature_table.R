@@ -199,7 +199,13 @@ group_low_abund_taxa <- function(abund_table, threshold=0.05,
 }
 
 
-library(tidyverse)
+library(tibble)
+library(tidyr)
+library(dplyr)
+library(purrr)
+library(readr)
+library(stringr)
+library(magrittr)
 library(glue)
 
 opt_parser <- OptionParser(

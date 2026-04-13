@@ -23,9 +23,15 @@ process METAPHLAN2COUNT {
                   --output-prefix '${params.additional_filename_prefix}' \\
                   --assay-suffix '${params.assay_suffix}'
 
-        Rscript -e "VERSIONS=sprintf('tidyverse %s\\nglue %s\\n', \\
-                                    packageVersion('tidyverse'), \\
-                                    packageVersion('glue')); \\
+        Rscript -e "VERSIONS=sprintf('tibble %s\\ntidyr %s\\ndplyr %s\\npurrr %s\\nreadr %s\\nstringr %s\\nmagrittr %s\\nglue %s\\n', \\
+                                   packageVersion('tibble'), \\
+                                   packageVersion('tidyr'), \\
+                                   packageVersion('dplyr'), \\
+                                   packageVersion('purrr'), \\
+                                   packageVersion('readr'), \\
+                                   packageVersion('stringr'), \\
+                                   packageVersion('magrittr'), \\
+                                   packageVersion('glue')); \\
                     write(x=VERSIONS, file='versions.txt', append=TRUE)"
         """
 
@@ -53,9 +59,16 @@ process KAIJU2SPECIES_TABLE  {
               --output-prefix '${params.additional_filename_prefix}' \\
               --assay-suffix '${params.assay_suffix}'
 
-        Rscript -e "VERSIONS=sprintf('tidyverse %s\\nglue %s\\n', \\
-                                    packageVersion('tidyverse'), \\
-                                    packageVersion('glue')); \\
+
+        Rscript -e "VERSIONS=sprintf('tibble %s\\ntidyr %s\\ndplyr %s\\npurrr %s\\nreadr %s\\nstringr %s\\nmagrittr %s\\nglue %s\\n', \\
+                                   packageVersion('tibble'), \\
+                                   packageVersion('tidyr'), \\
+                                   packageVersion('dplyr'), \\
+                                   packageVersion('purrr'), \\
+                                   packageVersion('readr'), \\
+                                   packageVersion('stringr'), \\
+                                   packageVersion('magrittr'), \\
+                                   packageVersion('glue')); \\
                     write(x=VERSIONS, file='versions.txt', append=TRUE)"
         """
 
@@ -87,9 +100,15 @@ process FILTER_RARE {
                   --output-file  '${meta.output_file}'
 
 
-        Rscript -e "VERSIONS=sprintf('tidyverse %s\\nglue %s\\n', \\
-                                    packageVersion('tidyverse'), \\
-                                    packageVersion('glue')); \\
+        Rscript -e "VERSIONS=sprintf('tibble %s\\ntidyr %s\\ndplyr %s\\npurrr %s\\nreadr %s\\nstringr %s\\nmagrittr %s\\nglue %s\\n', \\
+                                   packageVersion('tibble'), \\
+                                   packageVersion('tidyr'), \\
+                                   packageVersion('dplyr'), \\
+                                   packageVersion('purrr'), \\
+                                   packageVersion('readr'), \\
+                                   packageVersion('stringr'), \\
+                                   packageVersion('magrittr'), \\
+                                   packageVersion('glue')); \\
                     write(x=VERSIONS, file='versions.txt', append=TRUE)"
         """
 
@@ -113,6 +132,7 @@ process ASSEMBLY_TABLE {
 
     script:
         """
+
           process_assembly_table.R \\
                   --assembly-table '${feature_table}' \\
                   --assembly-summary '${summary_table}' \\
@@ -121,10 +141,17 @@ process ASSEMBLY_TABLE {
                   --output-prefix '${params.additional_filename_prefix}' \\
                   --assay-suffix '${params.assay_suffix}'
 
-          Rscript -e "VERSIONS=sprintf('tidyverse %s\\nglue %s\\n',  \\
-                                    packageVersion('tidyverse'), \\
-                                    packageVersion('glue')); \\
+        Rscript -e "VERSIONS=sprintf('tibble %s\\ntidyr %s\\ndplyr %s\\npurrr %s\\nreadr %s\\nstringr %s\\nmagrittr %s\\nglue %s\\n', \\
+                                   packageVersion('tibble'), \\
+                                   packageVersion('tidyr'), \\
+                                   packageVersion('dplyr'), \\
+                                   packageVersion('purrr'), \\
+                                   packageVersion('readr'), \\
+                                   packageVersion('stringr'), \\
+                                   packageVersion('magrittr'), \\
+                                   packageVersion('glue')); \\
                     write(x=VERSIONS, file='versions.txt', append=TRUE)"
+
         """
 }
 
@@ -151,9 +178,15 @@ process HUMANN_TABLE {
                   --output-prefix '${params.additional_filename_prefix}' \\
                   --assay-suffix '${params.assay_suffix}'
 
-          Rscript -e "VERSIONS=sprintf('tidyverse %s\\nglue %s\\n',  \\
-                                    packageVersion('tidyverse'), \\
-                                    packageVersion('glue')); \\
+        Rscript -e "VERSIONS=sprintf('tibble %s\\ntidyr %s\\ndplyr %s\\npurrr %s\\nreadr %s\\nstringr %s\\nmagrittr %s\\nglue %s\\n', \\
+                                   packageVersion('tibble'), \\
+                                   packageVersion('tidyr'), \\
+                                   packageVersion('dplyr'), \\
+                                   packageVersion('purrr'), \\
+                                   packageVersion('readr'), \\
+                                   packageVersion('stringr'), \\
+                                   packageVersion('magrittr'), \\
+                                   packageVersion('glue')); \\
                     write(x=VERSIONS, file='versions.txt', append=TRUE)"
         """
 }
@@ -200,13 +233,17 @@ process DECONTAM  {
                   --output-prefix '${params.additional_filename_prefix}' \\
                   --assay-suffix '${params.assay_suffix}'
 
-
-
-        Rscript -e "VERSIONS=sprintf('tidyverse %s\\nglue %s\\nphyloseq %s\\ndecontam %s\\n', \\
-                                    packageVersion('tidyverse'), \\
-                                    packageVersion('glue'), \\
-                                    packageVersion('phyloseq'), \\
-                                    packageVersion('decontam')); \\
+        Rscript -e "VERSIONS=sprintf('tibble %s\\ntidyr %s\\ndplyr %s\\npurrr %s\\nreadr %s\\nstringr %s\\nmagrittr %s\\nglue %s\\nphyloseq %s\\ndecontam %s\\n', \\
+                                   packageVersion('tibble'), \\
+                                   packageVersion('tidyr'), \\
+                                   packageVersion('dplyr'), \\
+                                   packageVersion('purrr'), \\
+                                   packageVersion('readr'), \\
+                                   packageVersion('stringr'), \\
+                                   packageVersion('magrittr'), \\
+                                   packageVersion('glue'), \\
+                                   packageVersion('phyloseq'), \\
+                                   packageVersion('decontam')); \\
                     write(x=VERSIONS, file='versions.txt', append=TRUE)"
         """
 
@@ -242,11 +279,19 @@ process BARPLOT {
                   --output-prefix  '${meta.prefix}' \\
                   --assay-suffix '${params.assay_suffix}'
 
-        Rscript -e "VERSIONS=sprintf('tidyverse %s\\nglue %s\\nplotly %s\\nhtmlwidgets %s\\n', \\
-                                    packageVersion('tidyverse'), \\
-                                    packageVersion('glue'), \\
-                                    packageVersion('plotly'), \\
-                                    packageVersion('htmlwidgets')); \\
+
+        Rscript -e "VERSIONS=sprintf('tibble %s\\ntidyr %s\\ndplyr %s\\npurrr %s\\nreadr %s\\nstringr %s\\nmagrittr %s\\nglue %s\\nplotly %s\\nhtmlwidgets %s\\nggplot2 %s\\n', \\
+                                   packageVersion('tibble'), \\
+                                   packageVersion('tidyr'), \\
+                                   packageVersion('dplyr'), \\
+                                   packageVersion('purrr'), \\
+                                   packageVersion('readr'), \\
+                                   packageVersion('stringr'), \\
+                                   packageVersion('magrittr'), \\
+                                   packageVersion('glue'), \\
+                                   packageVersion('plotly'), \\
+                                   packageVersion('htmlwidgets'),
+                                   packageVersion('ggplot2')); \\
                     write(x=VERSIONS, file='versions.txt', append=TRUE)"
         """
 
@@ -280,11 +325,16 @@ process HEATMAP {
                   --output-prefix '${meta.prefix}' \\
                   --assay-suffix '${params.assay_suffix}'
 
-
-        Rscript -e "VERSIONS=sprintf('tidyverse %s\\nglue %s\\npheatmap %s\\n', \\
-                                    packageVersion('tidyverse'), \\
-                                    packageVersion('glue'), \\
-                                    packageVersion('pheatmap')); \\
+        Rscript -e "VERSIONS=sprintf('tibble %s\\ntidyr %s\\ndplyr %s\\npurrr %s\\nreadr %s\\nstringr %s\\nmagrittr %s\\nglue %s\\npheatmap %s\\n', \\
+                                   packageVersion('tibble'), \\
+                                   packageVersion('tidyr'), \\
+                                   packageVersion('dplyr'), \\
+                                   packageVersion('purrr'), \\
+                                   packageVersion('readr'), \\
+                                   packageVersion('stringr'), \\
+                                   packageVersion('magrittr'), \\
+                                   packageVersion('glue'), \\
+                                   packageVersion('pheatmap')); \\
                     write(x=VERSIONS, file='versions.txt', append=TRUE)"
         """
 

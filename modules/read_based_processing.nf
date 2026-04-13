@@ -86,7 +86,7 @@ process HUMANN {
                     --output ${sample_id}-humann3-out-dir/ \\
                     --threads ${task.cpus} \\
                     --output-basename ${sample_id} \\
-                    --metaphlan-options "--bowtie2db ${metaphlan_dir} --unclassified_estimation --add_viruses --sample_id ${sample_id}" \\
+                    --metaphlan-options "--index ${params.metaphlan_index} --bowtie2db ${metaphlan_dir} --unclassified_estimation --add_viruses --sample_id ${sample_id}" \\
                     --nucleotide-database ${chocophlan_dir} \\
                     --protein-database ${uniref_dir} \\
                     --bowtie-options "--sensitive --mm" && \\
@@ -373,7 +373,7 @@ workflow read_based {
         if(chocophlan_dir && uniref_dir && metaphlan_dir && utilities_dir){
             HUMANN(filtered_reads, chocophlan_dir, uniref_dir, metaphlan_dir)
         }else{
-            make_humann_db()
+            make_humann_db(params.metaphlan_index)
             HUMANN(filtered_reads, make_humann_db.out.chocophlan_dir, 
                    make_humann_db.out.uniref_dir,
                    make_humann_db.out.metaphlan_db_dir) 

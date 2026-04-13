@@ -211,6 +211,8 @@ process SETUP_METAPHLAN {
     label "humann_setup"
     label "db_setup"
 
+    input: 
+        val(index) // mpa_vJun23_CHOCOPhlAnSGB_202307
     output:
         path("metaphlan4-db/"), emit: metaphlan_db_dir
         path("metaphlan4-db/METAPHLAN4_DB_SETUP"), emit: completion_indicator
@@ -222,7 +224,7 @@ process SETUP_METAPHLAN {
 
         if [ ! -f metaphlan4-db/METAPHLAN4_DB_SETUP ];then
             printf "\\n\\n  Downloading metaphlan db:\\n\\n"
-            metaphlan --install --bowtie2db metaphlan4-db/ && \\
+            metaphlan --install --index ${index} --bowtie2db metaphlan4-db/ && \\
             touch metaphlan4-db/METAPHLAN4_DB_SETUP
             metaphlan --version > versions.txt
             printf "### Set up completed successfully ###\\n\\n"
@@ -315,11 +317,13 @@ process SETUP_KRAKEN {
 
 workflow make_humann_db {
 
+    take: 
+       index_name
     main:
         SETUP_CHOCOPHLAN()
         SETUP_UNIREF()
         SETUP_UTILITY_MAPPING()
-        SETUP_METAPHLAN()
+        SETUP_METAPHLAN(index_name)
 
         software_versions_ch = Channel.empty()
         SETUP_CHOCOPHLAN.out.version | mix(software_versions_ch) | set{software_versions_ch}
@@ -343,6 +347,7 @@ workflow make_databases {
         GTDBTK_URL
         KAIJUDB_NAME // nr_euk
         KRAKEN_URL
+        index_name
 
     main:
         SETUP_CAT_DB(CAT_DB_LINK)
@@ -350,7 +355,7 @@ workflow make_databases {
         SETUP_GTDBTK_DB(GTDBTK_URL)
         SETUP_KAIJU(KAIJUDB_NAME)
         SETUP_KRAKEN(KRAKEN_URL)
-        make_humann_db()
+        make_humann_db(index_name)
 
         software_versions_ch = Channel.empty()
         SETUP_CAT_DB.out.version | mix(software_versions_ch) | set{software_versions_ch}
