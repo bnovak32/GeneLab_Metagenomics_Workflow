@@ -86,7 +86,7 @@ process HUMANN {
                     --output ${sample_id}-humann3-out-dir/ \\
                     --threads ${task.cpus} \\
                     --output-basename ${sample_id} \\
-                    --metaphlan-options "--bowtie2db ${metaphlan_dir} --unclassified_estimation --add_viruses --sample_id ${sample_id}" \\
+                    --metaphlan-options "--index ${params.metaphlan_index} --bowtie2db ${metaphlan_dir} --unclassified_estimation --add_viruses --sample_id ${sample_id}" \\
                     --nucleotide-database ${chocophlan_dir} \\
                     --protein-database ${uniref_dir} \\
                     --bowtie-options "--sensitive --mm" && \\

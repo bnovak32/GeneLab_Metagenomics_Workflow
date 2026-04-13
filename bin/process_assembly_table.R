@@ -239,6 +239,7 @@ if(any(str_detect(col_names, "gene_calls_identified"))){
 if(type == "KO"){
 
   df <- read_input_table(assembly_table)
+  colnames(df) <- colnames(df)  %>% str_remove_all(suffix)
   # Get common sample ids
   sample_order <- get_samples(df, sample_order, "KO_function")
   
@@ -249,6 +250,7 @@ if(type == "KO"){
 # Deduplicate rows by summing together species values
 
   df <- read_input_table(assembly_table)
+  colnames(df) <- colnames(df)  %>% str_remove_all(suffix)
   # Get common sample ids
   sample_order <- get_samples(df, sample_order)
   table2write <- read_taxonomy_table(df, sample_order) %>%
