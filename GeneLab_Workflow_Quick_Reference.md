@@ -208,28 +208,154 @@ sample2,reads/s2_pass1.fastq.gz,reads/s2_pass2.fastq.gz,treatment
 
 ### Read-Based
 ```
-Read-based_Processing/
-├── Kraken2-Outputs/Filtered-species-abundance-table.tsv
-├── Kaiju-Outputs/Filtered-species-abundance-table.tsv
-├── Metaphlan-Outputs/Filtered-species-abundance-table.tsv
-└── HUMAnN-Outputs/
-    ├── Gene-Families/Filtered-gene-families-grouped-uniref90.tsv
-    ├── Gene-Families-KO/Filtered-gene-families-grouped-KO.tsv
-    └── Pathway-Abundance/Filtered-pathway-abundance.tsv
+|-- Read-based_Processing
+|   |-- Humann_Outputs
+|   |   |-- Gene_Families
+|   |   |   |-- Gene-families-KO-cpm.tsv
+|   |   |   |-- Gene-families-KO.tsv
+|   |   |   |-- Gene-families-KO_decontam_results.tsv
+|   |   |   |-- Gene-families-KO_filtered.tsv
+|   |   |   |-- Gene-families-KO_filtered_heatmap.png
+|   |   |   |-- Gene-families-KO_filtered_top_50_heatmap.png
+|   |   |   |-- Gene-families-KO_unfiltered_heatmap.png
+|   |   |   |-- Gene-families-KO_unfiltered_top_50_heatmap.png
+|   |   |   |-- Gene-families-cpm.tsv
+|   |   |   |-- Gene-families-grouped-by-taxa.tsv
+|   |   |   |-- Gene-families-uniref.tsv
+|   |   |   |-- Gene-families-uniref_decontam_results.tsv
+|   |   |   |-- Gene-families-uniref_filtered.tsv
+|   |   |   |-- Gene-families-uniref_filtered_heatmap.png
+|   |   |   |-- Gene-families-uniref_filtered_top_50_heatmap.png
+|   |   |   |-- Gene-families-uniref_unfiltered_heatmap.png
+|   |   |   |-- Gene-families-uniref_unfiltered_top_50_heatmap.png
+|   |   |   |-- Gene-families.tsv
+|   |   |-- Pathway_Abundances
+|   |   |   |-- Pathway-abundances-cpm.tsv
+|   |   |   |-- Pathway-abundances-grouped-by-taxa.tsv
+|   |   |   |-- Pathway-abundances.tsv
+|   |   |   |-- Pathway-abundances_decontam_results.tsv
+|   |   |   |-- Pathway-abundances_filtered.tsv
+|   |   |   |-- Pathway-abundances_filtered_heatmap.png
+|   |   |   |-- Pathway-abundances_unfiltered_heatmap.png
+|   |   |   |-- Pathway-abundances_unfiltered_top_50_heatmap.png
+|   |   |-- Pathway_Coverage
+|   |       |-- Pathway-coverages-grouped-by-taxa.tsv
+|   |       |-- Pathway-coverages.tsv
+|   |-- Kaiju_Outputs
+|   |   |-- Barplots
+|   |   |   |-- kaiju_filtered_species_barplot.html
+|   |   |   |-- kaiju_filtered_species_barplot.png
+|   |   |   |-- kaiju_unfiltered_species_barplot.html
+|   |   |   |-- kaiju_unfiltered_species_barplot.png
+|   |   |-- Count_tables
+|   |   |   |-- kaiju_decontam_results.tsv
+|   |   |   |-- kaiju_filtered_species_table.tsv
+|   |   |   |-- kaiju_species_table.tsv
+|   |   |-- Krona_Reports
+|   |       |-- kaiju-report.html
+|   |-- Kraken2_Outputs
+|   |   |-- Barplots
+|   |   |   |-- kraken2_filtered_species_barplot.html
+|   |   |   |-- kraken2_filtered_species_barplot.png
+|   |   |   |-- kraken2_unfiltered_species_barplot.html
+|   |   |   |-- kraken2_unfiltered_species_barplot.png
+|   |   |-- Count_tables
+|   |   |   |-- kraken2_decontam_results.tsv
+|   |   |   |-- kraken2_filtered_species_table.tsv
+|   |   |   |-- kraken2_species_table.tsv
+|   |   |-- Krona_Reports
+|   |   |   |-- kraken2-report.html
+|   |   |-- MultiQC_Reports
+|   |       |-- kraken2_multiqc.html
+|   |       |-- kraken2_multiqc_data.zip
+|   |-- Metaphlan_Outputs # Illumina only
+|       |-- Barplots
+|       |   |-- metaplan_filtered_species_barplot.html
+|       |   |-- metaplan_filtered_species_barplot.png
+|       |   |-- metaplan_unfiltered_species_barplot.html
+|       |   |-- metaplan_unfiltered_species_barplot.png
+|       |-- Krona_Reports
+|       |   |-- metaphlan-report.html
+|       |-- Taxonomy
+|           |-- metaphlan-taxonomy.tsv
+|           |-- metaphlan_decontam_results.tsv
+|           |-- metaphlan_filtered_species_table.tsv
+|           |-- metaphlan_species_table.tsv
+
 ```
 
 ### Assembly-Based
 ```
-Assembly-based_Processing/
-├── assemblies/*_assembly.fasta
-├── annotations-and-taxonomy/
-│   ├── Gene-taxonomy-grouped/Filtered-grouped-gene-taxonomy.tsv
-│   ├── Gene-KO-annotation/Filtered-grouped-gene-KO-annotation.tsv
-│   └── Contig-taxonomy/Filtered-grouped-contig-taxonomy.tsv
-├── bins/Bins-overview.tsv
-└── MAGs/
-    ├── MAGs-overview.tsv
-    └── GTDB-tk-classification.tsv
+../
+|-- Assembly-based_Processing
+|   |-- Assembly-based-processing-overview.tsv
+|   |-- MAGs # High-quality bins only
+|   |   |-- *-MAGs.zip
+|   |   |-- MAG-KEGG-Decoder-out.html
+|   |   |-- MAG-KEGG-Decoder-out.tmp
+|   |   |-- MAG-KEGG-Decoder-out.tsv
+|   |   |-- MAG-level-KO-annotations.tsv
+|   |   |-- MAGs-overview.tsv
+|   |-- annotations-and-taxonomy
+|   |   |-- *-annotations.tsv
+|   |   |-- *-contig-coverage-and-tax.tsv
+|   |   |-- *-contig-tax.tsv
+|   |   |-- *-gene-coverage-annotation-and-tax.tsv
+|   |   |-- *-gene-tax.tsv
+|   |-- assemblies
+|   |   |-- *-assembly.fasta
+|   |   |-- Failed-assemblies.tsv # Only if some sample assemblies fail
+|   |   |-- assembly-summaries.tsv
+|   |-- bins
+|   |   |-- *-bins.zip
+|   |   |-- bin-assembly-summaries.tsv
+|   |   |-- bins-checkm-out.tsv
+|   |   |-- bins-overview.tsv
+|   |-- combined-outputs
+|   |   |-- Contig-level
+|   |   |   |-- Combined-contig-level-taxonomy-coverages-CPM.tsv
+|   |   |   |-- Combined-contig-level-taxonomy-coverages.tsv
+|   |   |   |-- Combined-contig-level-taxonomy.tsv
+|   |   |   |-- Combined-contig-level-taxonomy_decontam_failure.txt # Only if decontam fails
+|   |   |   |-- Combined-contig-level-taxonomy_decontam_results.tsv
+|   |   |   |-- Combined-contig-level-taxonomy_filtered.tsv
+|   |   |   |-- Combined-contig-level-taxonomy_filtered_heatmap.png
+|   |   |   |-- Combined-contig-level-taxonomy_filtered_top_50_heatmap.png
+|   |   |   |-- Combined-contig-level-taxonomy_unfiltered_heatmap.png
+|   |   |   |-- Combined-contig-level-taxonomy_unfiltered_top_50_heatmap.png
+|   |   |-- Gene-level
+|   |       |-- KO
+|   |       |   |-- Combined-gene-level-KO-function-coverages-CPM.tsv
+|   |       |   |-- Combined-gene-level-KO-function-coverages.tsv
+|   |       |   |-- Combined-gene-level-KO-function.tsv
+|   |       |   |-- Combined-gene-level-KO-function_decontam_failure.txt # Only if decontam fails
+|   |       |   |-- Combined-gene-level-KO-function_decontam_results.tsv
+|   |       |   |-- Combined-gene-level-KO-function_filtered.tsv
+|   |       |   |-- Combined-gene-level-KO-function_filtered_heatmap.png
+|   |       |   |-- Combined-gene-level-KO-function_filtered_top_50_heatmap.png
+|   |       |   |-- Combined-gene-level-KO-function_unfiltered_heatmap.png
+|   |       |   |-- Combined-gene-level-KO-function_unfiltered_top_50_heatmap.png
+|   |       |-- Taxonomy
+|   |           |-- Combined-gene-level-taxonomy-coverages-CPM.tsv
+|   |           |-- Combined-gene-level-taxonomy-coverages.tsv
+|   |           |-- Combined-gene-level-taxonomy.tsv
+|   |           |-- Combined-gene-level-taxonomy_decontam_failure.txt
+|   |           |-- Combined-gene-level-taxonomy_decontam_results.tsv
+|   |           |-- Combined-gene-level-taxonomy_filtered.tsv
+|   |           |-- Combined-gene-level-taxonomy_filtered_heatmap.png
+|   |           |-- Combined-gene-level-taxonomy_filtered_top_50_heatmap.png
+|   |           |-- Combined-gene-level-taxonomy_unfiltered_heatmap.png
+|   |           |-- Combined-gene-level-taxonomy_unfiltered_top_50_heatmap.png
+|   |-- predicted-genes
+|   |   |-- *-genes.faa
+|   |   |-- *-genes.fasta
+|   |   |-- *-genes.gff
+|   |-- read-mapping
+|       |-- *-contig-coverages.tsv
+|       |-- *-gene-coverages.tsv
+|       |-- *-mapping-info.txt
+|       |-- *-metabat-assembly-depth.tsv
+|       |-- *.bam
 ```
 
 ---
@@ -350,15 +476,6 @@ nextflow run main.nf -resume -profile slurm,singularity \
   --input_file barcodes.csv \
   --kit_name SQK-RPB114-24
 ```
-
-### Case 5: Swift 1S Library Prep
-```bash
-nextflow run main.nf -resume -profile slurm,singularity \
-  --technology illumina --sample_type standard \
-  --input_file samples.csv \
-  --swift_1S true
-```
-
 ---
 
 ## Execution Environment

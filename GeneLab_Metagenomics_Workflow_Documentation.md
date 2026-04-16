@@ -480,7 +480,8 @@ The workflow generates outputs in the following directory structure:
 |-- Resource_Usage
 |   |-- execution_report_*.html
 |   |-- execution_timeline_*.html
-|   |-- execution_trace_*.txt```
+|   |-- execution_trace_*.txt
+```
 
 ---
 
@@ -489,32 +490,35 @@ The workflow generates outputs in the following directory structure:
 ### Read-Based Analysis
 
 #### Taxonomic Classification
-- **Kraken2**: `Filtered-species-abundance-table.tsv`, `krona.html`
-- **Kaiju**: `Filtered-species-abundance-table.tsv`, `krona.html`
-- **Metaphlan**: `Filtered-species-abundance-table.tsv`, barplots
-
+- **Kraken2**: `kraken2_*_species_table.tsv`, `kraken2_*_species_barplot.html`, `kraken2_*_species_barplot.png`, `kraken2-report.html (krona)`
+- **Kaiju**: `kaiju_*_species_table.tsv`, `kaiju_*_species_barplot.html`, `kaiju_*_species_barplot.png`, `kaiju-report.html (krona)`
+- **Metaphlan**: `metaphlan_*_species_table.tsv`, `metaphlan_*_species_barplot.html`, `metaphlan_*_species_barplot.png`, `metaphlan-report.html (krona)`
 #### Functional Analysis
-- **Gene Families (UniRef90)**: `Filtered-gene-families-grouped-uniref90.tsv`
-- **Gene Families (KO)**: `Filtered-gene-families-grouped-KO.tsv`
-- **Pathways**: `Filtered-pathway-abundance.tsv`
+- **Gene Families (UniRef90)**: `Gene-families-uniref*`
+- **Gene Families (KO)**: `Gene-families-KO*`
+- **Pathways**: `Pathway-abundances*`
 
 ### Assembly-Based Analysis
 
 #### Assemblies & Genes
-- **Assemblies**: `*_assembly.fasta`
-- **Predicted genes**: `*_genes.faa` (protein), `*_genes.fna` (nucleotide)
+- **Assemblies**: `*_assembly.fasta`, ``
+- **Predicted genes**: `*_genes.faa` (protein), `*_genes.fasta` (nucleotide)
 
 #### Annotation & Taxonomy
-- **Gene annotations**: `*_gene_annotations.tsv` (KO functions + taxonomy + coverage)
-- **Contig taxonomy**: `*_contig_taxonomy.tsv` (CAT results + coverage)
-- **Combined tables**: Filtered, grouped abundance tables for genes and contigs
+- **Gene annotations**: `*_annotations.tsv` (KO functions + taxonomy + coverage)
+- **Contig taxonomy**: `*-contig-coverage-and-tax.tsv` (CAT results + coverage)
+- **Combined tables**:  `Combined*` (Filtered, grouped abundance tables for genes and contigs)
 
 #### Binning & MAGs
 - **All bins**: Individual FASTA files in `bins/`
 - **MAGs**: High-quality bins (>90% complete, <10% redundant) in `MAGs/`
-- **GTDB-Tk**: `GTDB-tk-classification.tsv` (phylogenetic placement)
-- **CheckM**: Quality metrics in overview files
+- **CheckM & GTDB-TK**: `MAGs-overview.tsv` (Quality metrics in overview files)
 
+#### Assembly-based summary
+- **Assembly summaries**: `assembly-summaries.tsv`
+- **Bins Overview**: `bins-overview.tsv` 
+- **MAGs overview**: `MAGs-overview.tsv`
+- **Overall summary**: `Assembly-based-processing-overview.tsv`
 ---
 
 ## Workflow Logic

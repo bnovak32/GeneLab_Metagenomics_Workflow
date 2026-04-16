@@ -22,7 +22,7 @@ The table below details the default maximum resource allocations for individual 
 
 | CPU Cores | Memory |
 |--------------------|------------------|
-| 10                 | 300 GB           |
+| 10                 | 500 GB           |
 
 > ***Note:*** *These per-process resource allocations are defaults. They can be adjusted by modifying `cpus` and `memory` directives in the  [default.config](config/default.config), [illumina.config](config/illumina.config) and [nanopore.config](config/nanopore.config) configuration files.*
 
