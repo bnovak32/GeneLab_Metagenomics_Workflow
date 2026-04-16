@@ -69,8 +69,8 @@ if (params.help) {
   println()
   println("MAG parameters: MAG filtering cutoffs based on checkm quality assessments (in percent); see https://github.com/Ecogenomics/CheckM/wiki/Reported-Statistics.")
   println("	 --min_est_comp [INT] Minimum estimated completion. Default: 90.") 
-  println("	 --max_est_redund [INT] Minimum estimated redundancy. Default: 10.") 
-  println("	 --max_est_strain_het [INT] Minimum estimated strain heterogeneity. Default: 50.")
+  println("	 --max_est_redund [INT] Maximum estimated redundancy. Default: 10.") 
+  println("	 --max_est_strain_het [INT] Maximum estimated strain heterogeneity. Default: 50.")
   println("	 --reduced_tree [STRING] reduced_tree option for checkm, limits the RAM usage to 16GB; https://github.com/Ecogenomics/CheckM/wiki/Genome-Quality-Commands#tree.")
   println("    'True' for yes, anything else will be considered 'False' and the default full tree will be used. Default: 'True'. ")
   println("	 --max_mem [INT] Maximum memory allowed, passed to megahit assembler. Can be set either by proportion of available on system, e.g. 0.5")
@@ -176,7 +176,7 @@ if (params.help) {
   println("      --conda_spades [PATH] Path to a conda environment with spades installed. Default: null.")
   println("      --conda_zip [PATH] Path to a conda environment containing zip. Default: null.")
   println()
-  print("Advanced users can edit the config files in the config directory for more control over default settings such container choice, number of cpus, memory per task etc.")
+  println("Advanced users can edit the configuration files in the 'config' directory (namely, 'config/params.config', 'config/default.config', 'config/illumina.config', 'config/nanopore.config', 'config/profiles.config') for more control over default parameters and settings such as container choice, number of CPUs, memory per task, and other workflow options.")
   exit 0
   }
 

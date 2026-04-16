@@ -4,11 +4,11 @@
 
 The **GeneLab Metagenomics Sequencing Data Processing Workflow** is a comprehensive Nextflow DSL2 pipeline developed by NASA's GeneLab (part of the Open Science Data Repository - OSDR) for processing both Illumina short-read and Oxford Nanopore long-read metagenomics sequencing data. This workflow implements NASA's standardized metagenomics data processing pipelines for both standard and low-biomass samples.
 
-**Repository**: https://github.com/olabiyi/GeneLab_Metagenomics_Workflow  
-**Branch**: DEV  
+**Repository**: https://github.com/nasa/GeneLab_Metagenomics_Workflow  
+**Branch**: main  
 **Version**: 1.0.0  
 **Author**: Olabiyi Aderemi Obayomi  
-**Nextflow Version**: >=24.04.4
+**Nextflow Version**: 24.10.5-0
 
 ---
 
@@ -42,7 +42,7 @@ The **GeneLab Metagenomics Sequencing Data Processing Workflow** is a comprehens
 ### Core Processing Modules (modules/)
 
 #### Quality Control & Preprocessing
-- **`quality_assessment.nf`**: FastQC, FASTP trimming/filtering, MultiQC reporting
+- **`quality_assessment.nf`**: FastQC, FASTP trimming/filtering, Filtlong filtering, PoreChop trimming,  MultiQC reporting etc
 - **`remove_contaminant.nf`**: Low-biomass contaminant removal from negative controls
 - **`remove_host.nf`**: Host sequence removal using Kraken2
 - **`demultiplexing.nf`**: Barcode demultiplexing for Nanopore data
@@ -70,6 +70,7 @@ The **GeneLab Metagenomics Sequencing Data Processing Workflow** is a comprehens
 - **Quality assessment**: CheckM
 - **MAG characterization**: GTDB-Tk taxonomy
 - **Coverage analysis**: BBMap pileup.sh
+- **Visualization**: Heatmaps
 
 #### Supporting Modules
 - **`database_creation.nf`**: Automatic database download and setup
@@ -171,7 +172,6 @@ Instead of providing an input file, you can directly specify a GeneLab accession
 | `--host_url` | URL to pre-built Kraken2 host database |
 | `--host_fasta` | Path to host genome FASTA file |
 | `--host_db_dir` | Path to existing host Kraken2 database |
-| `--swift_1S` | Enable Swift 1S library prep trimming (`true`/`false`) |
 
 ---
 
@@ -276,75 +276,211 @@ The workflow generates outputs in the following directory structure:
 
 ```
 ../
-├── Raw_Sequence_Data/                 # Raw read FastQC reports
-├── Filtered_Sequence_Data/            # Quality-filtered reads
-│   ├── *_filtered.fastq.gz
-│   └── FastQC/
-├── Decontaminated_Sequence_Data/      # Low-biomass decontaminated reads
-├── HostRM-removed_Sequence_Data/      # Host-removed reads
-├── Read-based_Processing/
-│   ├── Kraken2-Outputs/
-│   │   ├── *_kraken_report.txt
-│   │   ├── Filtered-species-abundance-table.tsv
-│   │   └── krona.html
-│   ├── Kaiju-Outputs/
-│   │   ├── *_kaiju.out
-│   │   ├── Filtered-species-abundance-table.tsv
-│   │   └── krona.html
-│   ├── Metaphlan-Outputs/             # Illumina only
-│   │   ├── *_metaphlan_bugs_list.tsv
-│   │   ├── Filtered-species-abundance-table.tsv
-│   │   └── metaphlan-combined-barplot.pdf
-│   └── HUMAnN-Outputs/
-│       ├── Gene-Families/
-│       │   ├── *_genefamilies.tsv
-│       │   ├── Filtered-gene-families-grouped-uniref90.tsv
-│       │   └── heatmap.pdf
-│       ├── Gene-Families-KO/
-│       │   ├── *_genefamilies_ko.tsv
-│       │   └── Filtered-gene-families-grouped-KO.tsv
-│       └── Pathway-Abundance/
-│           ├── *_pathabundance.tsv
-│           └── Filtered-pathway-abundance.tsv
-├── Assembly-based_Processing/
-│   ├── assemblies/
-│   │   ├── *_assembly.fasta
-│   │   └── Assembly-summaries.tsv
-│   ├── predicted-genes/
-│   │   ├── *_genes.faa
-│   │   └── *_genes.fna
-│   ├── annotations-and-taxonomy/
-│   │   ├── *_gene_annotations.tsv
-│   │   ├── *_contig_taxonomy.tsv
-│   │   ├── Gene-taxonomy-grouped/
-│   │   │   ├── Filtered-grouped-gene-taxonomy.tsv
-│   │   │   └── heatmap.pdf
-│   │   ├── Gene-KO-annotation/
-│   │   │   ├── Filtered-grouped-gene-KO-annotation.tsv
-│   │   │   └── heatmap.pdf
-│   │   └── Contig-taxonomy/
-│   │       ├── Filtered-grouped-contig-taxonomy.tsv
-│   │       └── heatmap.pdf
-│   ├── read-mapping/
-│   │   ├── *_mapped_sorted.bam
-│   │   └── *_coverage.tsv
-│   ├── bins/
-│   │   ├── sample1.*.fa
-│   │   └── Bins-overview.tsv
-│   ├── MAGs/                          # High-quality bins only
-│   │   ├── sample1.*.fa
-│   │   ├── MAGs-overview.tsv
-│   │   └── GTDB-tk-classification.tsv
-│   └── combined-outputs/
-│       └── Assembly-based-processing-overview.tsv
-├── Metadata/
-│   ├── software_versions.txt
-│   └── metadata_file.txt
-└── Resource_Usage/
-    ├── execution_timeline_*.html
-    ├── execution_report_*.html
-    └── execution_trace_*.txt
-```
+|-- Assembly-based_Processing
+|   |-- Assembly-based-processing-overview.tsv
+|   |-- MAGs # High-quality bins only
+|   |   |-- *-MAGs.zip
+|   |   |-- MAG-KEGG-Decoder-out.html
+|   |   |-- MAG-KEGG-Decoder-out.tmp
+|   |   |-- MAG-KEGG-Decoder-out.tsv
+|   |   |-- MAG-level-KO-annotations.tsv
+|   |   |-- MAGs-overview.tsv
+|   |-- annotations-and-taxonomy
+|   |   |-- *-annotations.tsv
+|   |   |-- *-contig-coverage-and-tax.tsv
+|   |   |-- *-contig-tax.tsv
+|   |   |-- *-gene-coverage-annotation-and-tax.tsv
+|   |   |-- *-gene-tax.tsv
+|   |-- assemblies
+|   |   |-- *-assembly.fasta
+|   |   |-- Failed-assemblies.tsv # Only if some sample assemblies fail
+|   |   |-- assembly-summaries.tsv
+|   |-- bins
+|   |   |-- *-bins.zip
+|   |   |-- bin-assembly-summaries.tsv
+|   |   |-- bins-checkm-out.tsv
+|   |   |-- bins-overview.tsv
+|   |-- combined-outputs
+|   |   |-- Contig-level
+|   |   |   |-- Combined-contig-level-taxonomy-coverages-CPM.tsv
+|   |   |   |-- Combined-contig-level-taxonomy-coverages.tsv
+|   |   |   |-- Combined-contig-level-taxonomy.tsv
+|   |   |   |-- Combined-contig-level-taxonomy_decontam_failure.txt # Only if decontam fails
+|   |   |   |-- Combined-contig-level-taxonomy_decontam_results.tsv
+|   |   |   |-- Combined-contig-level-taxonomy_filtered.tsv
+|   |   |   |-- Combined-contig-level-taxonomy_filtered_heatmap.png
+|   |   |   |-- Combined-contig-level-taxonomy_filtered_top_50_heatmap.png
+|   |   |   |-- Combined-contig-level-taxonomy_unfiltered_heatmap.png
+|   |   |   |-- Combined-contig-level-taxonomy_unfiltered_top_50_heatmap.png
+|   |   |-- Gene-level
+|   |       |-- KO
+|   |       |   |-- Combined-gene-level-KO-function-coverages-CPM.tsv
+|   |       |   |-- Combined-gene-level-KO-function-coverages.tsv
+|   |       |   |-- Combined-gene-level-KO-function.tsv
+|   |       |   |-- Combined-gene-level-KO-function_decontam_failure.txt # Only if decontam fails
+|   |       |   |-- Combined-gene-level-KO-function_decontam_results.tsv
+|   |       |   |-- Combined-gene-level-KO-function_filtered.tsv
+|   |       |   |-- Combined-gene-level-KO-function_filtered_heatmap.png
+|   |       |   |-- Combined-gene-level-KO-function_filtered_top_50_heatmap.png
+|   |       |   |-- Combined-gene-level-KO-function_unfiltered_heatmap.png
+|   |       |   |-- Combined-gene-level-KO-function_unfiltered_top_50_heatmap.png
+|   |       |-- Taxonomy
+|   |           |-- Combined-gene-level-taxonomy-coverages-CPM.tsv
+|   |           |-- Combined-gene-level-taxonomy-coverages.tsv
+|   |           |-- Combined-gene-level-taxonomy.tsv
+|   |           |-- Combined-gene-level-taxonomy_decontam_failure.txt
+|   |           |-- Combined-gene-level-taxonomy_decontam_results.tsv
+|   |           |-- Combined-gene-level-taxonomy_filtered.tsv
+|   |           |-- Combined-gene-level-taxonomy_filtered_heatmap.png
+|   |           |-- Combined-gene-level-taxonomy_filtered_top_50_heatmap.png
+|   |           |-- Combined-gene-level-taxonomy_unfiltered_heatmap.png
+|   |           |-- Combined-gene-level-taxonomy_unfiltered_top_50_heatmap.png
+|   |-- predicted-genes
+|   |   |-- *-genes.faa
+|   |   |-- *-genes.fasta
+|   |   |-- *-genes.gff
+|   |-- read-mapping
+|       |-- *-contig-coverages.tsv
+|       |-- *-gene-coverages.tsv
+|       |-- *-mapping-info.txt
+|       |-- *-metabat-assembly-depth.tsv
+|       |-- *.bam
+|-- Decontaminated_Sequence_Data # Low-biomass decontaminated reads
+|   |-- FastQC | Nanoplots
+|   |   |-- *_decontam_*.html
+|   |   |-- *_decontam_fastqc.zip # Illumina only
+|   |-- Fastq
+|   |   |-- *_decontam.fastq.gz
+|   |-- Logs
+|   |   |-- blank-assembly.log
+|   |-- MultiQC_Reports
+|       |-- decontam_multiqc.html
+|       |-- decontam_multiqc_data.zip
+|-- Filtered_Sequence_Data # Quality-filtered reads
+|   |-- FastQC
+|   |   |-- *_filtered_*.html
+|   |   |-- *_filtered_fastqc.zip # Illumina only
+|   |-- Fastq
+|   |   |-- `Tool Name` [Fastp or Filtlong]
+|   |   |   |-- *_filtered.fastq.gz
+|   |   |-- Fastp_temp  # First round of Fastp with PollG trimmed - illumina only
+|   |       |-- temp_*_filtered.fastq.gz
+|   |-- MultiQC_Reports
+|       |-- filtered_multiqc.html
+|       |-- filtered_multiqc_data.zip
+|-- HostRM-removed_Sequence_Data # Host-removed reads - Optional
+|   |-- FastQC | Nanoplots 
+|   |   |-- *_HostRM_*.html
+|   |-- Fastq
+|   |   |-- *_HostRM_*.fastq.gz
+|   |-- MultiQC_Reports
+|       |-- HostRM_multiqc.html
+|       |-- HostRM_multiqc_data.zip
+|-- HR-removed_Sequence_Data # Human-removed reads - Nanopore data only
+|   |-- Nanoplots
+|   |   |-- *_HRrm_*.html
+|   |-- Fastq
+|   |   |-- *_HRrm_*.fastq.gz
+|   |-- MultiQC_Reports
+|       |-- HRrm_multiqc.html
+|       |-- HRrm_multiqc_data.zip
+|-- Trimmed_Sequence_Data  # PoreChop Quality-trimmed reads - Nanopore data only
+|   |-- Nanoplots
+|   |   |-- *_trimmed_*.html
+|   |-- Fastq
+|   |   |-- *_trimmed.fastq.gz
+|   |-- MultiQC_Reports
+|       |-- trimmed_multiqc.html
+|       |-- trimmed_multiqc_data.zip
+|-- Logs
+|   |-- <TOOL NAME>
+|   |   |-- *.log
+|-- Merged_Sequence_Data # Raw read or Merged reads
+|   |-- FastQC | Nanoplots
+|   |   |-- *.html
+|   |   |-- *_fastqc.zip # Illumina only
+|   |-- MultiQC_Reports
+|       |-- HRrm_multiqc.html
+|       |-- HRrm_multiqc_data.zip
+|-- Metadata
+|   |-- software_versions.txt
+|-- Read-based_Processing
+|   |-- Humann_Outputs
+|   |   |-- Gene_Families
+|   |   |   |-- Gene-families-KO-cpm.tsv
+|   |   |   |-- Gene-families-KO.tsv
+|   |   |   |-- Gene-families-KO_decontam_results.tsv
+|   |   |   |-- Gene-families-KO_filtered.tsv
+|   |   |   |-- Gene-families-KO_filtered_heatmap.png
+|   |   |   |-- Gene-families-KO_filtered_top_50_heatmap.png
+|   |   |   |-- Gene-families-KO_unfiltered_heatmap.png
+|   |   |   |-- Gene-families-KO_unfiltered_top_50_heatmap.png
+|   |   |   |-- Gene-families-cpm.tsv
+|   |   |   |-- Gene-families-grouped-by-taxa.tsv
+|   |   |   |-- Gene-families-uniref.tsv
+|   |   |   |-- Gene-families-uniref_decontam_results.tsv
+|   |   |   |-- Gene-families-uniref_filtered.tsv
+|   |   |   |-- Gene-families-uniref_filtered_heatmap.png
+|   |   |   |-- Gene-families-uniref_filtered_top_50_heatmap.png
+|   |   |   |-- Gene-families-uniref_unfiltered_heatmap.png
+|   |   |   |-- Gene-families-uniref_unfiltered_top_50_heatmap.png
+|   |   |   |-- Gene-families.tsv
+|   |   |-- Pathway_Abundances
+|   |   |   |-- Pathway-abundances-cpm.tsv
+|   |   |   |-- Pathway-abundances-grouped-by-taxa.tsv
+|   |   |   |-- Pathway-abundances.tsv
+|   |   |   |-- Pathway-abundances_decontam_results.tsv
+|   |   |   |-- Pathway-abundances_filtered.tsv
+|   |   |   |-- Pathway-abundances_filtered_heatmap.png
+|   |   |   |-- Pathway-abundances_unfiltered_heatmap.png
+|   |   |   |-- Pathway-abundances_unfiltered_top_50_heatmap.png
+|   |   |-- Pathway_Coverage
+|   |       |-- Pathway-coverages-grouped-by-taxa.tsv
+|   |       |-- Pathway-coverages.tsv
+|   |-- Kaiju_Outputs
+|   |   |-- Barplots
+|   |   |   |-- kaiju_filtered_species_barplot.html
+|   |   |   |-- kaiju_filtered_species_barplot.png
+|   |   |   |-- kaiju_unfiltered_species_barplot.html
+|   |   |   |-- kaiju_unfiltered_species_barplot.png
+|   |   |-- Count_tables
+|   |   |   |-- kaiju_decontam_results.tsv
+|   |   |   |-- kaiju_filtered_species_table.tsv
+|   |   |   |-- kaiju_species_table.tsv
+|   |   |-- Krona_Reports
+|   |       |-- kaiju-report.html
+|   |-- Kraken2_Outputs
+|   |   |-- Barplots
+|   |   |   |-- kraken2_filtered_species_barplot.html
+|   |   |   |-- kraken2_filtered_species_barplot.png
+|   |   |   |-- kraken2_unfiltered_species_barplot.html
+|   |   |   |-- kraken2_unfiltered_species_barplot.png
+|   |   |-- Count_tables
+|   |   |   |-- kraken2_decontam_results.tsv
+|   |   |   |-- kraken2_filtered_species_table.tsv
+|   |   |   |-- kraken2_species_table.tsv
+|   |   |-- Krona_Reports
+|   |   |   |-- kraken2-report.html
+|   |   |-- MultiQC_Reports
+|   |       |-- kraken2_multiqc.html
+|   |       |-- kraken2_multiqc_data.zip
+|   |-- Metaphlan_Outputs # Illumina only
+|       |-- Barplots
+|       |   |-- metaplan_filtered_species_barplot.html
+|       |   |-- metaplan_filtered_species_barplot.png
+|       |   |-- metaplan_unfiltered_species_barplot.html
+|       |   |-- metaplan_unfiltered_species_barplot.png
+|       |-- Krona_Reports
+|       |   |-- metaphlan-report.html
+|       |-- Taxonomy
+|           |-- metaphlan-taxonomy.tsv
+|           |-- metaphlan_decontam_results.tsv
+|           |-- metaphlan_filtered_species_table.tsv
+|           |-- metaphlan_species_table.tsv
+|-- Resource_Usage
+|   |-- execution_report_*.html
+|   |-- execution_timeline_*.html
+|   |-- execution_trace_*.txt```
 
 ---
 
@@ -400,6 +536,7 @@ main.nf
   │   └─→ nanopore.nf
   │       ├─→ [Optional] Demultiplexing (pod5/fast5)
   │       ├─→ Quality filtering
+  │       ├─→ Adapter trimming  
   │       ├─→ [Low biomass] Contaminant removal
   │       ├─→ [Optional] Host removal
   │       └─→ Returns: clean_reads, metadata
@@ -424,7 +561,7 @@ illumina.nf
   ├─→ Filtering: FASTP
   │   ├─→ Adapter trimming
   │   ├─→ Quality filtering
-  │   └─→ [Optional] PolyG trimming (NextSeq/NovaSeq)
+  │   └─→ PolyG trimming (NextSeq/NovaSeq)
   │
   ├─→ QC: Filtered FastQC + MultiQC
   │
@@ -450,13 +587,17 @@ nanopore.nf
   │   ├─→ [multiple fastq] Concatenation
   │   └─→ [single fastq] Direct processing
   │
-  ├─→ QC: Raw NanoPlot
+  ├─→ QC: Raw NanoPlot  + MultiQC
   │
-  ├─→ Filtering: Chopper
+  ├─→ Filtering: 
   │   ├─→ Length filtering
   │   └─→ Quality score filtering
-  │
-  ├─→ QC: Filtered NanoPlot
+  |
+  ├─→ QC: Filtered NanoPlot  + MultiQC
+  │   
+  ├─→ Adapter Trimming: 
+  |
+  ├─→ QC: Trimmed NanoPlot + MultiQC
   │
   ├─→ [Low biomass] Contaminant removal
   │
@@ -606,11 +747,11 @@ All processes support Docker execution via `-profile docker`
 
 ### Conda Environments
 Pre-defined environments in `envs/`:
-- `humann3.yml`
-- `cat.yml`
-- `metabat.yml`
-- `gtdbtk.yml`
-- `megahit.yml`
+- `humann3.yaml`
+- `cat.yaml`
+- `metabat.yaml`
+- `gtdbtk.yaml`
+- `megahit.yaml`
 - And more...
 
 You can provide paths to existing conda environments:
@@ -635,6 +776,7 @@ You can provide paths to existing conda environments:
 - **GTDB-Tk**: 100-200 GB (use `--use_gtdbtk_scratch_location` to offload to disk)
 - **HUMAnN3**: 40-80 GB per sample
 - **CAT**: Depends on `--block_size` (lower = less RAM)
+- **Kaiju DB Setup**: 500 GB
 
 ---
 
@@ -648,12 +790,14 @@ You can provide paths to existing conda environments:
 ### Low-Biomass Sample Processing
 Specialized statistical decontamination:
 1. Identifies negative controls (NTC = true)
-2. Performs batch correction
-3. Removes contaminant signals from samples
-4. Applies to both read-based and assembly-based results
+2. Assembles negative controls and maps reads to the assembly
+3. Removes contaminant signals/reads from samples by retaining only unmapped reads
+4. Statistically identifies and removes contaminant features (taxa or functions) using decontam
+5. Applies to both read-based and assembly-based results
 
 ### Custom Genome Mapping
 Map reads to custom reference genomes:
+>Note: You'll need to uncomment relavent lines in main.nf to use this functionality
 ```bash
 --custome_genome /path/to/reference.fna
 ```
@@ -712,7 +856,8 @@ The workflow integrates the following major tools:
 - MultiQC
 - NanoPlot (Nanopore)
 - FASTP (Illumina)
-- Chopper (Nanopore)
+- Filtlong (Nanopore)
+- PoreChop (Nanopore)
 
 ### Taxonomic Classification
 - Metaphlan4 (Illumina)
@@ -749,20 +894,20 @@ The workflow integrates the following major tools:
 ## Citation & References
 
 If you use this workflow, please cite:
-- **GeneLab Metagenomics Workflow**: https://github.com/olabiyi/GeneLab_Metagenomics_Workflow
+- **GeneLab Metagenomics Workflow**: https://github.com/nasa/GeneLab_Metagenomics_Workflow
 - **NASA OSDR**: https://osdr.nasa.gov/
 - Individual tool citations (see `software_versions.txt` in outputs)
 
 ### Pipeline Documents
-- GL-DPPD-7107-A: Standard Illumina metagenomics
-- GL-DPPD-7116: Nanopore metagenomics
-- GL-DPPD-7117: Low-biomass metagenomics
+- [GL-DPPD-7107-B](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Illumina/Pipeline_GL-DPPD-7107_Versions/GL-DPPD-7107-B.md) : Standard Illumina metagenomics
+- [GL-DPPD-7116](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Pipeline_GL-DPPD-7116_Versions/GL-DPPD-7116.md): Low-biomass Nanopore metagenomics
+- [GL-DPPD-7117](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Pipeline_GL-DPPD-7117_Versions/GL-DPPD-7117.md): Low-biomass Illumina metagenomics
 
 ---
 
 ## Support & Contact
 
-- **Issues**: https://github.com/olabiyi/GeneLab_Metagenomics_Workflow/issues
+- **Issues**: https://github.com/nasa/GeneLab_Metagenomics_Workflow/issues
 - **GeneLab**: https://genelab.nasa.gov/
 - **OSDR**: https://osdr.nasa.gov/
 
@@ -770,13 +915,13 @@ If you use this workflow, please cite:
 
 ## Changelog
 
-### Version 1.0.0 (Current - DEV branch)
+### Version 1.0.0 (Current - main branch)
 - Initial Nextflow DSL2 implementation
 - Support for Illumina and Nanopore
 - Standard and low-biomass sample types
 - Read-based and assembly-based workflows
 - Automatic database management
-- GeneLab accession integration
+- GeneLab accession integration for traditional metagenomics
 - Comprehensive quality control and reporting
 
 ---
