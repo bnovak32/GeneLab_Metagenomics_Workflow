@@ -12,23 +12,25 @@ This is the initial release of the NF_MetagenomeSeq workflow which is an extensi
 [NF_MGIllumina workflow](https://github.com/nasa/GeneLab_Data_Processing/blob/master/Metagenomics/Illumina/Workflow_Documentation/NF_MGIllumina/).
 
 ### Added
-- Low biomass metagenomics processing for both short-read (Illumina) and long-read (Nanopore) data
-  - long-read specific pre-processing
-  - long-read specific updates to the Assembly-based processing subworkflow
-  - read decontamination/filtering during pre-processing for both long- and short-read data
-- Long-read data support for processing standard metagenomics data
-- Additional taxonomic profiling tools in the Read-based processing subworkflow
+- Add two additional taxonomic profiling tools to the Read-based processing subworkflow
   - Kaiju taxonomic profiling
   - Kraken2 taxonomic profiling
-- Downstream analysis
+- Add downstream analysis and visualization for both Read-based and Assembly-based processing outputs
   - Feature filtering for all output datatypes
-  - Barplots or Heatmaps generated for each output datatype
-- Feature decontamination during downstream analysis for low biomass data
+  - Barplots or Heatmaps for each output datatype
+- Add low biomass metagenomics processing support for both short-read (Illumina) and long-read (Nanopore) data
+  - Implement short-read low biomass pipeline [GL-DPPD-7117](https://github.com/nasa/GeneLab_Data_Processing/blob/master/Metagenomics/Low_Biomass/Pipeline_GL-DPPD-7117_Versions/GL-DPPD-7117.md)
+  - Implement long-read low biomass pipeline [GL-DPPD-7116](https://github.com/nasa/GeneLab_Data_Processing/blob/master/Metagenomics/Low_Biomass/Pipeline_GL-DPPD-7116_Versions/GL-DPPD-7116.md)
+    - Long-read specific pre-processing
+    - Long-read specific steps in the Assembly-based processing subworkflow
+  - Read decontamination/filtering during pre-processing for both short- and long-read data
+  - Feature decontamination using decontam package during downstream analysis for low biomass data
+- Long-read data support for processing standard metagenomics data
 
 ### Changed
-- Update to the latest standard short-read pipeline version [GL-DPPD-7101-B](https://github.com/nasa/GeneLab_Data_Processing/blob/master/Metagenomics/Illumina/Pipeline_GL-DPPD-7107_Versions/GL-DPPD-7107-B.md) 
+- Update to the latest standard short-read pipeline version [GL-DPPD-7107-B](https://github.com/nasa/GeneLab_Data_Processing/blob/master/Metagenomics/Illumina/Pipeline_GL-DPPD-7107_Versions/GL-DPPD-7107-B.md) 
 of the GeneLab Metagenomics consensus processing pipelines.
-- Replace bbduk with fastp for initial read quality filtering and adapter trimming
+- Replace bbduk with fastp for initial read quality filtering and adapter trimming in standard Illumina workflow
 
 <BR>
 
