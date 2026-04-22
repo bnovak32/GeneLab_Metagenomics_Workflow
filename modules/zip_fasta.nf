@@ -1,6 +1,40 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
+/*
+ * ========================================================================================
+ * PROCESS: ZIP_FASTA
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Zip bins or MAGs
+ *
+ * INPUTS:
+ *   1. val: TYPE
+ *      Cardinality: one
+ *      Description: Parameter value: bin or MAG
+ *
+ *   2. path: DIR
+ *      Cardinality: one
+ *      Description: Input file: Directory to be zipped
+ *
+ * OUTPUTS:
+ *   1. path: *.zip (emit: zip_files) [OPTIONAL]
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/zip.yaml
+ *   Labels: zip
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 process ZIP_FASTA {
 
     tag "Zipping up your ${TYPE}s..."

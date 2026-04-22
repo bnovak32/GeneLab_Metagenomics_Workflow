@@ -6,6 +6,42 @@ nextflow.enable.dsl = 2
 **************************  Combine Contig Annotation ***********************************
 ****************************************************************************************/
 
+/*
+ * ========================================================================================
+ * PROCESS: COMBINE_GENE_ANNOTS_TAX_AND_COVERAGE
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Combine gene and taxonomy annotations for sample
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(gene_coverages), path(contig_coverages), path(annotations),
+ *                   path(gene_tax), path(contig_tax), path(aa), path(nt), path(assembly)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - gene_coverages: path to sample gene converages
+ *                 - contig_coverages: path to sample contig coverages
+ *                 - gene_tax: path to sample gene taxonomy
+ *                 - contig_tax: path to sample contig taxonomy
+ *                 - aa: path to sample amino acids file
+ *                 - nt: path to sample nucleotide file
+ *                 - assembly: path to sample assembly/contigs
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}-gene-coverage-annotation-and-tax${params.assay_suffix}.tsv")
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bit, contig_annotation
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 /*
 This process combines the gene-level functional annotations, taxonomic classifications,
@@ -56,6 +92,42 @@ process COMBINE_GENE_ANNOTS_TAX_AND_COVERAGE {
 }
 
 
+/*
+ * ========================================================================================
+ * PROCESS: MAKE_COMBINED_GENE_LEVEL_TABLES
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Combine all gene level annotations
+ *
+ * INPUTS:
+ *   1. path: gene_coverage_annotation_and_tax_files
+ *      Cardinality: one
+ *      Description: Input file: gene coverage annotation and taxonomy files
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}Combined-gene-level-KO-function-coverages${params.assay_suffix}.tsv (emit: raw_function_coverages)
+ *
+ *   2. path: ${params.additional_filename_prefix}Combined-gene-level-KO-function-coverages-CPM${params.assay_suffix}.tsv (emit: norm_function_coverages)
+ *
+ *   3. path: ${params.additional_filename_prefix}Combined-gene-level-taxonomy-coverages${params.assay_suffix}.tsv (emit: raw_taxonomy_coverages)
+ *
+ *   4. path: ${params.additional_filename_prefix}Combined-gene-level-taxonomy-coverages-CPM${params.assay_suffix}.tsv (emit: norm_taxonomy_coverages)
+ *
+ *   5. path: versions.txt (emit: version)
+ *
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bit
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
+
 process MAKE_COMBINED_GENE_LEVEL_TABLES {
 
     tag "Combining all gene level annotations...."
@@ -92,6 +164,44 @@ process MAKE_COMBINED_GENE_LEVEL_TABLES {
         bit-version |grep "Bioinformatics Tools"|sed -E 's/^\\s+//' > versions.txt
         """
 }
+
+
+/*
+ * ========================================================================================
+ * PROCESS: COMBINE_CONTIG_TAX_AND_COVERAGE
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Combine taxonomy and coverage for sample
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(gene_coverages), path(contig_coverages),
+ *                   path(gene_tax), path(contig_tax), path(aa), path(nt), path(assembly)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - gene_coverages: path to sample gene converages
+ *                 - contig_coverages: path to sample contig coverages
+ *                 - gene_tax: path to sample gene taxonomy
+ *                 - contig_tax: path to sample contig taxonomy
+ *                 - aa: path to sample amino acids file
+ *                 - nt: path to sample nucleotide file
+ *                 - assembly: path to sample assembly/contigs
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}-contig-coverage-and-tax${params.assay_suffix}.tsv")
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bit, contig_annotation
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 // This process combines the contig-level taxonomic and 
 // coverage information for each individual sample. 
@@ -152,6 +262,38 @@ process COMBINE_CONTIG_TAX_AND_COVERAGE {
         fi
         """
 }
+
+/*
+ * ========================================================================================
+ * PROCESS: MAKE_COMBINED_CONTIG_TAX_TABLES
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Make summary contig taxonomy table
+ *
+ * INPUTS:
+ *   1. path: contig_coverage_and_tax_files
+ *      Cardinality: one
+ *      Description: Input file: contig coverage and tax files
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}Combined-contig-level-taxonomy-coverages${params.assay_suffix}.tsv (emit: raw_taxonomy)
+ *
+ *   2. path: ${params.additional_filename_prefix}Combined-contig-level-taxonomy-coverages-CPM${params.assay_suffix}.tsv (emit: norm_taxonomy)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bit
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process MAKE_COMBINED_CONTIG_TAX_TABLES {
 

@@ -1,7 +1,39 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl = 2
 
-
+/*
+ * ========================================================================================
+ * PROCESS: METAPHLAN2COUNT
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Convert metaphlan's default relative abundance output to a raw counts species table
+ *
+ * INPUTS:
+ *   1. path: metaphlan_table
+ *      Cardinality: one
+ *      Description: Input file: default metaphlan table
+ *
+ *   2. path: reads_per_sample
+ *      Cardinality: one
+ *      Description: Input file: reads per sample file
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}metaphlan_species_table${params.assay_suffix}.tsv (emit: table)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/R_visualizations.yaml
+ *   Labels: R_downstream
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process METAPHLAN2COUNT {
 
@@ -38,6 +70,35 @@ process METAPHLAN2COUNT {
 }
 
 
+/*
+ * ========================================================================================
+ * PROCESS: KAIJU2SPECIES_TABLE
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Generate kaiju species count table
+ *
+ * INPUTS:
+ *   1. path: merged_table
+ *      Cardinality: one
+ *      Description: Input file: merged kraken2 table generated from kraken2 reports
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}kaiju_species_table${params.assay_suffix}.tsv (emit: table)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/R_visualizations.yaml
+ *   Labels: R_downstream
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process KAIJU2SPECIES_TABLE  { 
 
@@ -74,6 +135,42 @@ process KAIJU2SPECIES_TABLE  {
 
 }
 
+/*
+ * ========================================================================================
+ * PROCESS: FILTER_RARE
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Filter out rare features
+ *
+ * INPUTS:
+ *   1. val: meta
+ *      Cardinality: one
+ *      Description: Parameter value: a mapping with the following keys:
+ *                  mode: filtering mode. 'across_samples' and 'values_sum' for read and assembly based analysis, respectively.  
+ *                  filter_threshold : threshold for filtering out rare taxa
+ *                  output_file: Output tsv filem name
+ *
+ *   2. path: feature_table
+ *      Cardinality: one
+ *      Description: Input file: feature table to filter
+ *
+ * OUTPUTS:
+ *   1. path: ${meta.output_file} (emit: table)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/R_visualizations.yaml
+ *   Labels: R_downstream
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process FILTER_RARE {
 
@@ -114,6 +211,45 @@ process FILTER_RARE {
 
 }
 
+/*
+ * ========================================================================================
+ * PROCESS: ASSEMBLY_TABLE
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Process Contig or Gene level taxonomy or KO table
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(type), val(level)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                   - type: feature type i.e taxonomy or KO
+ *                   - level: assembly level i.e. 'Gene' or 'Contig'
+ *
+ *   2. path: feature_table
+ *      Cardinality: one
+ *      Description: Input file: feature (KO or taxonomy) table
+ *
+ *   3. path: summary_table
+ *      Cardinality: one
+ *      Description: Input file: assembly summary table used to retrieve sample names
+ *
+ * OUTPUTS:
+ *   1. path: *.tsv (emit: table)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/R_visualizations.yaml
+ *   Labels: R_downstream
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process ASSEMBLY_TABLE {
   
@@ -155,6 +291,39 @@ process ASSEMBLY_TABLE {
         """
 }
 
+/*
+ * ========================================================================================
+ * PROCESS: HUMANN_TABLE
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Process Humann generated pathway, uniref or KO table
+ *
+ * INPUTS:
+ *   1. val: type
+ *      Cardinality: one
+ *      Description: Parameter value: feature type. one of 'pathway', 'uniref' or  'KO'.
+ *
+ *   2. path: feature_table
+ *      Cardinality: one
+ *      Description: Input file: feature table
+ *
+ * OUTPUTS:
+ *   1. path: *.tsv (emit: table)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/R_visualizations.yaml
+ *   Labels: R_downstream
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process HUMANN_TABLE {
 
@@ -192,6 +361,54 @@ process HUMANN_TABLE {
 }
 
 
+/*
+ * ========================================================================================
+ * PROCESS: DECONTAM
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Statistical feature table decontamination with decontam
+ *
+ * INPUTS:
+ *   1. val: meta
+ *      Cardinality: one
+ *      Description: Parameter value: A map with the following keys:
+ *                  feature:  feature column name e.g. 'Species'
+ *                  samples:  samples column name e.g. 'Sample_ID'
+ *                  prevalence: prevalence column name e.g. 'NTC'
+ *                  frequency: frequency column name e.g. 'concentration'
+ *                  decontam_threshold: decontam's threshold for identifying contaminants. Default: 0.5
+ *                  method: classification method e.g. 'kaiju'
+ *                  ntc_name: name of ntc in prevalence column e.g. 'true'
+ *
+ *   2. path: metadata
+ *      Cardinality: one
+ *      Description: Input file: samples metadata file
+ *
+ *   3. path: feature_table
+ *      Cardinality: one
+ *      Description: Input file: feature (species, KO etc) table
+ *
+ * OUTPUTS:
+ *   1. path: *_decontam_results*.tsv (emit: result)
+ *
+ *   2. path: *_decontam_*_table*.tsv (emit: table) [OPTIONAL]
+ *
+ *   3. path: *_decontam_failure.txt (emit: failure) [OPTIONAL] # A failure text file generated if the values in both prevalence and frequency columns are not different between samples within each column. i.e no difference between negative control(s) and other samples
+ *
+ *   4. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/R_visualizations.yaml
+ *   Labels: R_downstream
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process DECONTAM  { 
 
@@ -249,7 +466,48 @@ process DECONTAM  {
 
 }
 
-
+/*
+ * ========================================================================================
+ * PROCESS: BARPLOT
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Make relative abundance static and interactive bar plots
+ *
+ * INPUTS:
+ *   1. val: meta
+ *      Cardinality: one
+ *      Description: Parameter value:  A map with the following keys:
+ *                  feature:  feature column name e.g. 'Species'
+ *                  samples:  samples column name e.g. 'Sample_ID'
+ *                  prefix: output file prefix e.g. 'kaiju_filtered_species'
+ *
+ *   2. path: feature_table
+ *      Cardinality: one
+ *      Description: Input file: read-based feature table to plot
+ *
+ *   3. path: metadata
+ *      Cardinality: one
+ *      Description: Input file: samples metadata file
+ *
+ * OUTPUTS:
+ *   1. path: ${meta.prefix}_barplot${params.assay_suffix}.png (emit: plot)
+ *
+ *   2. path: ${meta.prefix}_barplot${params.assay_suffix}.html (emit: html)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/R_visualizations.yaml
+ *   Labels: R_downstream
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process BARPLOT {
 
@@ -297,6 +555,47 @@ process BARPLOT {
 
 }
 
+
+/*
+ * ========================================================================================
+ * PROCESS: HEATMAP
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Make feature heatmap
+ *
+ * INPUTS:
+ *   1. val: meta
+ *      Cardinality: one
+ *      Description: Parameter value: A map with the following keys:
+ *                  group:  sample grouping column name e.g. 'group'
+ *                  samples:  samples column name e.g. 'sample_id'
+ *                  prefix: output file prefix e.g. 'Gene-families-uniref_unfiltered'
+ *
+ *   2. path: feature_table
+ *      Cardinality: one
+ *      Description: Input file: feature table
+ *
+ *   3. path: metadata
+ *      Cardinality: one
+ *      Description: Input file: samples metadata file
+ *
+ * OUTPUTS:
+ *   1. path: *_heatmap${params.assay_suffix}.png (emit: plot)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/R_visualizations.yaml
+ *   Labels: R_downstream
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process HEATMAP {
 

@@ -19,6 +19,41 @@ already exists if wanting to use disk space
 
 //params.gtdb_tk_scratch_location = ""
 
+/*
+ * ========================================================================================
+ * PROCESS: FILTER_CHECKM_RESULTS_AND_COPY_MAGS
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Filter checkm results to retrieve MAGs
+ *
+ * INPUTS:
+ *   1. path: bins_checkm_results
+ *      Cardinality: one
+ *      Description: Input file: bins checkm results
+ *
+ *   2. path: bins
+ *      Cardinality: one
+ *      Description: Input file: bins
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}MAGs-checkm-out.tsv (emit: MAGs_checkm_out)
+ *
+ *   2. path: MAGs_dir/ (emit: MAGs_dir)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: CheckM
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bit
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 /*  Retrieve MAGS.
     Filters checkm results based on estimate completion, redundancy, and 
     strain heterogeneity. Defaults are conservatively 90, 10, and 50  
@@ -62,7 +97,33 @@ process FILTER_CHECKM_RESULTS_AND_COPY_MAGS {
 }
 
 
-
+/*
+ * ========================================================================================
+ * PROCESS: GET_MAGS
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Collect list of MAGs
+ *
+ * INPUTS:
+ *   1. path: MAGs_dir
+ *      Cardinality: one
+ *      Description: Input file: Directory containing MAGs
+ *
+ * OUTPUTS:
+ *   1. path: ${MAGs_dir}/*fasta [OPTIONAL]
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bit
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process GET_MAGS {
 
@@ -81,9 +142,53 @@ process GET_MAGS {
 }
 
 
+/*
+ * ========================================================================================
+ * PROCESS: GTDBTK_ON_MAG
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Assign taxonomy to MAG with gtdb-tk
+ *
+ * INPUTS:
+ *   1. path: MAGs_checkm_out
+ *      Cardinality: one
+ *      Description: Input file: MAGs checkm output
+ *
+ *   2. path: MAG
+ *      Cardinality: one
+ *      Description: Input file: MAG
+ *
+ *   3. path: gtdbtk_db_dir
+ *      Cardinality: one
+ *      Description: Input file:  path to GTDBTK database. Dummy here ensures dependency on process that creates the database
+ *
+ *   4. val: use_gtdbtk_scratch_location
+ *      Cardinality: one
+ *      Description: Parameter value: should a scratch location be use for gtdbtk 
+ *
+ *   5. env: GTDBTK_DATA_PATH
+ *      Cardinality: one
+ *      Description: Parameter value: environmental variable holding the path to your GTDBTK database
+ *
+ * OUTPUTS:
+ *   1. path: *.summary.tsv (emit: summary)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: GTDB-Tk
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/gtdb-tk.yaml
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 // Assign taxonomy to MAGs with gtdb-tk
-
 process  GTDBTK_ON_MAG {
    
     tag "Assigning taxonomy to your MAGs with gtdb-tk..." 
@@ -147,6 +252,34 @@ process  GTDBTK_ON_MAG {
 }
 
 
+/*
+ * ========================================================================================
+ * PROCESS: COMBINE_GTDBTK
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Combine GTDBTK summaries from all MAGs
+ *
+ * INPUTS:
+ *   1. path: summaries
+ *      Cardinality: one
+ *      Description: Input file: list of GTDBTK summaries
+ *
+ * OUTPUTS:
+ *   1. path: gtdbtk_summary.tsv (emit: summary)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: GTDB-Tk
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bit
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process COMBINE_GTDBTK {
 
@@ -172,6 +305,35 @@ process COMBINE_GTDBTK {
 }
 
 
+/*
+ * ========================================================================================
+ * PROCESS: SUMMARIZE_MAG_ASSEMBLIES
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Summarize MAG assemblies
+ *
+ * INPUTS:
+ *   1. path: MAGs_dir
+ *      Cardinality: one
+ *      Description: Input file: Directory of MAGs
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}MAG-assembly-summaries.tsv (emit: summary)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bit
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 // Summarize MAG assemblies
 process  SUMMARIZE_MAG_ASSEMBLIES {
@@ -206,6 +368,46 @@ process  SUMMARIZE_MAG_ASSEMBLIES {
         bit-version |grep "Bioinformatics Tools"|sed -E 's/^\\s+//' > versions.txt
         """
 }
+
+/*
+ * ========================================================================================
+ * PROCESS: GENERATE_MAGS_OVERVIEW_TABLE
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Generate an overview table of all MAGs
+ *
+ * INPUTS:
+ *   1. path: MAG_assembly_summaries
+ *      Cardinality: one
+ *      Description: Input file: MAG assembly summaries
+ *
+ *   2. path: MAGs_checkm_out
+ *      Cardinality: one
+ *      Description: Input file: MAGs checkm output
+ *
+ *   3. path: gtdbtk_summary
+ *      Cardinality: one
+ *      Description: Input file: gtdbtk summary
+ *
+ *   4. path: MAGs_dir
+ *      Cardinality: one
+ *      Description: Input file: directory of MAGs
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}MAGs-overview${params.assay_suffix}.tsv
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: mags, bit
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process  GENERATE_MAGS_OVERVIEW_TABLE {
 
@@ -260,6 +462,43 @@ process  GENERATE_MAGS_OVERVIEW_TABLE {
         """
 }
 
+/*
+ * ========================================================================================
+ * PROCESS: SUMMARIZE_MAG_LEVEL_KO_ANNOTATIONS
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Parse MAG KO annotations
+ *
+ * INPUTS:
+ *   1. path: MAGs_overview
+ *      Cardinality: one
+ *      Description: Input file: MAGs overview
+ *
+ *   2. path: gene_coverage_annotation_and_tax_files
+ *      Cardinality: one
+ *      Description: Input file: gene coverage annotation and taxonomy files
+ *
+ *   3. path: MAGs_dir
+ *      Cardinality: one
+ *      Description: Input file: directory of MAGs
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}MAG-level-KO-annotations${params.assay_suffix}.tsv (emit: summary)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: mags, bit
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process SUMMARIZE_MAG_LEVEL_KO_ANNOTATIONS {
 
@@ -303,6 +542,39 @@ process SUMMARIZE_MAG_LEVEL_KO_ANNOTATIONS {
         """
 }
 
+/*
+ * ========================================================================================
+ * PROCESS: SUMMARIZE_MAG_KO_ANNOTS_WITH_KEGG_DECODER
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Summarize MAG KO annotations with kegg decoder
+ *
+ * INPUTS:
+ *   1. path: MAG_level_KO_annotations
+ *      Cardinality: one
+ *      Description: Input file: MAG level KO annotations
+ *
+ *   2. path: MAGs_dir
+ *      Cardinality: one
+ *      Description: Input file: directory of MAGs
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}MAG-KEGG-Decoder-out${params.assay_suffix}.* (emit: summary)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/keggdecoder.yaml
+ *   Labels: mags
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process SUMMARIZE_MAG_KO_ANNOTS_WITH_KEGG_DECODER {
 

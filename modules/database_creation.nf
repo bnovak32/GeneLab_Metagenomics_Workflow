@@ -14,6 +14,38 @@ params.krakendb_dir    = null // "path/to/host/database"
 ***************************  Metagenomics databases set-up ******************************
 ****************************************************************************************/
 
+/*
+ * ========================================================================================
+ * PROCESS: SETUP_CAT_DB
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Download and set up CAT database
+ *
+ * INPUTS:
+ *   1. val: CAT_DB_LINK
+ *      Cardinality: one
+ *      Description: Parameter value: URL to cat database for download
+ *
+ * OUTPUTS:
+ *   1. path: CAT_prepare_20210107/ (emit: cat_db)
+ *
+ *   2. path: CAT_prepare_20210107/CAT_DB_SETUP (emit: completion_indicator)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: db_setup, bit
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 // This process download CAT reference database.
 process SETUP_CAT_DB {
 
@@ -42,6 +74,37 @@ process SETUP_CAT_DB {
         printf "### Set up completed successfully ###\\n\\n"
         """
 }
+
+
+/*
+ * ========================================================================================
+ * PROCESS: SETUP_KOFAMSCAN_DB
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Download and set up kofamscan database
+ *
+ * INPUTS:
+ *   No inputs defined
+ *
+ * OUTPUTS:
+ *   1. path: kofamscan_db/ (emit: ko_db_dir)
+ *
+ *   2. path: kofamscan_db/KO_DB_SETUP (emit: completion_indicator)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: db_setup, bit
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 // This process downloads KOFamScan db (minimally currently).
 process SETUP_KOFAMSCAN_DB {
@@ -90,6 +153,39 @@ process SETUP_KOFAMSCAN_DB {
         """
 }
 
+
+/*
+ * ========================================================================================
+ * PROCESS: SETUP_GTDBTK_DB
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Download and set up genome taxonomy toolkit's (GTDBTK) database
+ *
+ * INPUTS:
+ *   1. val: GTDBTK_URL
+ *      Cardinality: one
+ *      Description: Parameter value: URL to GTDBTK database.
+ *
+ * OUTPUTS:
+ *   1. path: GTDB-tk-ref-db/ (emit: gtdbtk_db_dir)
+ *
+ *   2. path: GTDB-tk-ref-db/SETUP_GTDBTK_DB_SETUP (emit: completion_indicator)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: db_setup, bit
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 // This process downloads the gtdb-tk db (minimally currently)
 process SETUP_GTDBTK_DB {
 
@@ -116,7 +212,38 @@ process SETUP_GTDBTK_DB {
         """
 }
 
-// The processes below download the databases required by humann3.
+
+/*
+ * ========================================================================================
+ * PROCESS: SETUP_CHOCOPHLAN
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Download and set up Humann's chocoplan nucleotide database
+ *
+ * INPUTS:
+ *   No inputs defined
+ *
+ * OUTPUTS:
+ *   1. path: humann3-db/chocophlan (emit: chocophlan_dir)
+ *
+ *   2. path: humann3-db/CHOCOPHLAN_DB_SETUP (emit: completion_indicator)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: HUMAnN
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/humann3.yaml
+ *   Labels: humann_setup, db_setup
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 process SETUP_CHOCOPHLAN {
 
     tag "Downloading and setting up Humann-s chocoplan nucleotide database..."
@@ -145,6 +272,37 @@ process SETUP_CHOCOPHLAN {
 }
 
 
+/*
+ * ========================================================================================
+ * PROCESS: SETUP_UNIREF
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Download and set up Humann's uniref protein database
+ *
+ * INPUTS:
+ *   No inputs defined
+ *
+ * OUTPUTS:
+ *   1. path: humann3-db/uniref/ (emit: uniref_dir)
+ *
+ *   2. path: humann3-db/UNIREF_DB_SETUP (emit: completion_indicator)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: HUMAnN
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/humann3.yaml
+ *   Labels: humann_setup, db_setup
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 process SETUP_UNIREF {
 
     tag "Downloading and setting up Humann-s uniref protein database..."
@@ -169,6 +327,37 @@ process SETUP_UNIREF {
         fi
         """
 }
+
+/*
+ * ========================================================================================
+ * PROCESS: SETUP_UTILITY_MAPPING
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Download and set up Humann's utility mapping database
+ *
+ * INPUTS:
+ *   No inputs defined
+ *
+ * OUTPUTS:
+ *   1. path: humann3-db/utility_mapping/ (emit: utilities_dir)
+ *
+ *   2. path: humann3-db/UTILITY_MAPPING_SETUP (emit: completion_indicator)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: HUMAnN
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/humann3.yaml
+ *   Labels: humann_setup, db_setup
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process SETUP_UTILITY_MAPPING {
 
@@ -205,9 +394,39 @@ process SETUP_UTILITY_MAPPING {
         """
 }
 
+/*
+ * ========================================================================================
+ * PROCESS: SETUP_METAPHLAN
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Download and set up metaphlan database
+ *
+ * INPUTS:
+ *   No inputs defined
+ *
+ * OUTPUTS:
+ *   1. path: metaphlan4-db/ (emit: metaphlan_db_dir)
+ *
+ *   2. path: metaphlan4-db/METAPHLAN4_DB_SETUP (emit: completion_indicator)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: Metaphlan
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/humann3.yaml
+ *   Labels: humann_setup, db_setup
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process SETUP_METAPHLAN {
-    tag "Downloading and setting up Humann-s utilities mapping database..."
+    tag "Downloading and setting up metaphlan database..."
     label "humann_setup"
     label "db_setup"
 
@@ -232,7 +451,38 @@ process SETUP_METAPHLAN {
         """
 }
 
-
+/*
+ * ========================================================================================
+ * PROCESS: SETUP_KAIJU
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Download and set up kaiju database
+ *
+ * INPUTS:
+ *   1. val: dbname
+ *      Cardinality: one
+ *      Description: Parameter value: database to download e.g nr, nr_euk, etc.
+ *
+ * OUTPUTS:
+ *   1. path: kaiju-db/ (emit: kaijudb_dir)
+ *
+ *   2. path: kaiju-db/KAIJU_DB_SETUP (emit: completion_indicator)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/kaiju.yaml
+ *   Labels: db_setup, kaiju
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: 2
+ *   - Memory: 500 GB
+ *
+ * NOTE: Very long running process. Will run for over a week.
+ * ========================================================================================
+ */
 
 process SETUP_KAIJU {
 
@@ -271,6 +521,37 @@ process SETUP_KAIJU {
 }
 
 
+/*
+ * ========================================================================================
+ * PROCESS: SETUP_KRAKEN
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Download and set up kraken2 database
+ *
+ * INPUTS:
+ *   1. val: url
+ *      Cardinality: one
+ *      Description: Parameter value: kraken2 database url
+ *
+ * OUTPUTS:
+ *   1. path: kraken2-db/ (emit: krakendb_dir)
+ *
+ *   2. path: kraken2-db/KRAKEN_DB_SETUP (emit: completion_indicator)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bit, db_setup
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 /* Build kraken2 database
 User supplied host url

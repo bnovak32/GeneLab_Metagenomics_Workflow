@@ -3,6 +3,41 @@ nextflow.enable.dsl = 2
 //params.pileup_mem = "5g"
 
 /*
+ * ========================================================================================
+ * PROCESS: GET_COV_AND_DET
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Calculate gene and contig coverage for sample
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(bam), path(assembly), path(aa), path(nt)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - bam: path to sample bam file
+ *                 - assembly: path to sample assembly/contigs
+ *                 - aa: path to sample amino acids file
+ *                 - nt: path to sample nucleotide file
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}-gene-coverages.tsv"), path("${sample_id}-contig-coverages.tsv") (emit: coverages)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bbmap.yaml
+ *   Labels: bbtools
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
+/*
     This process pulls out coverage and detection information for each sample, gene-level and contig-level,
     and filters the gene-level coverage information based on requiring at least 50% detection.
 */

@@ -4,6 +4,39 @@ nextflow.enable.dsl = 2
 //params.accession = "OSD-574"
 //params.RawFilePattern = null // Pattern of files on OSDR for the OSD accession you want to process 
 
+/*
+ * ========================================================================================
+ * PROCESS: GET_RUNSHEET
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Download raw fastq files and create runsheet for a GeneLab Accession
+ *
+ * INPUTS:
+ *   1. val: accession
+ *      Cardinality: one
+ *      Description: Parameter value:  GeneLab accession
+ *
+ * OUTPUTS:
+ *   1. path: a_*metagenomic*.txt (emit: assay_TABLE)
+ *
+ *   2. path: *.zip (emit: zip)
+ *
+ *   3. path: GLfile.csv (emit: input_file) # Runsheet
+ *
+ *   4. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/genelab.yaml
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 process GET_RUNSHEET {
 
     beforeScript "chmod +x ${projectDir}/bin/create_runsheet.sh" 

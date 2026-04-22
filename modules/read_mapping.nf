@@ -5,6 +5,41 @@ nextflow.enable.dsl = 2
 *********************  Read mapping to contig assembly using Bowtie2 ********************
 ****************************************************************************************/
 
+/*
+ * ========================================================================================
+ * PROCESS: MAPPING
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Map sample reads to sample assembly with bowtie2
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(assembly), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - assembly: path to sample assembly/contigs
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}.sam"), path("${sample_id}-mapping-info${params.assay_suffix}.txt") (emit: sam)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: Bowtie2
+ *   Container: [Defined in config/illumina.config]
+ *   Conda: envs/bowtie2.yaml
+ *   Labels: mapping, bowtie2
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 // This process builds the bowtie2 index and runs the mapping for each sample
 process MAPPING {
 
@@ -61,7 +96,41 @@ process MAPPING {
 }
 
 
-// This process builds the bowtie2 index and runs the mapping for each sample
+/*
+ * ========================================================================================
+ * PROCESS: LONG_MAPPING
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Map sample reads to sample assembly with minimap2
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(assembly), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - assembly: path to sample assembly/contigs
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not  
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}.sam"), path("${sample_id}-mapping-info${params.assay_suffix}.txt") (emit: sam)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: Minimap2
+ *   Container: [Defined in config/nanopore.config]
+ *   Conda: envs/minimap2.yaml
+ *   Labels: minimap2, mapping
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 process LONG_MAPPING {
 
     tag "Mapping ${sample_id}-s reads to its assembly ${assembly}..."
@@ -96,8 +165,40 @@ process LONG_MAPPING {
 }
 
 
+/*
+ * ========================================================================================
+ * PROCESS: SAM_TO_BAM
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Sort and convert sample sam to bam files
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(sam), path(mapping_info)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - sam: path to sample sam file
+ *                 - mapping_info: path to sample mapping info
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}${params.assay_suffix}.bam") (emit: bam)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: SAMtools
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/samtools.yaml
+ *   Labels: samtools
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
-// This process builds the bowtie2 index and runs the mapping for each sample
 process SAM_TO_BAM {
 
     tag "Sorting and converting ${sample_id}-s sam to bam files..."

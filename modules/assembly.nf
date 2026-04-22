@@ -7,6 +7,41 @@ nextflow.enable.dsl = 2
 **************************  Sequence assembly and summary *******************************
 ****************************************************************************************/
 
+/*
+ * ========================================================================================
+ * PROCESS: ASSEMBLE
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Assemble sample reads with megahit
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}_final.contigs.fa") (emit: contigs)
+ *
+ *   2. path: ${sample_id}-assembly.log (emit: log)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: MEGAHIT
+ *   Container: [Defined in config/illumina.config]
+ *   Conda: envs/megahit.yaml
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus 
+ *   - Memory: task.memory # value of params.max_mem
+ *
+ * ========================================================================================
+ */
+
 // This process handles running the assembly for each individual sample.
 process ASSEMBLE {
 
@@ -50,6 +85,42 @@ process ASSEMBLE {
 }
 
 
+/*
+ * ========================================================================================
+ * PROCESS: FLYE
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Assemble sample reads with flye
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements.
+ *                 - sample_id: string specifying the input sample name
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}-assembly.fasta") (emit: contigs)
+ *
+ *   2. tuple: tuple val(sample_id), path("${sample_id}-assembly.log") (emit: log)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: Flye
+ *   Container: [Defined in config/nanopore.config]
+ *   Conda: envs/flye.yaml
+ *   Labels: flye, assembly
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 process FLYE {
 
     tag "Assembling ${sample_id}-s reads.."
@@ -78,6 +149,43 @@ process FLYE {
     echo "flye \${VERSION}" > versions.txt
     """
 }
+
+
+/*
+ * ========================================================================================
+ * PROCESS: POLISH_ASSEMBLY
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Polish sample assembly with medaka
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(assembly), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - assembly: path to sample assembly/contigs
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}_polished.fasta") (emit: contigs)
+ *
+ *   2. tuple: tuple val(sample_id), path("${sample_id}-medaka.log") (emit: log)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: Medaka
+ *   Container: [Defined in config/nanopore.config]
+ *   Conda: envs/medaka.yaml
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 // Assembly polishing with medaka
 process POLISH_ASSEMBLY {
@@ -115,6 +223,47 @@ process POLISH_ASSEMBLY {
     echo "medaka \${VERSION}" > versions.txt
     """
 }
+
+/*
+ * ========================================================================================
+ * PROCESS: SPADES
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Assemble sample reads with spades
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *
+ *   2. val: type
+ *      Cardinality: one
+ *      Description: Parameter value: the technology type, one of illumina, pacbio or nanopore
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path('*.scaffolds.fa'), optional:true (emit: scaffolds) [OPTIONAL]
+ *
+ *   2. tuple: tuple val(sample_id), path('*warnings.log'), optional:true (emit: warnings) [OPTIONAL]
+ *
+ *   3. tuple: tuple val(sample_id), path('*spades.log') (emit: log)
+ *
+ *   4. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: SPAdes
+ *   Container: [Defined in config/illumina.config]
+ *   Conda: envs/spades.yaml
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process SPADES {
 
@@ -182,6 +331,39 @@ process SPADES {
     """
 }
 
+/*
+ * ========================================================================================
+ * PROCESS: RENAME_HEADERS
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Rename sample assembly fasta headers
+ *
+ * INPUTS: 
+ *   1. tuple: tuple val(sample_id), path(assembly)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - assembly: path to sample assembly/contigs 
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}-assembly${params.assay_suffix}.fasta") (emit: contigs)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ *   3. path: Failed-assemblies.tsv (emit: failed_assembly) [OPTIONAL]
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bit, assembly
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process RENAME_HEADERS {
 
@@ -210,6 +392,36 @@ process RENAME_HEADERS {
         """
 }
 
+
+/*
+ * ========================================================================================
+ * PROCESS: SUMMARIZE_ASSEMBLIES
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Summarize all sample assemblies. Generate all sort of assembly statistics such as N50
+ *
+ * INPUTS:
+ *   1. path: assemblies
+ *      Cardinality: one
+ *      Description: Input files: path to list of sample assemblies
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}assembly-summaries${params.assay_suffix}.tsv (emit: summary)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bit, assembly
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 // This process summarizes and reports general stats for all individual sample assemblies in one table.
 process SUMMARIZE_ASSEMBLIES {

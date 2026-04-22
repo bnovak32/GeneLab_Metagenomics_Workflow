@@ -5,7 +5,40 @@ nextflow.enable.dsl = 2
 *********************  Read mapping to contig assembly using Bowtie2 ********************
 ****************************************************************************************/
 
-// process to build minimap index
+/*
+ * ========================================================================================
+ * PROCESS: MINIMAP_INDEX
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Build sample minimap index
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(assembly)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - assembly: path to sample assembly/contigs
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}.mmi") (emit: index)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: Minimap2
+ *   Container: [Defined in config/nanopore.config]
+ *   Conda: envs/minimap2.yaml
+ *   Labels: minimap2
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
+// Process to build minimap index
 process MINIMAP_INDEX {
 
     tag "Building ${sample_id}-s index..."
@@ -24,7 +57,39 @@ process MINIMAP_INDEX {
         """
 }
 
-
+/*
+ * ========================================================================================
+ * PROCESS: LONG_MAPPING
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Map sample reads to sample assembly with mimimap2
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(assembly), path(reads)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - assembly: path to sample assembly/contigs
+ *                 - reads: path to sample fastq reads 
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}.sam"), path("${sample_id}-mapping-info${params.assay_suffix}.txt") (emit: sam)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: Minimap2
+ *   Container: [Defined in config/nanopore.config]
+ *   Conda: envs/minimap2.yaml
+ *   Labels: minimap2, mapping
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 // This process builds the bowtie2 index and runs the mapping for each sample
 process LONG_MAPPING {
