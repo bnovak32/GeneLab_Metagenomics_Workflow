@@ -1,6 +1,38 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl = 2
 
+/*
+ * ========================================================================================
+ * PROCESS: KRAKEN2KRONA
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Convert kraken2 report file to krona file
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(report)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - report: path to sample kraken2 report
+ *
+ * OUTPUTS:
+ *   1. path: ${sample_id}.krona (emit: krona)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: Kraken2
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/kraken2.yaml
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 process KRAKEN2KRONA {
 
     tag "Converting kraken file to krona file .." 
@@ -23,6 +55,38 @@ process KRAKEN2KRONA {
     """
 }
 
+/*
+ * ========================================================================================
+ * PROCESS: METAPHLAN2KRONA
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Convert metaphlan file to krona file
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(report)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - report: path to sample metaphlan taxonomy report 
+ *
+ * OUTPUTS:
+ *   1. path: ${sample_id}.krona (emit: krona)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: Python
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bit (Python environment)
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process METAPHLAN2KRONA {
 
@@ -45,7 +109,41 @@ process METAPHLAN2KRONA {
 
 }
 
-
+/*
+ * ========================================================================================
+ * PROCESS: KAIJU2KRONA
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Convert kaiju file to krona file
+ *
+ * INPUTS:
+ *   1. each: path(DB)
+ *      Cardinality: each
+ *      Description: Iterates over each element. Kaiju database directory.
+ *
+ *   2. tuple: tuple val(sample_id), path(report)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - report: path to sample kaiju report  
+ *
+ * OUTPUTS:
+ *   1. path: ${sample_id}.krona (emit: krona)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/kaiju.yaml
+ *   Labels: kaiju
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process KAIJU2KRONA {
 
@@ -79,6 +177,39 @@ process KAIJU2KRONA {
 }
 
 
+/*
+ * ========================================================================================
+ * PROCESS: KRONA_REPORT
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Create a krona html report..
+ *
+ * INPUTS:
+ *   1. val: prefix
+ *      Cardinality: one
+ *      Description: Parameter value: prefix for read classifier i.e. kaiju, kraken2 and metaphlan
+ *
+ *   2. path: krona_files
+ *      Cardinality: one
+ *      Description: Input file: krona files
+ *
+ * OUTPUTS:
+ *   1. path: ${prefix}-report${params.assay_suffix}.html (emit: html)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/krona.yaml
+ *   Labels: krona
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process KRONA_REPORT {
 

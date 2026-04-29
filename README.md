@@ -22,7 +22,7 @@ The table below details the default maximum resource allocations for individual 
 
 | CPU Cores | Memory |
 |--------------------|------------------|
-| 10                 | 300 GB           |
+| 10                 | 500 GB           |
 
 > ***Note:*** *These per-process resource allocations are defaults. They can be adjusted by modifying `cpus` and `memory` directives in the  [default.config](config/default.config), [illumina.config](config/illumina.config) and [nanopore.config](config/nanopore.config) configuration files.*
 
@@ -202,7 +202,7 @@ nextflow run main.nf -resume \
 
 The GeneLab Metagenomics Low Biomass Long Read workflow is designed to process data generated from 
 long-read platforms such as [Oxford Nanopore](https://nanoporetech.com/) using the 
-[GeneLab Metagenomics Low Biomass Long Read Pipeline](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Nanopore). Below are 3 
+[GeneLab Metagenomics Low Biomass Long Read Pipeline](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Pipeline_GL-DPPD-7116_Versions/GL-DPPD-7116.md). Below are 3 
 different approaches for running the workflow, depending on the input files provided.
 
 ##### 4bi. Approach 1: Start with pod5 files as input
@@ -261,7 +261,7 @@ nextflow run main.nf -resume \
 * `--sample_type` - Specifies the type of sample to be analyzed. One of "standard" or "low_biomass" for standard or low biomass sample type, respectively. 
 * `--input_dir` - Specifies the path to a directory containing pod5 files generated after nanopore sequencing
 * `--kit_name` - Specifies the Oxford nanopore sequencing kit used 
-* `--errorStrategy "ignore"` - Instructs nextflow to continue processing the dataset even if an error is encountered. It is recommended to set this to "ignore" because of very long running process that if when terminated can consume a lot of time and disk space. Set to "terminate" if you'd want to terminate the workflow if an error is encountered.
+* `--errorStrategy "ignore"` - Instructs nextflow to continue processing the dataset even if an error is encountered. It is recommended to set this to "ignore" because of very long running processes that if when terminated may require a lot of time and disk space. Set to "terminate" if you'd want to terminate the workflow when an error is encountered.
 * `--input_file *.csv` - Specifies the input csv file containing required metadata about the samples including barcode information and paths to the input file(s) for each sample.
 * `--input_type` - The type of input data/sequences in the `--input_file` when running the nanopore workflow. Values are one of "single", "multiple" or "directory" for single fastq files per sample, multiple fastq files per sample or a Pod5 directory, respectively. 
 * `--technology "nanopore"` - Specifies the technology type used to generate the sequencing data.
@@ -272,7 +272,7 @@ nextflow run main.nf -resume \
 #### 4c. Standard Short Read Workflow
 
 The GeneLab Metagenomics Standard Short Read workflow is designed to process data generated from short-read
-platforms such as [Illumina](https://www.illumina.com/) using the [GeneLab Metagenomics Standard Short Read Pipeline](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics/Metagenomics/Pipeline_GL-DPPD-7117_Versions). 
+platforms such as [Illumina](https://www.illumina.com/) using the [GeneLab Metagenomics Standard Short Read Pipeline](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Illumina/Pipeline_GL-DPPD-7107_Versions/GL-DPPD-7107-B.md). 
 Below are 2 different approaches for running the workflow, depending on the input files provided.
 
 >**NOTE:** Long-read data incorporates human read removal as one of the pre-processing steps. For short-read 
@@ -308,7 +308,7 @@ nextflow run main.nf -resume \
 
 The GeneLab Metagenomics Low Biomass Short Read workflow is designed to process data generated from 
 short-read platforms such as [Illumina](https://www.illumina.com/) using the 
-[GeneLab Metagenomics Low Biomass Short Read Pipeline](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Pipeline_GL-DPPD-7117_Versions). Below are 2 
+[GeneLab Metagenomics Low Biomass Short Read Pipeline](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Pipeline_GL-DPPD-7117_Versions/GL-DPPD-7117.md). Below are 2 
 different approaches for running the workflow, depending on the input files provided.
 
 
@@ -350,7 +350,7 @@ nextflow run main.nf -resume \
       * `slurm` - instructs Nextflow to use the [Slurm cluster management and job scheduling system](https://slurm.schedmd.com/overview.html) to schedule and run the jobs on a Slurm HPC cluster
 * `main.nf` - Instructs Nextflow to run the Genelab Metagenomics workflow. If running in a directory other than `NF_Metagenomics_1.0.0`, replace with the full path to the main.nf workflow file.
 * `--sample_type` - Specifies the type of sample to be analyzed. One of "standard" or "low_biomass" for standard and low biomass sample types, respectively. 
-* `--errorStrategy "ignore"` - Instructs nextflow to continue processing the dataset even if an error is encountered. It is recommended to set this to "ignore" because of very long running process that if when terminated can consume a lot of time and disk space. Set to "terminate" if you'd want to terminate the workflow if an error is encountered.
+* `--errorStrategy "ignore"` - Instructs nextflow to continue processing the dataset even if an error is encountered. It is recommended to set this to "ignore" because of very long running processes that if when terminated may require a lot of time and disk space. Set to "terminate" if you'd want to terminate the workflow when an error is encountered.
 * `--technology "illumina"` - Specifies the technology type used to generate the sequencing data.
 * `--input_file *.csv` - Specifies the input csv file containing required metadata about the samples including paths to the input file(s) for each sample.
   * > *Note: These input files require specific formatting to be interpreted correctly. Please see the [runsheet documentation](examples/runsheet) in this repository for examples on how to format this file type for each approach.
@@ -363,9 +363,6 @@ nextflow run main.nf -resume \
 * `--workflow` Specifies the workflow to be run. Options are one of ["read-based", "assembly-based", "both"]. Default: both.
 * `--publishDir_mode` Specifies how nextflow handles output file publishing. Options can be found here https://www.nextflow.io/docs/latest/process.html#publishdir Default: link.
 * `--errorStrategy` Specifies how nextflow handles errors. Options can be found here https://www.nextflow.io/docs/latest/process.html#errorstrategy. Default: terminate.
-* `--swift_1S` Setting for trimming recommended when working with Swift 1S libraries.
-  adds `swift=t` setting to bbduk quality trimming/filtering command. For info on this, see example, https://www.bioscience.co.uk/userfiles/pdf/16-0853-Tail-Trim-Final-442019.pdf.
-  Set to true if data was generated with Swift 1S library prep. Default: false.
 * `--multiqc_config` Path to a custom multiqc config file. Default: config/multiqc.config.
 * `--use_gtdbtk_scratch_location` Should a scratch location be used to store GTDBTK temp files? true or false. Scratch directory for gtdb-tk, if wanting to use disk space instead of RAM, can be memory intensive;
   see https://ecogenomics.github.io/GTDBTk/faq.html#gtdb-tk-reaches-the-memory-limit-pplacer-crashes leave empty if wanting to use memory, the default, put in quotes the path to a directory that
@@ -373,8 +370,8 @@ nextflow run main.nf -resume \
 
 **MAG parameters:** MAG filtering cutoffs based on checkm quality assessments (in percent); see https://github.com/Ecogenomics/CheckM/wiki/Reported-Statistics.
 * `--min_est_comp` Minimum estimated completion. Default: 90.
-* `--max_est_redund` Minimum estimated redundancy. Default: 10.
-* `--max_est_strain_het` Minimum estimated strain heterogeneity. Default: 50.
+* `--max_est_redund` Maximum estimated redundancy. Default: 10.
+* `--max_est_strain_het` Maximum estimated strain heterogeneity. Default: 50.
 * `--reduced_tree` reduced_tree option for checkm, limits the RAM usage to 16GB; https://github.com/Ecogenomics/CheckM/wiki/Genome-Quality-Commands#tree.
   'True' for yes, anything else will be considered 'False' and the default full tree will be used. Default: 'True'.
 * `--max_mem` Maximum memory allowed, passed to megahit assembler. Can be set either by proportion of available on system, e.g. 0.5
@@ -396,6 +393,7 @@ nextflow run main.nf -resume \
 * `--cat_db` Path to CAT database. Example, /path/to/Reference_DBs/CAT_prepare_20210107/. Default: null.
 
 *Humann database:*
+* `--metaphlan_index` Metaphlan bowtie2 database index name from here: http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/bowtie2_indexes/. Default: mpa_vJun23_CHOCOPhlAnSGB_202307.
 * `--metaphlan_db_dir` Path to metaphlan database. Example, /path/to/Reference_DBs/metaphlan4-db/. Default: null.
 * `--chocophlan_dir` Path to Humann's chocophlan nucleotide database. Example, /path/to/Reference_DBs/humann3-db/chocophlan/. Default: null.
 * `--uniref_dir` Path to Humann's Uniref protein database. Example, /path/to/Reference_DBs/humann3-db/uniref/. Default: null.
@@ -409,37 +407,38 @@ nextflow run main.nf -resume \
 * `--ko_db_dir`  Path to kofam scan database. Example, /path/to/Reference_DBs/kofamscan_db/. Default: null.
 
 **Paths to existing conda environments** to use, otherwise, new ones will be created using the yaml files in envs/ directory. since this directory for the exact packages required in an environment
-* `--conda_fastqc` Path to a conda environment containing fastqc. Default: null.
-* `--conda_multiqc`Path to a conda environment containing multiqc. Default: null.
-* `--conda_zip`Path to a conda environment containing zip. Default: null.
-* `--conda_humann3` Path to a conda environment with humann3 installed. Default: null.
-* `--conda_cat` Path to a conda environment containing CAT (Contig annotation tool). Default: null.
-* `--conda_prodigal` Path to a conda environment with prodigal installed. Default: null.
-* `--conda_metabat` Path to a conda environment containing metabat. Default: null.
-* `--conda_gtdbtk` Path to a conda environment containing gtdbtk. Default: null.
-* `--conda_kegg_decoder` Path to a conda environment with kegg_decoder installed. Default: null.
-* `--conda_megahit`  Path to a conda environment containing megahit. Default: null.
+* `--conda_bbmap` Path to a conda environment containing bbmap. Default: null.
 * `--conda_bit`  Path to a conda environment with bit installed. Default: null.
-* `--conda_kofamscan` Path to a conda environment containing KOFAM SCAN. Default: null.
 * `--conda_bowtie2` Path to a conda environment with bowtie2 installed. Default: null.
-* `--conda_minimap2` Path to a conda environment with minimap2 installed. Default: null.
-* `--conda_samtools` Path to a conda environment with samtools installed. Default: null.
+* `--conda_cat` Path to a conda environment containing CAT (Contig annotation tool). Default: null.
 * `--conda_checkm` Path to a conda environment with checkm installed. Default: null.
-* `--conda_kraken2` Path to a conda environment with kraken2 installed. Default: null.  
-* `--conda_kaiju` Path to a conda environment with kaiju installed. Default: null.
-* `--conda_krona` Path to a conda environment with krona installed. Default: null. 
-* `--conda_pavian` Path to a conda environment with R package pavian installed. Default: null.
-* `--conda_nanoplot` Path to a conda environment with nanoplot installed. Default: null.
-* `--conda_krakentools` Path to a conda environment with krakentools installed. Default: null.
-* `--conda_filtlong` Path to a conda environment with filtlong installed. Default: null.
-* `--conda_porechop` Path to a conda environment with porechop installed. Default: null.
-* `--conda_samtools` Path to a conda environment with samtools installed. Default: null. 
 * `--conda_dorado` Path to a conda environment with dorado installed. Default: null.
-* `--conda_spades` Path to a conda environment with spades assembler installed. Default: null.
 * `--conda_fastp` Path to a conda environment with fastp installed. Default: null. 
+* `--conda_fastqc` Path to a conda environment containing fastqc. Default: null.
+* `--conda_filtlong` Path to a conda environment with filtlong installed. Default: null.
 * `--conda_flye` Path to a conda environment with flye installed. Default: null.
+* `--conda_genelab` Path to a conda environment with genelab-utils installed. Default: null.
+* `--conda_gtdbtk` Path to a conda environment containing gtdbtk. Default: null.
+* `--conda_humann3` Path to a conda environment with humann3 installed. Default: null.
+* `--conda_kaiju` Path to a conda environment with kaiju installed. Default: null.
+* `--conda_kegg_decoder` Path to a conda environment with kegg_decoder installed. Default: null.
+* `--conda_kofamscan` Path to a conda environment containing KOFAM SCAN. Default: null.
+* `--conda_kraken2` Path to a conda environment with kraken2 installed. Default: null.  
+* `--conda_krakentools` Path to a conda environment with krakentools installed. Default: null.
+* `--conda_krona` Path to a conda environment with krona installed. Default: null. 
 * `--conda_medaka` Path to a conda environment with medaka installed. Default: null.
+* `--conda_megahit`  Path to a conda environment containing megahit. Default: null.
+* `--conda_metabat` Path to a conda environment containing metabat. Default: null.
+* `--conda_minimap2` Path to a conda environment with minimap2 installed. Default: null.
+* `--conda_multiqc` Path to a conda environment containing multiqc. Default: null.
+* `--conda_nanoplot` Path to a conda environment with nanoplot installed. Default: null.
+* `--conda_pavian` Path to a conda environment with R package pavian installed. Default: null.
+* `--conda_porechop` Path to a conda environment with porechop installed. Default: null.
+* `--conda_prodigal` Path to a conda environment with prodigal installed. Default: null.
 * `--conda_rvis` Path to a conda environment with r visualization packages (tidyverse, pheatmap, htmlwidgets etc.) installed. Default: null.
+* `--conda_samtools` Path to a conda environment with samtools installed. Default: null.
+* `--conda_spades` Path to a conda environment with spades assembler installed. Default: null.
+* `--conda_zip` Path to a conda environment containing zip. Default: null.
 
 <br>
 
@@ -483,7 +482,7 @@ Once you've downloaded the workflow template, you can modify the parameters in t
 
 * The outputs from the GeneLab Low Biomass Long Read Metagenomics workflow are documented in the [GL-DPPD-7116](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Pipeline_GL-DPPD-7116_Versions/GL-DPPD-7116.md) processing pipeline.
 
-* The outputs from the GeneLab Standard Short Read Metagenomics workflow are documented in the [GL-DPPD-7107-A](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Illumina/Pipeline_GL-DPPD-7107_Versions/GL-DPPD-7107-A.md) processing pipeline.
+* The outputs from the GeneLab Standard Short Read Metagenomics workflow are documented in the [GL-DPPD-7107-B](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Illumina/Pipeline_GL-DPPD-7107_Versions/GL-DPPD-7107-B.md) processing pipeline.
   
 * The outputs from the GeneLab Low Biomass Short Read Metagenomics workflow are documented in the [GL-DPPD-7117](https://github.com/nasa/GeneLab_Data_Processing/blob/DEV_Metagenomics_low_biomass/Metagenomics/Low_Biomass/Pipeline_GL-DPPD-7117_Versions/GL-DPPD-7117.md) processing pipeline.
 

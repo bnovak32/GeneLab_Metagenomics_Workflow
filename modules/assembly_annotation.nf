@@ -7,6 +7,40 @@ nextflow.enable.dsl = 2
 /**************************************************************************************** 
 **************************  Sequence Assembly Annotation *******************************
 ****************************************************************************************/
+
+/*
+ * ========================================================================================
+ * PROCESS: CALL_GENES
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Predict genes in sample assembly with prodigal
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(assembly)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - assembly: path to sample assembly/contigs
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}-genes.faa"), path("${sample_id}-genes.fasta"), path("${sample_id}-genes${params.assay_suffix}.gff") (emit: genes)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: Prodigal
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/prodigal.yaml
+ *   Labels: call_genes
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 // This process calls genes on each assembly file.
 process CALL_GENES {
 
@@ -37,6 +71,40 @@ process CALL_GENES {
         prodigal -v 2>&1 | grep Prodigal > versions.txt
         """
 }        
+
+/*
+ * ========================================================================================
+ * PROCESS: REMOVE_LINEWRAPS
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Remove line wraps in sample nucleotide and amino acid files
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(aa), path(nt), path(gff)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - aa: path to sample amino acids file
+ *                 - nt: path to sample nucleotide file
+ *                 - gff: path to sample gene feature file
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}-genes${params.assay_suffix}.faa"), path("${sample_id}-genes${params.assay_suffix}.fasta") (emit: genes)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: call_genes, bit
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 // Removing line-wraps using bit
 process REMOVE_LINEWRAPS {
@@ -69,6 +137,43 @@ process REMOVE_LINEWRAPS {
         """
 }
 
+
+/*
+ * ========================================================================================
+ * PROCESS: KO_ANNOTATION
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   KO annotation of sample predicted amino acids with kofamscan.
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(assembly), path(aa), path(nt)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - assembly: path to sample assembly/contigs
+ *                 - aa: path to sample amino acids file
+ *                 - nt: path to sample nucleotide file
+ *
+ *   2. path: ko_db_dir
+ *      Cardinality: one
+ *      Description: Input file: KO Database directory
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}-KO-tab.tmp") (emit: temp_table)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/kofamscan.yaml
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 // This process runs the gene-level (KO) functional annotation for each sample.
 // KO annotatiuon of the predicted amino acids
@@ -104,6 +209,38 @@ process KO_ANNOTATION {
 }
 
 
+/*
+ * ========================================================================================
+ * PROCESS: FILTER_KFAMSCAN
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Filter sample KO annotation results
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(KO_tab_tmp)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - KO_tab_tmp: path to temporary KO annotation table produced by the KO_ANNOTATION process.
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}-annotations.tsv") (emit: ko_annotation)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bit, contig_annotation
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 process FILTER_KFAMSCAN {
 
     tag "Filtering ${sample_id}-s KO annotation results..."
@@ -131,6 +268,45 @@ process FILTER_KFAMSCAN {
         """
 
 }
+
+/*
+ * ========================================================================================
+ * PROCESS: TAX_CLASSIFICATION
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Taxonomy classification of sample contigs with CAT (Contig Annotation Tool) 
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(assembly), path(aa), path(nt)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - assembly: path to sample assembly/contigs
+ *                 - aa: path to sample amino acids file
+ *                 - nt: path to sample nucleotide file
+ *
+ *   2. path: cat_db
+ *      Cardinality: one
+ *      Description: Input file: CAT database directory
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}-gene-tax.tsv"), path("${sample_id}-contig-tax.tsv") (emit: taxonomy)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: CAT
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/cat.yaml
+ *   Labels: contig_annotation
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 // This process runs the gene- and contig-level taxonomic classifications for each assembly.
 process TAX_CLASSIFICATION {

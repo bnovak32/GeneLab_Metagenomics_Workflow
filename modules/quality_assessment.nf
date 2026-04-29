@@ -4,11 +4,41 @@ nextflow.enable.dsl = 2
 /**************************************************************************************** 
 *********************  Sequence quality assessment and control processes ****************
 ****************************************************************************************/
-
-// a 2-column (single-end) or 3-column (paired-end) file
-//params.prefix = "raw" // "filtered"
-//params.csv_file = "file.csv" 
 //params.multiqc_config = "config/multiqc.config"
+
+/*
+ * ========================================================================================
+ * PROCESS: FASTQC
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Sample quality assessment with fastqc
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not  
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple path("*.html"), path("*.zip") (emit: html)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: FastQC
+ *   Container: [Defined in config/illumina.config]
+ *   Conda: envs/fastqc.yaml
+ *   Labels: quality_check
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process FASTQC {
 
@@ -32,7 +62,40 @@ process FASTQC {
     """
 }
 
-
+/*
+ * ========================================================================================
+ * PROCESS: NANOPLOT
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Sample quality assessment with nanoplot
+ *
+ * INPUTS:
+ *   1. each: prefix
+ *      Cardinality: each
+ *      Description: Iterates over each element. Prefix to add to output file.
+ *
+ *   2. tuple: tuple val(sample_id), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple path("*.log"), path("*_NanoStats.txt"), path("*.html") (emit: html)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: NanoPlot
+ *   Container: [Defined in config/nanopore.config]
+ *   Conda: envs/nanoplot.yaml
+ *   Labels: quality_check
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 // Quality control on Nanopore data
 process NANOPLOT {
@@ -65,7 +128,47 @@ process NANOPLOT {
     """
 }
 
-
+/*
+ * ========================================================================================
+ * PROCESS: MULTIQC
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Summarize QC outputs with multiqc
+ *
+ * INPUTS:
+ *   1. val: prefix
+ *      Cardinality: one
+ *      Description: Parameter value: prefix to add to output file name
+ *
+ *   2. path: multiqc_config
+ *      Cardinality: one
+ *      Description: Input file: multiqc config file to customize output
+ *
+ *   3. path: files
+ *      Cardinality: one
+ *      Description: Input file: QC files to summarize
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}${prefix}_multiqc${params.assay_suffix}.html (emit: html)
+ *
+ *   2. path: ${params.additional_filename_prefix}${prefix}_multiqc_report/${prefix}_multiqc_data/ (emit: data)
+ *
+ *   3. path: ${params.additional_filename_prefix}${prefix}_reads_per_sample.tsv (emit: reads_per_sample)
+ *
+ *   4. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: MultiQC
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/multiqc.yaml
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process MULTIQC {
 
@@ -117,6 +220,40 @@ process MULTIQC {
     """
   }
 
+/*
+ * ========================================================================================
+ * PROCESS: ZIP_MULTIQC
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Zip directory
+ *
+ * INPUTS:
+ *   1. val: prefix
+ *      Cardinality: one
+ *      Description: Parameter value: prefix to add to output zip file.
+ *
+ *   2. path: multiqc_dir
+ *      Cardinality: one
+ *      Description: Input file: directory to zip
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}${prefix}_multiqc${params.assay_suffix}_data.zip (emit: data)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: MultiQC
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/zip.yaml
+ *   Labels: zip
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process ZIP_MULTIQC {
 
@@ -143,6 +280,49 @@ process ZIP_MULTIQC {
 }
 
 
+
+/*
+ * ========================================================================================
+ * PROCESS: FASTP
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Quality filter sample reads with fastp
+ *
+ * INPUTS:
+ *   1. each: trimPolyG
+ *      Cardinality: each
+ *      Description: Iterates over each element
+ *
+ *   2. tuple: tuple val(sample_id), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("*fastq.gz"), val(isPaired) (emit: reads)
+ *
+ *   2. tuple: tuple val(sample_id), path("${sample_id}.fastp.json") (emit: json)
+ *
+ *   3. tuple: tuple val(sample_id), path("${sample_id}.fastp.html") (emit: html)
+ *
+ *   4. tuple: tuple val(sample_id), path("${sample_id}-fastp.log") (emit: log)
+ *
+ *   5. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/illumina.config]
+ *   Conda: envs/fastp.yaml
+ *   Labels: fastp
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 //Adapter trimming and filtering for short reads 
 // (quality_score>20;min_length=20;low complexity filter;threading;
@@ -202,6 +382,39 @@ process FASTP {
 
 }
 
+/*
+ * ========================================================================================
+ * PROCESS: FILTLONG
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Quality filter sample reads by length with filtlong
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not  
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}_filtered.fastq.gz"), val(isPaired) (emit: reads)
+ *
+ *   2. tuple: tuple val(sample_id), path("${sample_id}-filtlong.log") (emit: log)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/nanopore.config]
+ *   Conda: envs/filtlong.yaml
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process FILTLONG {
 
@@ -230,6 +443,39 @@ process FILTLONG {
 }
 
 
+/*
+ * ========================================================================================
+ * PROCESS: PORECHOP
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Trim adapters from sample reads with porechop
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not  
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}_trimmed.fastq.gz"), val(isPaired) (emit: reads)
+ *
+ *   2. tuple: tuple val(sample_id), path("${sample_id}-porechop.log") (emit: log)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/nanopore.config]
+ *   Conda: envs/porechop.yaml 
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 // Adapter trimming for Nanopore
 // Porechop is a tool for removing adapter sequences from nanopore reads

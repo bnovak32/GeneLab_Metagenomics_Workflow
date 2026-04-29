@@ -204,7 +204,13 @@
           "fa_icon": "fas fa-database",
           "help_text": "Example: /path/to/Reference_DBs/kofamscan_db/"
         },
-        "metaphlan_db_dir": {
+        "metaphlan_index": {
+          "type": "string",
+          "description": "Metaphan database index name to download/use from here: http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/bowtie2_indexes/",
+          "fa_icon": "fas fa-database",
+          "default": "mpa_vJun23_CHOCOPhlAnSGB_202307"
+        },
+	"metaphlan_db_dir": {
           "type": "string",
           "format": "directory-path",
           "description": "Path to MetaPhlAn4 database",

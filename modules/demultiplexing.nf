@@ -15,6 +15,40 @@ nextflow.enable.dsl = 2
 // SQK-RPB114-24 TWIST-16-UDI TWIST-96A-UDI VSK-PTC001 VSK-VMK001 VSK-VMK004 VSK-VPS001
 
 
+/*
+ * ========================================================================================
+ * PROCESS: DORADO_BASECALLER
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Bascall pod5 files with dorado
+ *
+ * INPUTS:
+ *   1. path: input_dir
+ *      Cardinality: one
+ *      Description: Input file: input directory contaning pod5 files to basecall
+ *
+ *   2. val: kit_name
+ *      Cardinality: one
+ *      Description: Parameter value:  Name of the nanopore sequencing kit used
+ *
+ * OUTPUTS:
+ *   1. path: basecalled.bam (emit: bam)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/nanopore.config]
+ *   Conda: envs/dorado.yaml
+ *   Labels: dorado
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 //  Runs the basecalling process to convert raw nanopore signal data to nucleotide sequences
 // https://github.com/nanoporetech/dorado/
 process DORADO_BASECALLER {
@@ -45,8 +79,41 @@ process DORADO_BASECALLER {
 }
 
 
+/*
+ * ========================================================================================
+ * PROCESS: DORADO_DEMUX
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Demultiplex basecalled bam
+ *
+ * INPUTS:
+ *   1. path: basecalled
+ *      Cardinality: one
+ *      Description: Input file: basecalled bam file
+ *
+ *   2. val: kit_name
+ *      Cardinality: one
+ *      Description: Parameter value: Name of the nanopore sequencing kit used
+ *
+ * OUTPUTS:
+ *   1. path: demultiplexed/ (emit: demux_dir)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/nanopore.config]
+ *   Conda: envs/dorado.yaml
+ *   Labels: dorado
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
-// performs demultiplexing to separate reads based on their barcodes
+// Performs demultiplexing to separate reads based on their barcodes
 process DORADO_DEMUX {
 
 
@@ -76,7 +143,37 @@ process DORADO_DEMUX {
        """
 }
 
-
+/*
+ * ========================================================================================
+ * PROCESS: CAT_FASTQ_FILES
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Concatenate sample fastq files
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(reads)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - reads: path to a list sample fastq reads to concatenate
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}.fastq.gz") (emit: reads)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bit
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process CAT_FASTQ_FILES {
 
@@ -104,6 +201,42 @@ process CAT_FASTQ_FILES {
     echo "cat \${VERSION}" > versions.txt
     """
 }
+
+/*
+ * ========================================================================================
+ * PROCESS: CAT_FASTQ_DIR
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Concatenating barcode split fastqs...
+ *
+ * INPUTS:
+ *   1. path: sample_to_barcode_file
+ *      Cardinality: one
+ *      Description: Input file: CSV file mapping sample name to barcode name
+ *
+ *   2. path: demux_dir
+ *      Cardinality: one
+ *      Description: Input file: directory containing fastq files to be concatenated
+ *
+ * OUTPUTS:
+ *   1. path: *.fastq.gz (emit: reads)
+ *
+ *   2. path: runsheet.csv (emit: runsheet)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bit
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process CAT_FASTQ_DIR {
 

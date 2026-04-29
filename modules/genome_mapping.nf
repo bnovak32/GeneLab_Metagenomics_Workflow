@@ -1,8 +1,48 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl = 2
 
+/*
+ * ========================================================================================
+ * PROCESS: LONG_MAP2GENOME
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Map sample reads to a custom genome reference
+ *
+ * INPUTS:
+ *   1. each: path(REF)
+ *      Cardinality: each
+ *      Description: Iterates over each element. Custom reference for genome mapping.
+ *
+ *   2. each: prefix
+ *      Cardinality: each
+ *      Description: Iterates over each element. Prefix to add to output file.
+ *
+ *   3. tuple: tuple val(sample_id), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id) , path("${prefix}-${sample_id}_scaffold_stats.txt") (emit: stats)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bbmap.yaml
+ *   Labels: bbtools
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
-// process to count the number / percentage of reads mapping to a custome genome
+// Process to count the number / percentage of reads mapping to a custome genome
 process LONG_MAP2GENOME {
 
     tag "mapping ${sample_id}-s reads to a custome reference"
@@ -32,7 +72,46 @@ process LONG_MAP2GENOME {
     """
 }
 
-
+/*
+ * ========================================================================================
+ * PROCESS: SHORT_MAP2GENOME
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Map sample reads to a custom reference
+ *
+ * INPUTS:
+ *   1. each: path(REF)
+ *      Cardinality: each
+ *      Description: Iterates over each element. Custom reference for genome mapping.
+ *
+ *   2. each: prefix
+ *      Cardinality: each
+ *      Description: Iterates over each element. refix to add to output file.
+ *
+ *   3. tuple: tuple val(sample_id), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id) , path("${prefix}-${sample_id}_scaffold_stats.txt") (emit: stats)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bbmap.yaml
+ *   Labels: bbtools
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process SHORT_MAP2GENOME {
 

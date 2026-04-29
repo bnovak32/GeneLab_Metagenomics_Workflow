@@ -9,6 +9,36 @@ include { ZIP_FASTA as ZIP_BINS } from "./zip_fasta.nf"
 
 //params.reduced_tree = "True"
 
+/*
+ * ========================================================================================
+ * PROCESS: SUMMARIZE_BIN_ASSEMBLIES
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Get a summary of recovered bins
+ *
+ * INPUTS:
+ *   1. path: bins
+ *      Cardinality: one
+ *      Description: Input file: bins
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}bin-assembly-summaries.tsv (emit: summary)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bins, bit
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 // Summarize bin assemblies
 process SUMMARIZE_BIN_ASSEMBLIES {
  
@@ -42,6 +72,35 @@ process SUMMARIZE_BIN_ASSEMBLIES {
         """
 }
 
+/*
+ * ========================================================================================
+ * PROCESS: CHECKM_ON_BIN
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Run checkm on a recovered bin if any.
+ *
+ * INPUTS:
+ *   1. path: bin
+ *      Cardinality: one
+ *      Description: Input file: bin
+ *
+ * OUTPUTS:
+ *   1. path: bin-checkm-out.tsv (emit: checkm_output)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: CheckM
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/checkm.yaml
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 // Runs checkm on a recovered bin
 process CHECKM_ON_BIN {
@@ -93,6 +152,38 @@ process CHECKM_ON_BIN {
         """
 }
 
+
+/*
+ * ========================================================================================
+ * PROCESS: COMBINE_CHECKM
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Combine CheckM results for all recovered bins
+ *
+ * INPUTS:
+ *   1. path: checkm_output, stageAs: "?/*
+ *      Cardinality: one
+ *      Description: Input file: checkm output
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}bins-checkm-out.tsv (emit: checkm_output)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: CheckM
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/checkm.yaml
+ *   Labels: bins
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 // Combines the outputs of running checkm on every bin into one file
 process COMBINE_CHECKM {
     tag "Combining CheckM results for all recovered bins..."
@@ -122,11 +213,45 @@ process COMBINE_CHECKM {
 
 }
 
-
+/*
+ * ========================================================================================
+ * PROCESS: GENERATE_BINS_OVERVIEW_TABLE
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Generate an overview of the recovered bins
+ *
+ * INPUTS:
+ *   1. path: bin_assembly_summaries
+ *      Cardinality: one
+ *      Description: Input file: bin assembly summaries
+ *
+ *   2. path: bins_checkm_results
+ *      Cardinality: one
+ *      Description: Input file: bins checkm results
+ *
+ *   3. path: bins
+ *      Cardinality: one
+ *      Description: Input file: bins
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}bins-overview${params.assay_suffix}.tsv
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/bit.yaml
+ *   Labels: bins, bit
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process GENERATE_BINS_OVERVIEW_TABLE {
 
-    tag "Generating an overall overview of the recovered bins..."
+    tag "Generating an overview of the recovered bins..."
     label "bins"
     label "bit"
 

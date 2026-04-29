@@ -56,6 +56,58 @@ if(params.sample_type == "low_biomass"){
 }
 
 /*
+ * ========================================================================================
+ * PROCESS: HUMANN
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Run Humann on sample reads
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *
+ *   2. path: chocophlan_dir
+ *      Cardinality: one
+ *      Description: Input file: humann chocophlan nucleotide database directory
+ *
+ *   3. path: uniref_dir
+ *      Cardinality: one
+ *      Description: Input file: humann uniref protein database directory
+ *
+ *   4. path: metaphlan_dir
+ *      Cardinality: one
+ *      Description: Input file: metaphlan database directory
+ *
+ * OUTPUTS:
+ *   1. path: ${sample_id}-humann3-out-dir/${sample_id}_genefamilies.tsv (emit: genefamilies)
+ *
+ *   2. path: ${sample_id}-humann3-out-dir/${sample_id}_pathabundance.tsv (emit: pathabundance)
+ *
+ *   3. path: ${sample_id}-humann3-out-dir/${sample_id}_pathcoverage.tsv (emit: pathcoverage)
+ *
+ *   4. tuple: tuple val(sample_id), path("${sample_id}-humann3-out-dir/${sample_id}_metaphlan_bugs_list.tsv") (emit: metaphlan_bugs_list)
+ *
+ *   5. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: HUMAnN
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/humann3.yaml
+ *   Labels: read_based
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
+/*
     This process runs humann3 and metaphlan4 on each individual sample generating the
     read-based functional annotations and taxonomic classifications.
 */
@@ -99,6 +151,53 @@ process HUMANN {
 
 
 /*
+ * ========================================================================================
+ * PROCESS: COMBINE_READ_BASED_PROCESSING_TABLES
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Combine read-based processing tables
+ *
+ * INPUTS:
+ *   1. path: gene_families
+ *      Cardinality: one
+ *      Description: Input file: list of gene families files
+ *
+ *   2. path: path_abundances
+ *      Cardinality: one
+ *      Description: Input file: list of pathway abundances files
+ *
+ *   3. path: path_coverages
+ *      Cardinality: one
+ *      Description: Input file: list of pathway coverages files
+ *
+ *   4. path: utilities_path
+ *      Cardinality: one
+ *      Description: Input file: humann utilities mapping database
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}gene-families.tsv (emit: gene_families)
+ *
+ *   2. path: ${params.additional_filename_prefix}pathway-abundances.tsv (emit: path_abundances)
+ *
+ *   3. path: ${params.additional_filename_prefix}pathway-coverages.tsv (emit: path_coverages)
+ *
+ *   4. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: HUMAnN
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/humann3.yaml
+ *   Labels: read_based
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
+/*
     This process combines the read-based humann3 output functional 
     tables from indiviual samples into single tables across the GLDS dataset.
 */
@@ -140,6 +239,55 @@ process COMBINE_READ_BASED_PROCESSING_TABLES {
         """
 }
 
+
+/*
+ * ========================================================================================
+ * PROCESS: SPLIT_READ_BASED_PROCESSING_TABLES
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Split humann stratified tables. Split taxonomy and non-taxonomy grouped function profiles.
+ *
+ * INPUTS:
+ *   1. path: gene_families
+ *      Cardinality: one
+ *      Description: Input file: combined gene families file
+ *
+ *   2. path: path_abundances
+ *      Cardinality: one
+ *      Description: Input file: combined pathway abundances file
+ *
+ *   3. path: path_coverages
+ *      Cardinality: one
+ *      Description: Input file: combined pathway coverages file
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}Gene-families${params.assay_suffix}.tsv (emit: gene_families)
+ *
+ *   2. path: ${params.additional_filename_prefix}Gene-families-grouped-by-taxa${params.assay_suffix}.tsv (emit: gene_families_grouped)
+ *
+ *   3. path: ${params.additional_filename_prefix}Pathway-abundances${params.assay_suffix}.tsv (emit: path_abundances)
+ *
+ *   4. path: ${params.additional_filename_prefix}Pathway-abundances-grouped-by-taxa${params.assay_suffix}.tsv (emit: path_abundances_grouped)
+ *
+ *   5. path: ${params.additional_filename_prefix}Pathway-coverages${params.assay_suffix}.tsv (emit: path_coverages)
+ *
+ *   6. path: ${params.additional_filename_prefix}Pathway-coverages-grouped-by-taxa${params.assay_suffix}.tsv (emit: path_coverages_grouped)
+ *
+ *   7. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: HUMAnN
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/humann3.yaml
+ *   Labels: read_based
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 /*
     The read-based functional annotation tables have taxonomic info and non-taxonomic info mixed
@@ -199,6 +347,43 @@ process SPLIT_READ_BASED_PROCESSING_TABLES {
 
 
 /*
+ * ========================================================================================
+ * PROCESS: GEN_NORMALIZED_READ_BASED_PROCESSING_TABLES
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Generate normalized humann tables
+ *
+ * INPUTS:
+ *   1. path: gene_families
+ *      Cardinality: one
+ *      Description: Input file: gene families file
+ *
+ *   2. path: path_abundances
+ *      Cardinality: one
+ *      Description: Input file: pathway abundances file
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}Gene-families-cpm${params.assay_suffix}.tsv (emit: gene_families)
+ *
+ *   2. path: ${params.additional_filename_prefix}Pathway-abundances-cpm${params.assay_suffix}.tsv (emit: path_abundances)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: HUMAnN
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/humann3.yaml
+ *   Labels: read_based
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
+/*
     This process generates some normalized tables of the read-based functional outputs from
     humann that are more readily suitable for across sample comparisons.
 */
@@ -233,6 +418,37 @@ process GEN_NORMALIZED_READ_BASED_PROCESSING_TABLES {
 
 
 /*
+ * ========================================================================================
+ * PROCESS: GEN_READ_BASED_PROCESSING_KO_TABLE
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Regroup gene families to Kegg orthologs
+ *
+ * INPUTS:
+ *   1. path: gene_families
+ *      Cardinality: one
+ *      Description: Input file: gene families file
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}Gene-families-KO-cpm${params.assay_suffix}.tsv (emit: gene_families)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: HUMAnN
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/humann3.yaml
+ *   Labels: read_based
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
+/*
     This process summarizes the read-based humann annotations based on Kegg Orthlogy terms.
 */
 
@@ -263,7 +479,38 @@ process GEN_READ_BASED_PROCESSING_KO_TABLE {
 
 
 
-//This process merges the taxonomy tables generated by metaphlan
+/*
+ * ========================================================================================
+ * PROCESS: COMBINE_READ_BASED_PROCESSING_TAXONOMY
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Combine metaphlan taxonomy tables
+ *
+ * INPUTS:
+ *   1. path: metaphlan_bugs_list_files
+ *      Cardinality: one
+ *      Description: Input file: list of metaphlan taxonomy files
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}metaphlan-taxonomy${params.assay_suffix}.tsv (emit: taxonomy)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: MetaPhlAn
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/humann3.yaml
+ *   Labels: read_based
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
+// This process merges the taxonomy tables generated by metaphlan
 process COMBINE_READ_BASED_PROCESSING_TAXONOMY {
 
     tag "Merging metaphlan taxonomy tables..."

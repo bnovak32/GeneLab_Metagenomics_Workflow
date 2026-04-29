@@ -5,6 +5,52 @@ include { SAMTOOLS_FILTER_FASTQ as  NANO_REMOVE_CONTAMINANT} from "./samtools.nf
 
 // max_mem = 100e9 // 100GB
 
+/*
+ * ========================================================================================
+ * PROCESS: SPADES
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Assemble a group of (blank)reads with spades
+ *
+ * INPUTS:
+ *   1. path: forward
+ *      Cardinality: one
+ *      Description: Input file: list of forward reads
+ *
+ *   2. path: reverse
+ *      Cardinality: one
+ *      Description: Input file: list of reverse reads
+ *
+ *   3. val: isPaired
+ *      Cardinality: one
+ *      Description: Parameter value: are the input reads paired?
+ *
+ *   4. val: type
+ *      Cardinality: one
+ *      Description: Parameter value: technology type i.e. one of illumina, pacbio or nanopore
+ *
+ * OUTPUTS:
+ *   1. path: blank-assembly.fasta (emit: assembly) [OPTIONAL]
+ *
+ *   2. path: blank-warnings.log (emit: warnings) [OPTIONAL]
+ *
+ *   3. path: blank-assembly.log (emit: log)
+ *
+ *   4. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: SPAdes
+ *   Container: [Defined in config/nextflow.config]
+ *   Conda: envs/spades.yaml
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 process SPADES {
 
     tag "Assembling contaminants..."
@@ -75,6 +121,38 @@ process SPADES {
 }
     
 
+/*
+ * ========================================================================================
+ * PROCESS: FLYE
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Assemble a group of (blank)reads with flye
+ *
+ * INPUTS:
+ *   1. path: reads
+ *      Cardinality: one
+ *      Description: Input file: list of reads
+ *
+ * OUTPUTS:
+ *   1. path: blank-assembly.fasta (emit: assembly)
+ *
+ *   2. path: blank-flye.log (emit: log)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: Flye
+ *   Container: [Defined in config/nanopore.config]
+ *   Conda: envs/flye.yaml
+ *   Labels: flye
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process FLYE {
 
@@ -104,6 +182,35 @@ process FLYE {
     """
 }
 
+/*
+ * ========================================================================================
+ * PROCESS: BUILD_CONTAMINANT_DB
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Build a contaminant Database from blank samples with bowtie2
+ *
+ * INPUTS:
+ *   1. path: FASTA
+ *      Cardinality: one
+ *      Description: Input file: Blank assembly
+ *
+ * OUTPUTS:
+ *   1. path: blank-index/ (emit: index)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/illumina.config]
+ *   Conda: envs/bowtie2.yaml
+ *   Labels: bowtie2
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process BUILD_CONTAMINANT_DB {
 
@@ -128,6 +235,36 @@ process BUILD_CONTAMINANT_DB {
         """
 }
 
+/*
+ * ========================================================================================
+ * PROCESS: BUILD_CONTAMINANT_INDEX
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Build a contaminant index from blank samples with minimap2
+ *
+ * INPUTS:
+ *   1. path: FASTA
+ *      Cardinality: one
+ *      Description: Input file: Blank assembly
+ *
+ * OUTPUTS:
+ *   1. path: blanks.mmi (emit: index)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: Minimap2
+ *   Container: [Defined in config/nanopore.config]
+ *   Conda: envs/minimap2.yaml
+ *   Labels: minimap2
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process BUILD_CONTAMINANT_INDEX {
 
@@ -147,7 +284,44 @@ process BUILD_CONTAMINANT_INDEX {
         """
 }
 
-
+/*
+ * ========================================================================================
+ * PROCESS: REMOVE_CONTAMINANT
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Remove reads mapping to blanks assembly with bowtie2
+ *
+ * INPUTS:
+ *   1. each: path(BLANKS_DB)
+ *      Cardinality: each
+ *      Description: Iterates over each element. Blanks assembly index.
+ *
+ *   2. tuple: tuple val(sample_id), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("*.fastq.gz"), val(isPaired) (emit: reads)
+ *
+ *   2. tuple: tuple val(sample_id), path("${sample_id}-mapping-info.txt") (emit: info)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/illumina.config]
+ *   Conda: envs/bowtie2.yaml
+ *   Labels: bowtie2
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process REMOVE_CONTAMINANT {
 
@@ -195,6 +369,43 @@ process REMOVE_CONTAMINANT {
     """
 }
 
+
+/*
+ * ========================================================================================
+ * PROCESS: MAPPING_TO_CONTAMINANT
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Map reads to blanks assembly with minimap2
+ *
+ * INPUTS:
+ *   1. each: path(BLANKS_DB)
+ *      Cardinality: each
+ *      Description: Iterates over each element. Blanks minimap index.
+ *
+ *   2. tuple: tuple val(sample_id), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}.sam"), path("${sample_id}-mapping-info.txt") (emit: sam)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/nanopore.config]
+ *   Conda: envs/minimap2.yaml
+ *   Labels: minimap2
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 // This process builds the bowtie2 index and runs the mapping for each sample
 process MAPPING_TO_CONTAMINANT {

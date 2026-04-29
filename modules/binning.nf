@@ -5,7 +5,40 @@ nextflow.enable.dsl = 2
 *********************  Assembly binning *************************************************
 ****************************************************************************************/
 
-
+/*
+ * ========================================================================================
+ * PROCESS: METABAT_BINNING
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Binning sample contigs with metabat2
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(sample_id), path(assembly), path(bam)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - assembly: path to sample assembly/contigs
+ *                 - bam: path to sample bam file
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}-metabat-assembly-depth${params.assay_suffix}.tsv") (emit: depth)
+ *
+ *   2. tuple: tuple val(sample_id), path("${sample_id}-bin*"), optional: true (emit: bins) [OPTIONAL]
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: MetaBAT2
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/metabat.yaml
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 // This process runs metabat2 for binning contigs.
 process METABAT_BINNING {

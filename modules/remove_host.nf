@@ -8,6 +8,36 @@ params.host_fasta = null // "/path/to/host_sequences.fasta"
 params.host_db    = null // "path/to/host/database"
 */
 
+/*
+ * ========================================================================================
+ * PROCESS: BUILD_HOSTDB
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Build kraken2 database via host name, url or host fasta
+ *
+ * INPUTS:
+ *   1. tuple: tuple val(host_name), val(host_url) , path(host_fasta)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *
+ * OUTPUTS:
+ *   1. path: kraken2_${host_name}_db/ (emit: krakendb_dir)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: Kraken2
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/kraken2.yaml
+ *   Labels: kraken2, db_setup
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 /* Build kraken2 database in one of 3 modes
  1. User supplied host url
@@ -88,8 +118,51 @@ process BUILD_HOSTDB {
     """
 }
 
+/*
+ * ========================================================================================
+ * PROCESS: REMOVE_HOST
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Removing host reads
+ *
+ * INPUTS:
+ *   1. val: host_suffix
+ *      Cardinality: one
+ *      Description: Parameter value: host name
+ *
+ *   2. each: path(HOST_DB)
+ *      Cardinality: each
+ *      Description: Iterates over each element. Host database
+ *
+ *   3. tuple: tuple val(sample_id), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not  
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("*_${host_suffix}${params.assay_suffix}.fastq.gz"), val(isPaired) (emit: reads)
+ *
+ *   2. tuple: tuple val(sample_id), path("*-kraken2-report.tsv") (emit: report)
+ *
+ *   3. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: Kraken2
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/samtools.yaml
+ *   Labels: kraken2
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
-// Remove host sequence using kranken2
+// Remove host sequence using kraken2
 process REMOVE_HOST {
 
     tag "Removing host reads"

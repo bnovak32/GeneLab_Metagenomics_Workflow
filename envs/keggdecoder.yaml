@@ -1,3 +1,4 @@
+name: keggdecoder
 channels:
     - conda-forge
 dependencies:

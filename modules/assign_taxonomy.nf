@@ -1,6 +1,43 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl = 2
 
+/*
+ * ========================================================================================
+ * PROCESS: KRAKEN_CLASSIFY
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Classify sample reads with kraken2
+ *
+ * INPUTS:
+ *   1. each: path(DB)
+ *      Cardinality: each
+ *      Description: Iterates over each DB element. Ensures all samples are processed not just one. 
+ *
+ *   2. tuple: tuple val(sample_id), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}-kraken2-report.tsv") (emit: report)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: Kraken2
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/kraken2.yaml
+ *   Labels: kraken2
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 // Classify reads using kraken2
 process KRAKEN_CLASSIFY {
@@ -43,6 +80,36 @@ process KRAKEN_CLASSIFY {
 }
 
 
+/*
+ * ========================================================================================
+ * PROCESS: KRAKEN2TABLE
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Create species table from multiple kraken2 reports with pavian
+ *
+ * INPUTS:
+ *   1. path: reports
+ *      Cardinality: one
+ *      Description: Input file: Kraken2 reports
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}kraken2_species_table${params.assay_suffix}.tsv (emit: table)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Primary Tool: Pavian
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/pavian.yaml
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
+
 process KRAKEN2TABLE {
 
 
@@ -76,6 +143,42 @@ process KRAKEN2TABLE {
 }
 
 
+/*
+ * ========================================================================================
+ * PROCESS: KAIJU_CLASSIFY
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Classify sample reads with kaiju
+ *
+ * INPUTS:
+ *   1. each: path(DB)
+ *      Cardinality: each
+ *      Description: Iterates over each DB element. Ensures all samples are processed not just one. 
+ *
+ *   2. tuple: tuple val(sample_id), path(reads), val(isPaired)
+ *      Cardinality: one
+ *      Description: Tuple input combining multiple channel elements
+ *                 - sample_id: string specifying the input sample name
+ *                 - reads: path to sample fastq reads
+ *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *
+ * OUTPUTS:
+ *   1. tuple: tuple val(sample_id), path("${sample_id}_kaiju.out") (emit: report)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/kaiju.yaml
+ *   Labels: kaiju
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process KAIJU_CLASSIFY {
 
@@ -110,6 +213,44 @@ process KAIJU_CLASSIFY {
     """
 }
 
+
+/*
+ * ========================================================================================
+ * PROCESS: KAIJU2TABLE
+ * ========================================================================================
+ *
+ * SUMMARY:
+ *   Merge kaiju reports in a table at the specified taxon level
+ *
+ * INPUTS:
+ *   1. path: DB
+ *      Cardinality: one
+ *      Description: Input file: Kaiju database directory
+ *
+ *   2. val: taxon_level
+ *      Cardinality: one
+ *      Description: Parameter value: taxon_level i.e phylum, class, order, family, genus and species
+ *
+ *   3. path: reports
+ *      Cardinality: one
+ *      Description: Input file: kaiju reports
+ *
+ * OUTPUTS:
+ *   1. path: ${params.additional_filename_prefix}merged_kaiju_table.tsv (emit: table)
+ *
+ *   2. path: versions.txt (emit: version)
+ *
+ * SOFTWARE & CONTAINERS:
+ *   Container: [Defined in config/default.config]
+ *   Conda: envs/kaiju.yaml
+ *   Labels: kaiju
+ *
+ * RESOURCE REQUIREMENTS:
+ *   - CPU cores: task.cpus
+ *   - Memory: task.memory
+ *
+ * ========================================================================================
+ */
 
 process KAIJU2TABLE {
  
