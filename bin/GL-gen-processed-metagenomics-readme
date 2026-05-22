@@ -2,266 +2,359 @@
 
 """
 This is a program for generating a README.txt file for GeneLab processed metagenomics datasets.
+It has been updated to follow the tree-style formatting and the specific directory structure 
+provided in the dir_struct.txt file.
 """
 
-import os
 import sys
 import argparse
-import textwrap
-import zipfile
-import re
+import datetime
 
-
-parser = argparse.ArgumentParser(description = "This program generates the corresponding README file for GeneLab processed amplicon dataset. It is intended to \
+parser = argparse.ArgumentParser(
+    description="This program generates the corresponding README file for GeneLab processed metagenomics datasets. It is intended to \
                                              be run before running `GL-validate-processed-metagenomics-data` and after processing_info.zip has been created.")
 
 required = parser.add_argument_group('required arguments')
-required.add_argument("-g", "--GLDS-ID", help = 'GLDS ID (e.g. "GLDS-69")', action = "store", required = True)
-parser.add_argument("--output", help = 'Name of output file (default: "README.txt", with appended prefix if one is provided)', default = "README.txt")
-parser.add_argument("--name", help = 'Name of individual who performed the processing (default: "Michael D. Lee")', default = "Michael D. Lee")
-parser.add_argument("--email", help = 'Email address of individual who performed the processing (default: "Mike.Lee@nasa.gov")', default = "Mike.Lee@nasa.gov")
-parser.add_argument("--protocol_ID", help = 'Protocol document ID followed (default: assay dependent)', default = "GL-DPPD-7104-B")
-parser.add_argument("-p", "--output-prefix", help = "Output additional file prefix if there is one", action = "store", default = "")
-parser.add_argument("--assay_suffix", help = "Genelab assay suffix", action = "store", default = "_GLAmpSeq")
-parser.add_argument("--primers-already-trimmed", help = "Add this flag if primers were trimmed prior to GeneLab processing, \
-                    therefore there are no trimmed sequence data", action = "store_true")
-parser.add_argument("--processing_zip_file", help = "Specifies the location of processing_info.zip", 
-                    action = "store", default = "processing_info.zip")
-parser.add_argument("--raw-reads-dir", help = "Specifies the location of the raw reads directory if they are to be included", action = "store", default = "")
-parser.add_argument("--fastqc_dir", help = "Specifies the location of fastqc and multiqc reports directory", 
-                    action = "store", default = "FastQC_Outputs/")
-parser.add_argument("--filtered_reads_dir", help = "Specifies the location of the filtered reads directory", 
-                    action = "store", default = "Filtered_Sequence_Data/")
-parser.add_argument("--read_based_dir", help = "Specifies the location of the directory containing the results generated from read-based approach", 
-                    action = "store", default = "Read-based_Processing/")
-parser.add_argument("--assembly_based_dir", help = "Specifies the location of the directory containing results generated from assembly-based approach", 
-                    action = "store", default = "Assembly-based_Processing/")
-parser.add_argument("--assemblies_dir", help = "Specifies the location of the directory containing sample contig assemblies", 
-                    action = "store", default = "Assembly-based_Processing/assemblies/")
-parser.add_argument("--genes_dir", help = "Specifies the location of the directory containing predicted genes", 
-                    action = "store", default = "Assembly-based_Processing/predicted-genes/")
-parser.add_argument("--annotations_and_tax_dir", help = "Specifies the location of the directory containing contigs annotation and taxonomy", 
-                    action = "store", default = "Assembly-based_Processing/annotations-and-taxonomy/")
-parser.add_argument("--mapping_dir", help = "Specifies the location of the directory containing per-sample bam, coverage, and mapping info files", 
-                    action = "store", default = "Assembly-based_Processing/read-mapping/")
-parser.add_argument("--bins_dir", help = "Specifies the location of the directory containing recovered genome bins", 
-                    action = "store", default = "Assembly-based_Processing/bins/")
-parser.add_argument("--MAGs_dir", help = "Specifies the location of the directory containing metaassebled genomes (MAGs)", 
-                    action = "store", default = "Assembly-based_Processing/MAGs/")
-parser.add_argument("--combined_output_dir", help = "Specifies the location of the directory containing summary outputs with all samples combined", 
-                    action = "store", default = "Assembly-based_Processing/combined-outputs/")
+required.add_argument("--glds-id", "--osd-id", help='GLDS or OSDR ID (e.g. "GLDS-69" or "OSD-69")', action="store", required=True)
 
-if len(sys.argv)==1:
+parser.add_argument("--output", "--output-name", default="README.txt",
+                    help='Name of output file (default: "README.txt")')
+parser.add_argument("--name", default="Olabiyi A. Obayomi",
+                    help='Name of individual who performed the processing (default: "Olabiyi A. Obayomi")')
+parser.add_argument("--email", default="olabiyi.a.obayomi@nasa.gov",
+                    help='Email address of individual who performed the processing (default: "olabiyi.a.obayomi@nasa.gov")')
+parser.add_argument("--protocol-id", default="GL-DPPD-7116",
+                    help='Protocol document ID followed (default: "GL-DPPD-7116")')
+parser.add_argument("--runsheet", default="PE_file.csv",
+                    help='Runsheet file name (default: "PE_file.csv")')
+parser.add_argument("--technology", default="illumina",
+                    help='Technology used for sequencing. One of "illumina" or "nanopore" (default: "illumina")')
+parser.add_argument("--sample-type", default="low_biomass",
+                    help='Sample type sequenced. One of "low_biomass" or "standard" (default: "low_biomass")')
+parser.add_argument("--host-removed", default=False, action="store_true",
+                    help='Indicates if host sequences were removed from the dataset (default: False)')
+parser.add_argument("-p", "--output-prefix", help="Output additional file prefix if there is one", action="store", default="")
+parser.add_argument("--assay-suffix", help="GeneLab assay suffix. one of '_GLmetagenomics', '_GLlbsMetag', '_GLlblMetag', and '_GLlongMetag'", action="store", default="")
+parser.add_argument("--date", action="store", default=datetime.date.today(), type=datetime.date.fromisoformat,
+                    help="Date the processed data was generated in ISO format (YYYY-MM-DD). (default: today's date)")
+
+if len(sys.argv) == 1:
     parser.print_help(sys.stderr)
     sys.exit(0)
 
 args = parser.parse_args()
 
-# Setting some colors
-tty_colors = {
-    'green' : '\033[0;32m%s\033[0m',
-    'yellow' : '\033[0;33m%s\033[0m',
-    'red' : '\033[0;31m%s\033[0m'
-}
+################################################################################
 
+def main():
+    with open(args.output, "w") as output:
+        write_header(output, args.glds_id, args.name, args.email, args.protocol_id, args.date)
+        write_metagenomics_body(output)
 
-### Functions ###
-def color_text(text, color='green'):
-    if sys.stdout.isatty():
-        return tty_colors[color] % text
-    else:
-        return text
+################################################################################
 
-
-def wprint(text):
-    """ Print wrapper """
-
-    print(textwrap.fill(text, width=80, initial_indent="  ", 
-          subsequent_indent="  ", break_on_hyphens=False))
-
-
-def report_failure(message, color = "yellow"):
-    print("")
-    wprint(color_text(message, color))
-    print("\nREADME-generation failed.\n")
-
-    sys.exit(1)
-
-
-def check_for_file_and_contents(file_path):
-    """ Used by get_processing_zip_contents function """
-
-    if not os.path.exists(file_path):
-        report_failure("The expected file '" + str(file_path) + "' does not exist.")
-    if not os.path.getsize(file_path) > 0:
-        report_failure("The file '" + str(file_path) + "' is empty.")
-
-
-def get_processing_zip_contents(processing_zip_file):
-    """ This gets the filenames that are in the processing_info.zip to add them to the readme """
-    # Check that the zip file exists and that it is not empty
-
-    check_for_file_and_contents(processing_zip_file)
-
-    with zipfile.ZipFile(processing_zip_file) as zip_obj:
-
-        entries = zip_obj.namelist()
-        entries.sort()
-
-    return(entries)
-
-
-def write_header(output, GLDS_ID, name, email, protocol_ID):
-
+def write_header(output, glds_id, name, email, protocol_id, date):
+    # Support both GLDS and OSD prefixes
+    url_base = "https://osdr.nasa.gov/bio/repo/data/studies/" if glds_id.startswith("OSD-") else "https://genelab-data.ndc.nasa.gov/genelab/accession/"
+    
     header = ["################################################################################\n",
-              "{:<77} {:>0}".format("## This directory holds processed data for NASA " + str(GLDS_ID), "##\n"),
-              "{:<77} {:>0}".format("## https://genelab-data.ndc.nasa.gov/genelab/accession/" + str(GLDS_ID) + "/", "##\n"),
+              "{:<77} {:>0}".format(f"## This directory holds processed data for NASA {glds_id}", "##\n"),
+              "{:<77} {:>0}".format(f"## {url_base}{glds_id}/", "##\n"),
               "{:<77} {:>0}".format("##", "##\n"),
-              "{:<77} {:>0}".format("## Processed by " + str(name) + " (" + str(email) + ")", "##\n"),
-              "{:<77} {:>0}".format("## Based on " + str(protocol_ID),  "##\n"),
+              "{:<77} {:>0}".format(f"## Processed by {name} ({email}) on {date}", "##\n"),
+              "{:<77} {:>0}".format(f"## Based on {protocol_id}", "##\n"),
               "################################################################################\n\n",
               "Summary of contents:\n\n"]
 
     output.writelines(header)
 
-
-
-def write_metagenomics_body(output, output_file, assay_suffix, output_prefix, processing_zip_file,
-                        processing_zip_contents, fastqc_dir, raw_reads_dir, filtered_reads_dir,
-                        read_based_dir, assembly_based_dir, assemblies_dir, mapping_dir, genes_dir,
-                        annotations_and_tax_dir, bins_dir, MAGs_dir, combined_output_dir):
-
-    # this file
-    output.write("    {:<75} {:>0}".format("- " + str(output_file), "- this file\n\n"))
-
-    # fastqc info
-    output.write("    {:<75} {:>0}".format("- " + str(fastqc_dir), "- multiQC summary reports of FastQC runs\n\n"))
-
-    # raw reads
-    if raw_reads_dir != "":
-        output.write("    {:<75} {:>0}".format("- " + str(raw_reads_dir), "- initial read fastq files\n\n"))
-
-    # quality-filtered reads
-    output.write("    {:<75} {:>0}".format("- " + str(filtered_reads_dir), "- quality-filtered fastq files\n\n"))
-
-    # outputs
-    output.write("    {:<75} {:>0}".format("- " + str(assembly_based_dir), "- results generated from assembly-based approach\n\n"))
-
-    output.write("        {:<71} {:>0}".format(f"- {output_prefix}Assembly-based-processing-overview{assay_suffix}.tsv", "- Assembly-based overview per sample\n\n"))
+def add_level(file_name, file_description, max_offset, output, continues, is_last=False):
+    indent_parts = ["   "]
+    for cont in continues[:-1]:
+        indent_parts.append("│   " if cont else "    ")
     
-    output.write("        {:<71} {:>0}".format("- " + str(assemblies_dir), "- per-sample assembly files and info\n"))
-    output.write("            {:<67} {:>0}".format("- *-assembly.fasta", "- fasta files of individual sample assemblies\n"))
-    output.write("            {:<67} {:>0}".format(f"- {output_prefix}assembly-summaries{assay_suffix}.tsv", "- table of all assemblies' summary statistics\n"))
-    output.write("            {:<67} {:>0}".format(f"- {output_prefix}Failed-assemblies{assay_suffix}.tsv", "- samples that didn't assemble any contigs (if any)\n\n"))
+    connector = "└──" if is_last else "├──"
+    indent_parts.append(connector)
+    prefix = "".join(indent_parts)
+    spacing = max(1, max_offset - len(prefix))
 
-    output.write("        {:<71} {:>0}".format("- " + str(genes_dir), "- per-sample predicted gene files\n"))
-    output.write("            {:<67} {:>0}".format("- *.faa", "- gene amino-acid sequences\n"))
-    output.write("            {:<67} {:>0}".format("- *.fasta", "- gene nucleotide sequences\n"))
-    output.write("            {:<67} {:>0}".format("- *.gff", "- predicted genes in general feature format\n\n"))
+    if file_description == "":
+        output.write(f"{prefix} {file_name:<{spacing}}\n")
+    else:
+        output.write(f"{prefix} {file_name:<{spacing}}   - {file_description}\n")
 
-    output.write("        {:<71} {:>0}".format("- " + str(annotations_and_tax_dir), "- per-sample Kegg Orthology (KO) annotations, taxonomy, and coverages\n"))
-    output.write("            {:<67} {:>0}".format("- *-gene-coverage-annotation-tax.tsv", "- tables with gene coverage, annotation, and taxonomy info\n"))
-    output.write("            {:<67} {:>0}".format("- *-contig-coverage-and-tax.tsv", "- tables with contig coverage and taxonomy info\n\n"))
+def add_spacer(output):
+    output.write("   │\n")
 
-    output.write("        {:<71} {:>0}".format("- " + str(mapping_dir), "- per-sample bam, coverage, and mapping info files\n"))
-    output.write("            {:<67} {:>0}".format("- *.bam", "- bam files\n"))
-    output.write("            {:<67} {:>0}".format("- *.tsv", "- coverage files used for metabat2 binning\n"))
-    output.write("            {:<67} {:>0}".format("- *.txt", "- stdout from bowtie2 mapping\n\n"))
+def write_metagenomics_body(output):
+    # Calculate padding based on a long representative filename
+    longest_filename = f"{args.output_prefix}Combined-gene-level-KO-function_unfiltered_top_50_heatmap{args.assay_suffix}.png"
+    pad = len(longest_filename) + (6 * 4) + 2
 
-    if os.path.exists(bins_dir):
-        output.write("        {:<71} {:>0}".format("- " + str(bins_dir), "- genomic bins recovered (if any)\n"))
-        output.write("            {:<67} {:>0}".format("- *.fasta", "- fasta files of bins recovered\n"))
-        output.write("            {:<67} {:>0}".format(f"- {output_prefix}bins-overview{assay_suffix}.tsv", "- summary stats of bins recovered\n\n"))
+    # Root Level
+    add_level(args.output, "this file", pad, output, continues=[True])
+    add_spacer(output)
 
-    if os.path.exists(MAGs_dir):
-        output.write("        {:<71} {:>0}".format("- " + str(MAGs_dir), "- high-quality Metagenome-Assembled Genomes recovered (if any; > 90% est. comp., < 10% est. redundancy)\n"))
-        output.write("            {:<67} {:>0}".format("- *.fasta", "- fasta files of MAGs\n"))
-        output.write("            {:<67} {:>0}".format(f"- {output_prefix}MAGs-overview{assay_suffix}.tsv", "- summary stats of MAGs including GTDB taxonomy\n"))
-        output.write("            {:<67} {:>0}".format(f"- {output_prefix}MAG-level-KO-annotations{assay_suffix}.tsv", "- KO functional annotations associated with each MAG\n"))
-        output.write("            {:<67} {:>0}".format(f"- {output_prefix}MAG-KEGG-Decoder*", "- KEGG-Decoder summaries of MAG functional annotations\n\n"))
+    isNanopore = True if args.technology == "nanopore" else False
+    prefix = "raw" if isNanopore else "HRrm"
+    step = "raw" if isNanopore else "human read removed"
+    # Sequence Data Sections
+    add_level("Merged_Sequence_Data/", "raw data", pad, output, continues=[True])
+    add_level("MultiQC_Reports/", "raw data MultiQC summary reports", pad, output, continues=[True, True])
+    add_level(f"{prefix}_multiqc{args.assay_suffix}.html", f"{step} data MultiQC summary report", pad, output, continues=[True, isNanopore, True])
+    add_level(f"{prefix}_multiqc{args.assay_suffix}_data.zip", f"{step} data MultiQC data files", pad, output, continues=[True, isNanopore, True], is_last=True)
+    if args.technology == "nanopore":
+        add_level("NanoPlot/", "NanoPlot report for raw sample data", pad, output, continues=[True, True])
+        add_level(f"*_{prefix}_NanoPlot-report{args.assay_suffix}.html", f"NanoPlot html summary for {step} sample data", pad, output, continues=[True, False, True], is_last=True)
+    add_spacer(output)
+
+    add_level("Filtered_Sequence_Data/", "quality-filtered data", pad, output, continues=[True])
+    if args.technology == "illumina":
+        add_level(f"*filtered{args.assay_suffix}.fastq.gz", "fastq files that have been quality filtered, adapter trimmed and human reads removed", pad, output, continues=[True, True])
+    add_level("MultiQC_Reports/", "filtered data MultiQC summary reports", pad, output, continues=[True, True])
+    add_level(f"filtered_multiqc{args.assay_suffix}.html", "filtered data MultiQC summary report", pad, output, continues=[True, isNanopore, True])
+    add_level(f"filtered_multiqc{args.assay_suffix}_data.zip", "filtered data MultiQC data files", pad, output, continues=[True, isNanopore, True], is_last=True)
+    if args.technology == "nanopore":
+        add_level("NanoPlot/", "NanoPlot report for filtered sample data", pad, output, continues=[True, True])
+        add_level(f"*_filtered_NanoPlot-report{args.assay_suffix}.html", "NanoPlot html summary for filtered sample data", pad, output, continues=[True, False, True], is_last=True)
+    add_spacer(output)
+
+    if args.technology == "nanopore":
+        add_level("Trimmed_Sequence_Data/", "adapter trimmed data", pad, output, continues=[True])
+        add_level("MultiQC_Reports/", "trimmed data MultiQC summary reports", pad, output, continues=[True, True])
+        add_level(f"trimmed_multiqc{args.assay_suffix}.html", "trimmed data MultiQC summary report", pad, output, continues=[True, True, True])
+        add_level(f"trimmed_multiqc{args.assay_suffix}_data.zip", "trimmed data MultiQC data files", pad, output, continues=[True, True, True], is_last=True)
+        add_level("NanoPlot/", "NanoPlot report for trimmed sample data", pad, output, continues=[True, True])
+        add_level(f"*_trimmed_NanoPlot-report{args.assay_suffix}.html", "NanoPlot html summary for trimmed sample data", pad, output, continues=[True, False, True], is_last=True)
+        add_spacer(output)
+
+    if args.sample_type == "low_biomass":
+        add_level("Decontaminated_Sequence_Data/", "data after blank removal", pad, output, continues=[True])
+        add_level(f"*_decontam{args.assay_suffix}.fastq.gz", "fastq files that have been filtered and trimmed and had blank reads removed", pad, output, continues=[True, True])
+        add_level("MultiQC_Reports/", "decontaminated data MultiQC summary reports", pad, output, continues=[True, True])
+        add_level(f"decontam_multiqc{args.assay_suffix}.html", "MultiQC summary report for samples with blanks removed", pad, output, continues=[True, isNanopore, True])
+        add_level(f"decontam_multiqc{args.assay_suffix}_data.zip", "MultiQC data for samples with blanks removed", pad, output, continues=[True, isNanopore, True], is_last=True)
+        if args.technology == "nanopore":
+            add_level("NanoPlot/", "NanoPlot report for decontaminated sample data", pad, output, continues=[True, True])
+            add_level(f"*_decontam{args.assay_suffix}_NanoPlot-report{args.assay_suffix}.html", "NanoPlot html summary for decontaminated sample data", pad, output, continues=[True, False, True], is_last=True)    
+        add_spacer(output)
+
+    if args.technology == "nanopore":
+        add_level("HR-removed_Sequence_Data/", "data after human read removal", pad, output, continues=[True])
+        add_level(f"*_HRrm{args.assay_suffix}.fastq.gz", "fastq files that have been filtered and trimmed and had blank and human reads removed", pad, output, continues=[True, True])
+        add_level("MultiQC_Reports/", "human read removed data MultiQC summary reports", pad, output, continues=[True, True])
+        add_level(f"HRrm_multiqc{args.assay_suffix}.html", "MultiQC summary report for samples with human reads removed", pad, output, continues=[True, False, True])
+        add_level(f"HRrm_multiqc{args.assay_suffix}_data.zip", "MultiQC data for samples with human reads removed", pad, output, continues=[True, False, True], is_last=True)
+        add_spacer(output)    
+
+    if args.host_removed:
+        add_level("HostRm-removed_Sequence_Data/", "data after host read removal", pad, output, continues=[True])
+        add_level(f"*_HostRm{args.assay_suffix}.fastq.gz", "fastq files that have been filtered and trimmed and had blank, human and host reads removed", pad, output, continues=[True, True])
+        add_level("MultiQC_Reports/", "host read removed data MultiQC summary reports", pad, output, continues=[True, True])
+        add_level(f"HostRm_multiqc{args.assay_suffix}.html", "MultiQC summary report for samples with host reads removed", pad, output, continues=[True, False, True])
+        add_level(f"HostRm_multiqc{args.assay_suffix}_data.zip", "MultiQC data for samples with host reads removed", pad, output, continues=[True, False, True], is_last=True)
+        add_spacer(output)    
+
+    # Assembly-based Processing
+    add_level("Assembly-based_Processing/", "results generated from assembly-based approach", pad, output, continues=[True])
+    add_level(f"{args.output_prefix}Assembly-based-processing-overview{args.assay_suffix}.tsv", "summary overview of assembly-based processing", pad, output, continues=[True, True])
+    
+    # MAGs
+    add_level("MAGs/", "metagenome-assembled genomes (MAGs) and associated data", pad, output, continues=[True, True])
+    add_level(f"*-MAGs{args.assay_suffix}.zip", "fasta files for all recovered MAGs", pad, output, continues=[True, True, True])
+    add_level(f"{args.output_prefix}MAGs-overview{args.assay_suffix}.tsv", "summary statistics for all recovered MAGs", pad, output, continues=[True, True, True])
+    add_level("KEGG_Outputs/", "functional annotations for MAGs", pad, output, continues=[True, True, True], is_last=True)
+    add_level(f"{args.output_prefix}MAG-KEGG-Decoder-out{args.assay_suffix}.tsv", "KEGG Decoder metabolic pathway summary table", pad, output, continues=[True, True, False, True])
+    add_level(f"{args.output_prefix}MAG-KEGG-Decoder-out{args.assay_suffix}.html", "KEGG Decoder metabolic pathway summary html", pad, output, continues=[True, True, False, True])
+    add_level(f"{args.output_prefix}MAG-level-KO-annotations{args.assay_suffix}.tsv", "KO term annotations for each MAG", pad, output, continues=[True, True, False, True], is_last=True)
+
+    # Annotations and Taxonomy
+    add_level("annotations-and-taxonomy/", "functional and taxonomic annotations for contigs and genes", pad, output, continues=[True, True])
+    add_level(f"*-contig-coverage-and-tax{args.assay_suffix}.tsv", "contig-level coverage and taxonomy", pad, output, continues=[True, True, True])
+    add_level(f"*-gene-coverage-annotation-and-tax{args.assay_suffix}.tsv", "gene-level coverage, annotation, and taxonomy", pad, output, continues=[True, True, True], is_last=True)
+
+    # Assemblies
+    add_level("assemblies/", "per-sample assembly files", pad, output, continues=[True, True])
+    add_level(f"*assembly{args.assay_suffix}.fasta", "assembled contigs in fasta format", pad, output, continues=[True, True, True])
+    add_level(f"{args.output_prefix}Failed-assemblies{args.assay_suffix}.tsv", "samples that didn't assemble any contigs (if any)", pad, output, continues=[True, True, True])
+    add_level(f"{args.output_prefix}assembly-summaries{args.assay_suffix}.tsv", "summary stats for all assemblies", pad, output, continues=[True, True, True], is_last=True)
+
+    # Bins
+    add_level("bins/", "genomic bins recovered from assemblies", pad, output, continues=[True, True])
+    add_level(f"*-bins{args.assay_suffix}.zip", "fasta files for genomic bins", pad, output, continues=[True, True, True])
+    add_level(f"{args.output_prefix}bins-overview{args.assay_suffix}.tsv", "summary statistics for genomic bins", pad, output, continues=[True, True, True], is_last=True)
+
+    # Combined Outputs
+    add_level("combined-outputs/", "summary outputs with all samples combined", pad, output, continues=[True, True])
+
+    add_level("Contig-level/", "combined contig-level taxonomy data", pad, output, continues=[True, True, True])
+    add_level("Count_Tables/", "combined contig-level taxonomy count tables", pad, output, continues=[True, True, True, True])
+    add_level(f"{args.output_prefix}Combined-contig-level-taxonomy-coverages-CPM{args.assay_suffix}.tsv", "combined contig-level taxonomy coverages normalized to copies per million", pad, output, continues=[True, True, True, True, True])
+    add_level(f"{args.output_prefix}Combined-contig-level-taxonomy-coverages{args.assay_suffix}.tsv", "combined contig-level taxonomy coverages", pad, output, continues=[True, True, True, True, True])
+    add_level(f"{args.output_prefix}Combined-contig-level-taxonomy{args.assay_suffix}.tsv", "combined contig-level taxonomy data", pad, output, continues=[True, True, True, True, True])
+    if args.sample_type == "low_biomass":
+        add_level(f"{args.output_prefix}Combined-contig-level-taxonomy_decontam_results{args.assay_suffix}.tsv", "decontam results for contig-level taxonomy data", pad, output, continues=[True, True, True, True, True])
+    add_level(f"{args.output_prefix}Combined-contig-level-taxonomy_filtered{args.assay_suffix}.tsv", "filtered contig-level taxonomy table", pad, output, continues=[True, True, True, True, True], is_last=True)
+    add_level("Heatmaps/", "combined contig-level taxonomy heatmaps", pad, output, continues=[True, True, True, True])
+    
+    if args.sample_type == "low_biomass":
+        add_level(f"{args.output_prefix}Combined-contig-level-taxonomy_decontam_heatmap{args.assay_suffix}.png", "heatmap of decontam results for contig-level taxonomy data", pad, output, continues=[True, True, True, False, True])
+        add_level(f"{args.output_prefix}Combined-contig-level-taxonomy_decontam_top_50_heatmap{args.assay_suffix}.png", "top 50 heatmap of decontam results for contig-level taxonomy data", pad, output, continues=[True, True, True, False, True])
+    add_level(f"{args.output_prefix}Combined-contig-level-taxonomy_filtered_heatmap{args.assay_suffix}.png", "heatmap of filtered contig-level taxonomy data", pad, output, continues=[True, True, True, False, True])
+    add_level(f"{args.output_prefix}Combined-contig-level-taxonomy_filtered_top_50_heatmap{args.assay_suffix}.png", "top 50 heatmap of filtered contig-level taxonomy data", pad, output, continues=[True, True, True, False, True])
+    add_level(f"{args.output_prefix}Combined-contig-level-taxonomy_unfiltered_heatmap{args.assay_suffix}.png", "heatmap of unfiltered contig-level taxonomy data", pad, output, continues=[True, True, True, False, True])
+    add_level(f"{args.output_prefix}Combined-contig-level-taxonomy_unfiltered_top_50_heatmap{args.assay_suffix}.png", "top 50 heatmap of unfiltered contig-level taxonomy data", pad, output, continues=[True, True, True, False, True], is_last=True)
+
+    add_level("Gene-level/", "combined gene-level data", pad, output, continues=[True, True, True], is_last=True)
+    add_level("KO/", "Kegg Orthology functional data", pad, output, continues=[True, True, False, True])
+    add_level("Count_Tables/", "combined gene-level KO-function count tables", pad, output, continues=[True, True, False, True, True])
+    add_level(f"{args.output_prefix}Combined-gene-level-KO-function-coverages-CPM{args.assay_suffix}.tsv", "combined gene-level KO-function coverages normalized to copies per million", pad, output, continues=[True, True, False, True, True, True])
+    add_level(f"{args.output_prefix}Combined-gene-level-KO-function-coverages{args.assay_suffix}.tsv", "combined gene-level KO-function coverages", pad, output, continues=[True, True, False, True, True, True])
+    add_level(f"{args.output_prefix}Combined-gene-level-KO-function{args.assay_suffix}.tsv", "combined gene-level KO-function data", pad, output, continues=[True, True, False, True, True, True])
+    if args.sample_type == "low_biomass":
+        add_level(f"{args.output_prefix}Combined-gene-level-KO-function_decontam{args.assay_suffix}.tsv", "decontam results for gene-level KO-function data", pad, output, continues=[True, True, False, True, True, True])
+    add_level(f"{args.output_prefix}Combined-gene-level-KO-function_filtered{args.assay_suffix}.tsv", "filtered gene-level KO-function table", pad, output, continues=[True, True, False, True, True, True], is_last=True)
+
+    add_level("Heatmaps/", "combined gene-level KO-function heatmaps", pad, output, continues=[True, True, False, True, True])
+    if args.sample_type == "low_biomass":
+        add_level(f"{args.output_prefix}Combined-gene-level-KO-function_decontam_heatmap{args.assay_suffix}.png", "heatmap of decontam results for gene-level KO-function data", pad, output, continues=[True, True, False, True, False, True])
+        add_level(f"{args.output_prefix}Combined-gene-level-KO-function_decontam_top_50_heatmap{args.assay_suffix}.png", "top 50 heatmap of decontam results for gene-level KO-function data", pad, output, continues=[True, True, False, True, False, True])
+    add_level(f"{args.output_prefix}Combined-gene-level-KO-function_filtered_heatmap{args.assay_suffix}.png", "heatmap of filtered gene-level KO-function data", pad, output, continues=[True, True, False, True, False, True])
+    add_level(f"{args.output_prefix}Combined-gene-level-KO-function_filtered_top_50_heatmap{args.assay_suffix}.png", "top 50 heatmap of filtered gene-level KO-function data", pad, output, continues=[True, True, False, True, False, True])
+    add_level(f"{args.output_prefix}Combined-gene-level-KO-function_unfiltered_heatmap{args.assay_suffix}.png", "heatmap of unfiltered gene-level KO-function data", pad, output, continues=[True, True, False, True, False, True])
+    add_level(f"{args.output_prefix}Combined-gene-level-KO-function_unfiltered_top_50_heatmap{args.assay_suffix}.png", "top 50 heatmap of unfiltered gene-level KO-function data", pad, output, continues=[True, True, False, True, False, True], is_last=True)
+
+    add_level("Taxonomy/", "gene-level taxonomy data", pad, output, continues=[True, True, False, True])
+    add_level("Count_Tables/", "combined gene-level taxonomy count tables", pad, output, continues=[True, True, False, False, True])
+    add_level(f"{args.output_prefix}Combined-gene-level-taxonomy-coverages-CPM{args.assay_suffix}.tsv", "combined gene-level taxonomy coverages normalized to copies per million", pad, output, continues=[True, True, False, False, True, True])
+    add_level(f"{args.output_prefix}Combined-gene-level-taxonomy-coverages{args.assay_suffix}.tsv", "combined gene-level taxonomy coverages", pad, output, continues=[True, True, False, False, True, True])
+    add_level(f"{args.output_prefix}Combined-gene-level-taxonomy{args.assay_suffix}.tsv", "combined gene-level taxonomy data", pad, output, continues=[True, True, False, False, True, True])
+    if args.sample_type == "low_biomass":
+        add_level(f"{args.output_prefix}Combined-gene-level-taxonomy_decontam_results{args.assay_suffix}.tsv", "decontam results for gene-level taxonomy data", pad, output, continues=[True, True, False, False, True, True])
+    add_level(f"{args.output_prefix}Combined-gene-level-taxonomy_filtered{args.assay_suffix}.tsv", "filtered gene-level taxonomy table", pad, output, continues=[True, True, False, False, True, True], is_last=True)
+    add_level("Heatmaps/", "combined gene-level taxonomy heatmaps", pad, output, continues=[True, True, False, False, True])
+    if args.sample_type == "low_biomass":
+        add_level(f"{args.output_prefix}Combined-gene-level-taxonomy_decontam_heatmap{args.assay_suffix}.png", "heatmap of decontam results for gene-level taxonomy data", pad, output, continues=[True, True, False, False, False, True])
+        add_level(f"{args.output_prefix}Combined-gene-level-taxonomy_decontam_top_50_heatmap{args.assay_suffix}.png", "top 50 heatmap of decontam results for gene-level taxonomy data", pad, output, continues=[True, True, False, False, False, True])
+    add_level(f"{args.output_prefix}Combined-gene-level-taxonomy_filtered_heatmap{args.assay_suffix}.png", "heatmap of filtered gene-level taxonomy data", pad, output, continues=[True, True, False, False, False, True])
+    add_level(f"{args.output_prefix}Combined-gene-level-taxonomy_filtered_top_50_heatmap{args.assay_suffix}.png", "top 50 heatmap of filtered gene-level taxonomy data", pad, output, continues=[True, True, False, False, False, True])
+    add_level(f"{args.output_prefix}Combined-gene-level-taxonomy_unfiltered_heatmap{args.assay_suffix}.png", "heatmap of unfiltered gene-level taxonomy data", pad, output, continues=[True, True, False, False, False, True], is_last=True)
+
+    # Predicted Genes
+    add_level("predicted-genes/", "per-sample gene predictions", pad, output, continues=[True, True])
+    add_level(f"*-genes{args.assay_suffix}.faa", "protein sequences of predicted genes", pad, output, continues=[True, True, True])
+    add_level(f"*-genes{args.assay_suffix}.fasta", "nucleotide sequences of predicted genes", pad, output, continues=[True, True, True])
+    add_level(f"*-genes{args.assay_suffix}.gff", "coordinates of predicted genes", pad, output, continues=[True, True, True], is_last=True)
+
+    # Read Mapping
+    add_level("read-mapping/", "alignment of reads back to assemblies", pad, output, continues=[True, True], is_last=True)
+    add_level(f"*{args.assay_suffix}.bam", "binary alignment files", pad, output, continues=[True, False, True])
+    add_level(f"*-mapping-info{args.assay_suffix}.txt", "alignment summary statistics", pad, output, continues=[True, False, True])
+    add_level(f"*-metabat-assembly-depth{args.assay_suffix}.tsv", "contig depth for binning", pad, output, continues=[True, False, True], is_last=True)
+
+    add_spacer(output)
 
 
-    output.write("        {:<71} {:>0}".format("- " + str(combined_output_dir), "- summary outputs with all samples combined\n"))
-    output.write("            {:<67} {:>0}".format(f"- {output_prefix}Combined-gene-level-KO-function-coverages{assay_suffix}.tsv", "- table of combined KO function coverages\n"))
-    output.write("            {:<67} {:>0}".format(f"- {output_prefix}Combined-gene-level-KO-function-coverages-CPM{assay_suffix}.tsv", "- table of combined KO function coverages, normalized to coverage per million\n"))
-    output.write("            {:<67} {:>0}".format(f"- {output_prefix}Combined-gene-level-taxonomy-coverages{assay_suffix}.tsv", "- table of combined, gene-level taxonomy coverages\n"))
-    output.write("            {:<67} {:>0}".format(f"- {output_prefix}Combined-gene-level-taxonomy-coverages-CPM{assay_suffix}.tsv", "- table of combined, gene-level taxonomy coverages, normalized to coverage per million\n"))
-    output.write("            {:<67} {:>0}".format(f"- {output_prefix}Combined-contig-level-taxonomy-coverages{assay_suffix}.tsv", "- table of combined, contig-level taxonomy coverages\n"))
-    output.write("            {:<67} {:>0}".format(f"- {output_prefix}Combined-contig-level-taxonomy-coverages-CPM{assay_suffix}.tsv", "- table of combined, contig-level taxonomy coverages, normalized to coverage per million\n\n"))
+    # Read-based Processing 
+    add_level("Read-based_Processing/", "taxonomic profiling results", pad, output, continues=[True])
 
-    output.write("    {:<75} {:>0}".format("- " + str(read_based_dir), "- results generated from read-based approach\n"))
-    output.write("        {:<71} {:>0}".format(f"- {output_prefix}Gene-families{assay_suffix}.tsv", "- gene-family abundances\n"))
-    output.write("        {:<71} {:>0}".format(f"- {output_prefix}Gene-families-grouped-by-taxa{assay_suffix}.tsv", "- gene-family abundances grouped by taxa\n"))
-    output.write("        {:<71} {:>0}".format(f"- {output_prefix}Gene-families-cpm{assay_suffix}.tsv", "- gene-family abundances normalized to copies-per-million\n"))
-    output.write("        {:<71} {:>0}".format(f"- {output_prefix}Gene-families-KO-cpm{assay_suffix}.tsv", "- KO term abundances normalized to copies-per-million\n"))
-    output.write("        {:<71} {:>0}".format(f"- {output_prefix}Pathway-abundances{assay_suffix}.tsv", "- pathway abundances\n"))
-    output.write("        {:<71} {:>0}".format(f"- {output_prefix}Pathway-abundances-grouped-by-taxa{assay_suffix}.tsv", "- pathway abundances grouped by taxa\n"))
-    output.write("        {:<71} {:>0}".format(f"- {output_prefix}Pathway-abundances-cpm{assay_suffix}.tsv", "- pathway abundances normalized to copies-per-million\n"))
-    output.write("        {:<71} {:>0}".format(f"- {output_prefix}Pathway-coverages{assay_suffix}.tsv", "- pathway coverages\n"))
-    output.write("        {:<71} {:>0}".format(f"- {output_prefix}Pathway-coverages-grouped-by-taxa{assay_suffix}.tsv", "- pathway coverages grouped by taxa\n"))
-    output.write("        {:<71} {:>0}".format(f"- {output_prefix}Metaphlan-taxonomy{assay_suffix}.tsv", "- metaphlan estimated taxonomic relative abundances\n\n"))
+    add_level("Humann_Outputs/", "Humann functional profiling", pad, output, continues=[True, True])
+    add_level("Gene_families/", "Gene families", pad, output, continues=[True, True, True])
+    add_level(f"{args.output_prefix}Gene-families{args.assay_suffix}.tsv", "raw gene-family abundance table", pad, output, continues=[True, True, True, True])
+    add_level(f"{args.output_prefix}Gene-families-cpm{args.assay_suffix}.tsv", "gene-family abundances normalized to copies-per-million", pad, output, continues=[True, True, True, True])
+    add_level(f"{args.output_prefix}Gene-families-grouped-by-taxa{args.assay_suffix}.tsv", "gene-family abundances grouped by taxa", pad, output, continues=[True, True, True, True])
 
-    # Processing info
-    output.write("    {:<75} {:>0}".format("- " + str(processing_zip_file), "- zip archive holding info related to processing\n"))
-    for item in processing_zip_contents:
+    add_level("KO/", "KO term abundances", pad, output, continues=[True, True, True, True])
+    add_level("Count_Tables/", "KO term abundances table", pad, output, continues=[True, True, True, True, True])
+    add_level(f"{args.output_prefix}Gene-families-KO{args.assay_suffix}.tsv", "KO term abundances", pad, output, continues=[True, True, True, True, True, True])
+    add_level(f"{args.output_prefix}Gene-families-KO-cpm{args.assay_suffix}.tsv", "KO term abundances normalized to copies-per-million", pad, output, continues=[True, True, True, True, True, True])
+    if args.sample_type == "low_biomass":
+        add_level(f"{args.output_prefix}Gene-families-KO_decontam_results{args.assay_suffix}.tsv", "decontamination results for KO terms", pad, output, continues=[True, True, True, True, True, True])
+        add_level(f"{args.output_prefix}Gene-families-KO_decontam{args.assay_suffix}.tsv", "decontaminated KO term abundances", pad, output, continues=[True, True, True, True, True, True])
+    add_level(f"{args.output_prefix}Gene-families-KO_filtered{args.assay_suffix}.tsv", "filtered KO term abundances", pad, output, continues=[True, True, True, True, True, True], is_last=True)
+    add_level("Heatmaps/", "KO term abundances", pad, output, continues=[True, True, True, True, True])
+    if args.sample_type == "low_biomass":
+        add_level(f"{args.output_prefix}Gene-families-KO_decontam_heatmap{args.assay_suffix}.png", "heatmap of decontaminated KO term abundances", pad, output, continues=[True, True, True, True, False, True])
+        add_level(f"{args.output_prefix}Gene-families-KO_decontam_top_50_heatmap{args.assay_suffix}.png", "top 50 KO terms heatmap after decontamination", pad, output, continues=[True, True, True, True, False, True])
+    add_level(f"{args.output_prefix}Gene-families-KO_filtered_heatmap{args.assay_suffix}.png", "heatmap of filtered KO term abundances", pad, output, continues=[True, True, True, True, False, True])
+    add_level(f"{args.output_prefix}Gene-families-KO_filtered_top_50_heatmap{args.assay_suffix}.png", "top 50 KO terms heatmap", pad, output, continues=[True, True, True, True, False, True])
+    add_level(f"{args.output_prefix}Gene-families-KO_unfiltered_heatmap{args.assay_suffix}.png", "heatmap of unfiltered KO term abundances", pad, output, continues=[True, True, True, True, False, True])
+    add_level(f"{args.output_prefix}Gene-families-KO_unfiltered_top_50_heatmap{args.assay_suffix}.png", "top 50 KO terms heatmap", pad, output, continues=[True, True, True, True, False, True], is_last=True)
 
-        num_levels = item.count("/")
+    add_level("Uniref/", "uniref gene families", pad, output, continues=[True, True, True, True])
+    add_level("Count_Tables/", "uniref gene families count tables", pad, output, continues=[True, True, True, True, True])
+    add_level(f"{args.output_prefix}Gene-families-uniref{args.assay_suffix}.tsv", "uniref gene-family abundances", pad, output, continues=[True, True, True, True, True, True])
+    if args.sample_type == "low_biomass":
+        add_level(f"{args.output_prefix}Gene-families-uniref_decontam_results{args.assay_suffix}.tsv", "decontamination results for uniref gene families", pad, output, continues=[True, True, True, True, True, True])
+        add_level(f"{args.output_prefix}Gene-families-uniref_decontam{args.assay_suffix}.tsv", "decontaminated uniref gene-family abundances", pad, output, continues=[True, True, True, True, True, True])
+    add_level(f"{args.output_prefix}Gene-families-uniref_filtered{args.assay_suffix}.tsv", "filtered uniref gene-family abundances", pad, output, continues=[True, True, True, True, True, True], is_last=True)
+    add_level("Heatmaps/", "uniref gene families heatmaps", pad, output, continues=[True, True, True, True, True])
+    if args.sample_type == "low_biomass":
+        add_level(f"{args.output_prefix}Gene-families-uniref_decontam_heatmap{args.assay_suffix}.png", "heatmap of decontaminated uniref gene-family abundances", pad, output, continues=[True, True, True, True, False, True])
+        add_level(f"{args.output_prefix}Gene-families-uniref_decontam_top_50_heatmap{args.assay_suffix}.png", "top 50 uniref gene families heatmap after decontamination", pad, output, continues=[True, True, True, True, False, True])
+    add_level(f"{args.output_prefix}Gene-families-uniref_filtered_heatmap{args.assay_suffix}.png", "filtered heatmap of gene-family abundances", pad, output, continues=[True, True, True, True, False, True])
+    add_level(f"{args.output_prefix}Gene-families-uniref_filtered_top_50_heatmap{args.assay_suffix}.png", "top 50 gene families heatmap", pad, output, continues=[True, True, True, True, False, True])
+    add_level(f"{args.output_prefix}Gene-families-uniref_unfiltered_heatmap{args.assay_suffix}.png", "heatmap of unfiltered gene-family abundances", pad, output, continues=[True, True, True, True, False, True])
+    add_level(f"{args.output_prefix}Gene-families-uniref_unfiltered_top_50_heatmap{args.assay_suffix}.png", "top 50 gene families heatmap", pad, output, continues=[True, True, True, True, False, True], is_last=True)
 
-        if num_levels > 1 and not item.endswith("/"):
-            out_item = re.sub(r'^.*/', '', str(item))
-        elif num_levels == 1 and not item.endswith("/"):
-            out_item = re.sub(r'^.*/', '', str(item))
-        elif num_levels > 1:
-            out_item = re.sub(r'^[^/]*/', '', str(item))
-        else:
-            out_item = str(item)
 
-        if item.endswith('/'):
-            num_levels -= 1
+    add_level("Pathway_abundances/", "Pathway abundances", pad, output, continues=[True, True, True])
+    add_level("Count_Tables/", "pathway abundances count tables", pad, output, continues=[True, True, True, True])
+    if args.sample_type == "low_biomass":
+        add_level(f"{args.output_prefix}Pathway-abundances_decontam{args.assay_suffix}.tsv", "decontaminated pathways abundance table", pad, output, continues=[True, True, True, True, True])
+        add_level(f"{args.output_prefix}Pathway-abundances_decontam_results{args.assay_suffix}.tsv", "decontam results for pathway abundances", pad, output, continues=[True, True, True, True, True])
+    add_level(f"{args.output_prefix}Pathway-abundances-cpm{args.assay_suffix}.tsv", "pathway abundances normalized to copies-per-million", pad, output, continues=[True, True, True, True, True])
+    add_level(f"{args.output_prefix}Pathway-abundances-grouped-by-taxa{args.assay_suffix}.tsv", "pathway abundances grouped by taxa", pad, output, continues=[True, True, True, True, True])
+    add_level(f"{args.output_prefix}Pathway-abundances{args.assay_suffix}.tsv", "raw pathway abundance table", pad, output, continues=[True, True, True, True, True])
+    add_level(f"{args.output_prefix}Pathway-abundances_filtered{args.assay_suffix}.tsv", "filtered pathway abundance table", pad, output, continues=[True, True, True, True, True], is_last=True)
 
-        num_spaces = num_levels * 4
+    add_level("Heatmaps/", "pathways heatmaps", pad, output, continues=[True, True, True, True])
+    if args.sample_type == "low_biomass":
+        add_level(f"{args.output_prefix}Pathway-abundances_decontam_heatmap{args.assay_suffix}.png", "heatmap of unfiltered pathway abundances of decontaminated data", pad, output, continues=[True, True, True, False, True])
+        add_level(f"{args.output_prefix}Pathway-abundances_decontam_top_50_heatmap{args.assay_suffix}.png", "top 50 pathway abundances heatmap of decontaminated data", pad, output, continues=[True, True, True, False, True])
+    add_level(f"{args.output_prefix}Pathway-abundances_filtered_heatmap{args.assay_suffix}.png", "filtered pathways heatmap", pad, output, continues=[True, True, True, False, True])
+    add_level(f"{args.output_prefix}Pathway-abundances_filtered_top_50_heatmap{args.assay_suffix}.png", "top 50 pathways heatmap after filtering", pad, output, continues=[True, True, True, False, True])
+    add_level(f"{args.output_prefix}Pathway-abundances_unfiltered_heatmap{args.assay_suffix}.png", "heatmap of unfiltered pathway abundances", pad, output, continues=[True, True, True, False, True])
+    add_level(f"{args.output_prefix}Pathway-abundances_unfiltered_top_50_heatmap{args.assay_suffix}.png", "top 50 pathways heatmap", pad, output, continues=[True, True, True, False, True], is_last=True)
 
-        output.write("        " + " " * num_spaces + "- " + out_item + "\n")
+    add_level("Pathway_coverages/", "Pathway coverages", pad, output, continues=[True, True, True])
+    add_level(f"{args.output_prefix}Pathway-coverages-grouped-by-taxa{args.assay_suffix}.tsv", "pathway coverages grouped by taxa", pad, output, continues=[True, True, False, True])
+    add_level(f"{args.output_prefix}Pathway-coverages{args.assay_suffix}.tsv", "pathway coverages", pad, output, continues=[True, True, False, True], is_last=True)
+
+    tools = ["Kaiju", "Kraken2", "Metaphlan"] if args.technology == "illumina" else ["Kaiju", "Kraken2"]
+    for tool in tools:
+        is_tool_last = (tool == "Metaphlan") if args.technology == "illumina" else (tool == "Kraken2")
+        add_level(f"{tool}_Outputs/", f"{tool} taxonomic profiling", pad, output, continues=[True, not is_tool_last], is_last=is_tool_last)
+        if tool == "Kraken2":
+            add_level("MultiQC_Reports/", "Kraken2 MultiQC summary reports", pad, output, continues=[True, not isNanopore, True])
+            add_level(f"kraken2_multiqc{args.assay_suffix}.html", "MultiQC summary report for kraken2 classification", pad, output, continues=[True, not isNanopore, True, True])
+            add_level(f"kraken2_multiqc{args.assay_suffix}_data.zip", "MultiQC data for kraken2 classification", pad, output, continues=[True, not isNanopore, True, True], is_last=True)
+        add_level("Barplots/", "visualizations of taxonomic relative abundance", pad, output, continues=[True, not is_tool_last, True])
+        if args.sample_type == "low_biomass":
+            add_level(f"{tool.lower()}_decontam_species_barplot{args.assay_suffix}.html", f"{tool} decontaminated species html barplot", pad, output, continues=[True, not is_tool_last, True, True])
+        add_level(f"{tool.lower()}_filtered_species_barplot{args.assay_suffix}.html", f"{tool} filtered species html barplot", pad, output, continues=[True, not is_tool_last, True, True])
+        add_level(f"{tool.lower()}_unfiltered_species_barplot{args.assay_suffix}.html", f"{tool} unfiltered species html barplot", pad, output, continues=[True, not is_tool_last, True, True], is_last=True)
+        add_level("Count_Tables/", "species relative abundance tables", pad, output, continues=[True, not is_tool_last, True])
+        if args.sample_type == "low_biomass":
+            add_level(f"{tool.lower()}_decontam_results{args.assay_suffix}.tsv", f"{tool} decontaminated results", pad, output, continues=[True, not is_tool_last, True, True])
+            add_level(f"{tool.lower()}_decontam_species_table{args.assay_suffix}.tsv", f"{tool} decontaminated species table", pad, output, continues=[True, not is_tool_last, True, True])
+        add_level(f"{tool.lower()}_filtered_species_table{args.assay_suffix}.tsv", f"{tool} filtered species table", pad, output, continues=[True, not is_tool_last, True, True])
+        if tool == "Metaphlan":
+            add_level(f"Metaphlan-taxonomy{args.assay_suffix}.tsv", "Metaphlan estimated taxonomic relative abundances", pad, output, continues=[True, not is_tool_last, True, True])
+        add_level(f"{tool.lower()}_species_table{args.assay_suffix}.tsv", f"{tool} raw species table", pad, output, continues=[True, not is_tool_last, True, True], is_last=True)
+        add_level("Krona_Reports/", "interactive hierarchical taxonomy plots", pad, output, continues=[True, not is_tool_last, True])
+        add_level(f"{tool.lower()}-report{args.assay_suffix}.html", f"Krona plots for {tool} taxonomies", pad, output, continues=[True, not is_tool_last, False, True], is_last=True)
+    
+    add_spacer(output)
+
+    # Processing Scripts
+    add_level(f"processing_info{args.assay_suffix}.zip", "zip archive holding info related to processing", pad, output, continues=[True])
+    add_level(f"{args.runsheet}", "runsheet file used to run the workflow", pad, output, continues=[False, True])
+    add_level("command.txt", "command-line used to invoke the nextflow workflow", pad, output, continues=[False, True])
+    add_level("nextflow_processing_info.txt", "Nextflow log listing all commands executed by the workflow", pad, output, continues=[False, True])
+    add_level("software_versions.txt", "list of software versions used", pad, output, continues=[False, True], is_last=True)
 
     output.write("\n")
-
-
-
-
-def main():
-    ### Variable setup ###
-    # Suffixes
-    output_prefix = str(args.output_prefix)
-    assay_suffix = str(args.assay_suffix)
-    # Directories
-    raw_reads_dir = str(args.raw_reads_dir)
-    fastqc_dir = str(args.fastqc_dir)
-    filtered_reads_dir = str(args.filtered_reads_dir)
-    read_based_dir =  str(args.read_based_dir) 
-    assembly_based_dir = str(args.assembly_based_dir)
-    assemblies_dir = str(args.assemblies_dir)
-    genes_dir = str(args.genes_dir)
-    annotations_and_tax_dir = str(args.annotations_and_tax_dir)
-    mapping_dir = str(args.mapping_dir)
-    bins_dir = str(args.bins_dir)
-    MAGs_dir = str(args.MAGs_dir)
-    combined_output_dir = str(args.combined_output_dir)
-    # Files
-    processing_zip_file = str(args.processing_zip_file)
-    output_file = str(args.output)
-    
-    processing_zip_contents = get_processing_zip_contents(processing_zip_file)
-
-    with open(output_file, "w") as output:
-
-        write_header(output, args.GLDS_ID, args.name, args.email, args.protocol_ID)
-        
-        write_metagenomics_body(output, output_file, assay_suffix, output_prefix, processing_zip_file,
-                        processing_zip_contents, fastqc_dir, raw_reads_dir, filtered_reads_dir,
-                        read_based_dir, assembly_based_dir, assemblies_dir, mapping_dir, genes_dir,
-                        annotations_and_tax_dir, bins_dir, MAGs_dir, combined_output_dir)
-
-
 
 if __name__ == "__main__":
     main()
