@@ -123,10 +123,10 @@ def main():
         
     # Calculate percentages
     if args.technology == "nanopore":
-        df['Percent_human_reads_removed'] = ((df['Raw'] - df['Human-removed'])/df['Raw']) * 100
-        df['Percent_reads_filtered'] = ((df['Human-removed'] - df['Filtered'])/df['Human-removed']) * 100
+        df['Percent_reads_filtered'] = ((df['Raw'] - df['Filtered'])/df['Raw']) * 100
         df['Percent_reads_trimmed'] = ((df['Filtered'] - df['Trimmed'])/df['Filtered']) * 100
-        df['Percent_blank_reads_removed'] = ((df['Trimmed'] - df['Blank-removed'])/df['Trimmed']) * 100
+        df['Percent_human_reads_removed'] = ((df['Trimmed'] - df['Human-removed'])/df['Trimmed']) * 100
+        df['Percent_blank_reads_removed'] = ((df['Human-removed'] - df['Blank-removed'])/df['Human-removed']) * 100
 
     # Illumina with human removed summary file precompiled    
     elif args.human_removed_summary != "":
@@ -145,13 +145,12 @@ def main():
     # Define column order for output file based on technology and whether host removed data is provided
     if args.technology == "nanopore":
         if args.host_removed != "":
-            column_order = ['Sample_ID', 'Raw', 'Human-removed', 'Filtered', 'Trimmed',
-            'Blank-removed', 'Host-removed', 'Percent_human_reads_removed', 'Percent_reads_filtered', 
-            'Percent_reads_trimmed', 'Percent_blank_reads_removed', 'Percent_host_reads_removed']
+            column_order = ['Sample_ID', 'Raw', 'Filtered', 'Trimmed', 'Human-removed',
+            'Blank-removed', 'Host-removed', 'Percent_reads_filtered', 'Percent_reads_trimmed', 'Percent_human_reads_removed',
+            'Percent_blank_reads_removed', 'Percent_host_reads_removed']
         else:
-            column_order = ['Sample_ID', 'Raw', 'Human-removed', 'Filtered', 'Trimmed',
-            'Blank-removed', 'Percent_human_reads_removed', 'Percent_reads_filtered', 
-            'Percent_reads_trimmed', 'Percent_blank_reads_removed']
+            column_order = ['Sample_ID', 'Raw', 'Filtered', 'Trimmed', 'Human-removed',
+            'Blank-removed', 'Percent_reads_filtered', 'Percent_reads_trimmed',  'Percent_human_reads_removed', 'Percent_blank_reads_removed']
     
     if args.technology == "illumina":
         if args.host_removed != "":
