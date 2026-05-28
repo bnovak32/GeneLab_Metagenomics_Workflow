@@ -33,13 +33,14 @@ required.add_argument("--filtered", default="",
                     help='Path to the filtered MultiQC report zip file. e.g., "filtered_multiqc_report.zip" (default: ""). \
                         This is the zip generated after running multiqc on the outputs of FastP and Filtlong for the illumina \
                             and nanopore pipelines, respectively.', action="store", required=True)
-required.add_argument("--blank-removed", default="",
-                    help='Path to the blank removed MultiQC report zip file. e.g., "decontam_multiqc_report.zip" (default: "")', action="store", required=True)
 required.add_argument("--technology", default="nanopore",
                     help='Technology used for sequencing. One of "illumina" or "nanopore" (default: "nanopore")',
                     choices=["illumina", "nanopore"], action="store", required=True)
-parser.add_argument("--sample-type", default="low_biomass",
-                    help='Sample type sequenced. One of "low_biomass" or "standard" (default: "low_biomass")', choices=["low_biomass", "standard"], action="store")
+required.add_argument("--sample-type", default="low_biomass",
+                    help='Sample type sequenced. One of "low_biomass" or "standard" (default: "low_biomass")', choices=["low_biomass", "standard"], action="store", required=True)
+parser.add_argument("--blank-removed", default="",
+                    help='Path to the blank removed MultiQC report zip file. e.g., "decontam_multiqc_report.zip" (default: ""). \
+                          Required only if --sample-type is low_biomass', action="store")
 parser.add_argument("--raw", default="",
                     help='Path to the raw reads MultiQC report zip file. e.g., "raw_multiqc_GLlbnMetag_report.zip" (default: ""). \
                         Not required when --human-removed-summary is provided and technology is "illumina"', action="store")
@@ -207,6 +208,15 @@ def main():
     
     # Order columns as expected 
     df = df[column_order]
+   
+    # Convert counts to integers and percentages to 2 decimal places
+    for col in df.columns:
+        if col.startswith("Percent"):
+            df[col] = df[col].round(2)
+        elif col != "Sample_ID":
+            df[col] = df[col].astype(int)
+
+    # Save output file
     df.to_csv(args.output, sep="\t", index=False)
     
 if __name__ == "__main__":
