@@ -341,7 +341,7 @@ def check_assembly_based_overview_table(validation_log, expected_samples, overvi
     if missing_sample_IDs:
         report_failure(validation_log, f"The overview table '{overview_table_path}' lacks samples: {', '.join(missing_sample_IDs)}.")
 
-def check_metagenomics_processing_zip(validation_log, samples, processing_zip_file, expected_zip_contents):
+def check_metagenomics_processing_zip(validation_log, processing_zip_file, expected_zip_contents):
     check_for_file_and_contents(validation_log, processing_zip_file)
     with zipfile.ZipFile(processing_zip_file) as zip_obj:
         entries = zip_obj.namelist()
@@ -628,8 +628,9 @@ def main():
 
     # ------------------ RUNTIME ZIP METADATA AUDIT ------------------
     zip_archive_path = args.processing_zip_file
-    expected_zip_contents = ["command.txt","nextflow_processing_info.txt","software_versions.txt", str(args.runsheet)]
-    check_metagenomics_processing_zip(validation_log, sample_names, zip_archive_path, expected_zip_contents)
+    runsheet = os.path.basename(args.runsheet)
+    expected_zip_contents = ["command.txt","nextflow_processing_info.txt","software_versions.txt", runsheet]
+    check_metagenomics_processing_zip(validation_log, zip_archive_path, expected_zip_contents)
     append_message_to_log(validation_log, f"    - processing zip file verified complete")
 
     # ------------------ PRINT METRIC SUMMARIES ------------------
