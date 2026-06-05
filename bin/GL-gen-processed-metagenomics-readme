@@ -281,7 +281,7 @@ def write_metagenomics_body(output):
         add_level(f"{args.output_prefix}Gene-families-KO_decontam_top_50_heatmap{args.assay_suffix}.png", "top 50 KO terms heatmap after decontamination", pad, output, continues=[True, True, True, True, False, True])
     add_level(f"{args.output_prefix}Gene-families-KO_filtered_heatmap{args.assay_suffix}.png", "heatmap of filtered KO term abundances", pad, output, continues=[True, True, True, True, False, True])
     add_level(f"{args.output_prefix}Gene-families-KO_filtered_top_50_heatmap{args.assay_suffix}.png", "top 50 KO terms heatmap", pad, output, continues=[True, True, True, True, False, True])
-    add_level(f"{args.output_pr efix}Gene-families-KO_unfiltered_heatmap{args.assay_suffix}.png", "heatmap of unfiltered KO term abundances", pad, output, continues=[True, True, True, True, False, True])
+    add_level(f"{args.output_prefix}Gene-families-KO_unfiltered_heatmap{args.assay_suffix}.png", "heatmap of unfiltered KO term abundances", pad, output, continues=[True, True, True, True, False, True])
     add_level(f"{args.output_prefix}Gene-families-KO_unfiltered_top_50_heatmap{args.assay_suffix}.png", "top 50 KO terms heatmap", pad, output, continues=[True, True, True, True, False, True], is_last=True)
 
     add_level("Uniref/", "uniref gene families", pad, output, continues=[True, True, True, True])
