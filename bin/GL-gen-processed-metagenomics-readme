@@ -10,6 +10,9 @@ import sys
 import argparse
 import datetime
 
+# EXAMPLE USAGE
+# GL-gen-processed-metagenomics-readme --output-name Post_Processing/README.txt --protocol-id GL-DPPD-7116 --runsheet PE_file.csv --technology illumina --sample-type low_biomass --assay-suffix ''  --glds-id OSD-944
+
 parser = argparse.ArgumentParser(
     description="This program generates the corresponding README file for GeneLab processed metagenomics datasets. It is intended to \
                                              be run before running `GL-validate-processed-metagenomics-data` and after processing_info.zip has been created.")
@@ -259,7 +262,7 @@ def write_metagenomics_body(output):
     add_level("Read-based_Processing/", "taxonomic profiling results", pad, output, continues=[True])
 
     add_level("Humann_Outputs/", "Humann functional profiling", pad, output, continues=[True, True])
-    add_level("Gene_families/", "Gene families", pad, output, continues=[True, True, True])
+    add_level("Gene_Families/", "Gene families", pad, output, continues=[True, True, True])
     add_level(f"{args.output_prefix}Gene-families{args.assay_suffix}.tsv", "raw gene-family abundance table", pad, output, continues=[True, True, True, True])
     add_level(f"{args.output_prefix}Gene-families-cpm{args.assay_suffix}.tsv", "gene-family abundances normalized to copies-per-million", pad, output, continues=[True, True, True, True])
     add_level(f"{args.output_prefix}Gene-families-grouped-by-taxa{args.assay_suffix}.tsv", "gene-family abundances grouped by taxa", pad, output, continues=[True, True, True, True])
@@ -270,7 +273,7 @@ def write_metagenomics_body(output):
     add_level(f"{args.output_prefix}Gene-families-KO-cpm{args.assay_suffix}.tsv", "KO term abundances normalized to copies-per-million", pad, output, continues=[True, True, True, True, True, True])
     if args.sample_type == "low_biomass":
         add_level(f"{args.output_prefix}Gene-families-KO_decontam_results{args.assay_suffix}.tsv", "decontamination results for KO terms", pad, output, continues=[True, True, True, True, True, True])
-        add_level(f"{args.output_prefix}Gene-families-KO_decontam{args.assay_suffix}.tsv", "decontaminated KO term abundances", pad, output, continues=[True, True, True, True, True, True])
+        add_level(f"{args.output_prefix}Gene-families-KO_decontam_table{args.assay_suffix}.tsv", "decontaminated KO term abundances", pad, output, continues=[True, True, True, True, True, True])
     add_level(f"{args.output_prefix}Gene-families-KO_filtered{args.assay_suffix}.tsv", "filtered KO term abundances", pad, output, continues=[True, True, True, True, True, True], is_last=True)
     add_level("Heatmaps/", "KO term abundances", pad, output, continues=[True, True, True, True, True])
     if args.sample_type == "low_biomass":
@@ -278,7 +281,7 @@ def write_metagenomics_body(output):
         add_level(f"{args.output_prefix}Gene-families-KO_decontam_top_50_heatmap{args.assay_suffix}.png", "top 50 KO terms heatmap after decontamination", pad, output, continues=[True, True, True, True, False, True])
     add_level(f"{args.output_prefix}Gene-families-KO_filtered_heatmap{args.assay_suffix}.png", "heatmap of filtered KO term abundances", pad, output, continues=[True, True, True, True, False, True])
     add_level(f"{args.output_prefix}Gene-families-KO_filtered_top_50_heatmap{args.assay_suffix}.png", "top 50 KO terms heatmap", pad, output, continues=[True, True, True, True, False, True])
-    add_level(f"{args.output_prefix}Gene-families-KO_unfiltered_heatmap{args.assay_suffix}.png", "heatmap of unfiltered KO term abundances", pad, output, continues=[True, True, True, True, False, True])
+    add_level(f"{args.output_pr efix}Gene-families-KO_unfiltered_heatmap{args.assay_suffix}.png", "heatmap of unfiltered KO term abundances", pad, output, continues=[True, True, True, True, False, True])
     add_level(f"{args.output_prefix}Gene-families-KO_unfiltered_top_50_heatmap{args.assay_suffix}.png", "top 50 KO terms heatmap", pad, output, continues=[True, True, True, True, False, True], is_last=True)
 
     add_level("Uniref/", "uniref gene families", pad, output, continues=[True, True, True, True])
@@ -286,7 +289,7 @@ def write_metagenomics_body(output):
     add_level(f"{args.output_prefix}Gene-families-uniref{args.assay_suffix}.tsv", "uniref gene-family abundances", pad, output, continues=[True, True, True, True, True, True])
     if args.sample_type == "low_biomass":
         add_level(f"{args.output_prefix}Gene-families-uniref_decontam_results{args.assay_suffix}.tsv", "decontamination results for uniref gene families", pad, output, continues=[True, True, True, True, True, True])
-        add_level(f"{args.output_prefix}Gene-families-uniref_decontam{args.assay_suffix}.tsv", "decontaminated uniref gene-family abundances", pad, output, continues=[True, True, True, True, True, True])
+        add_level(f"{args.output_prefix}Gene-families-uniref_decontam_table{args.assay_suffix}.tsv", "decontaminated uniref gene-family abundances", pad, output, continues=[True, True, True, True, True, True])
     add_level(f"{args.output_prefix}Gene-families-uniref_filtered{args.assay_suffix}.tsv", "filtered uniref gene-family abundances", pad, output, continues=[True, True, True, True, True, True], is_last=True)
     add_level("Heatmaps/", "uniref gene families heatmaps", pad, output, continues=[True, True, True, True, True])
     if args.sample_type == "low_biomass":
@@ -301,7 +304,7 @@ def write_metagenomics_body(output):
     add_level("Pathway_abundances/", "Pathway abundances", pad, output, continues=[True, True, True])
     add_level("Count_Tables/", "pathway abundances count tables", pad, output, continues=[True, True, True, True])
     if args.sample_type == "low_biomass":
-        add_level(f"{args.output_prefix}Pathway-abundances_decontam{args.assay_suffix}.tsv", "decontaminated pathways abundance table", pad, output, continues=[True, True, True, True, True])
+        add_level(f"{args.output_prefix}Pathway-abundances_decontam_table{args.assay_suffix}.tsv", "decontaminated pathways abundance table", pad, output, continues=[True, True, True, True, True])
         add_level(f"{args.output_prefix}Pathway-abundances_decontam_results{args.assay_suffix}.tsv", "decontam results for pathway abundances", pad, output, continues=[True, True, True, True, True])
     add_level(f"{args.output_prefix}Pathway-abundances-cpm{args.assay_suffix}.tsv", "pathway abundances normalized to copies-per-million", pad, output, continues=[True, True, True, True, True])
     add_level(f"{args.output_prefix}Pathway-abundances-grouped-by-taxa{args.assay_suffix}.tsv", "pathway abundances grouped by taxa", pad, output, continues=[True, True, True, True, True])
