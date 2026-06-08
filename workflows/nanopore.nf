@@ -304,11 +304,11 @@ workflow nanopore {
    if( params.host_db_dir || params.host_url || params.host_fasta || params.host_name ){
 
     // Remove host
-    remove_host("HostRM", params.host_name, params.host_url, params.host_fasta,
+    remove_host("HostRm", params.host_name, params.host_url, params.host_fasta,
                 params.host_db_dir, trimmed_reads)
 
     //DECONTAMED_MAP2GENOME(params.custome_genome, Channel.of("decontamed"), clean_reads)
-    nohost_qc(Channel.of("HostRM"), params.multiqc_config, remove_host.out.clean_reads)
+    nohost_qc(Channel.of("HostRm"), params.multiqc_config, remove_host.out.clean_reads)
 
     //DECONTAMED_MAP2GENOME.out.version | mix(software_versions_ch) | set{software_versions_ch}
     remove_host.out.versions | mix(software_versions_ch) | set{software_versions_ch}

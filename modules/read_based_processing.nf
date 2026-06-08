@@ -709,7 +709,7 @@ workflow read_based {
         unfilt_metaphlan_barplot_meta = Channel.of([group: "group",
                                feature: 'Species',
                                samples: 'sample_id',
-                               prefix:  'metaplan_unfiltered_species'])
+                               prefix:  'metaphlan_unfiltered_species'])
         METAPHLAN_UNFILTERED_BARPLOT(unfilt_metaphlan_barplot_meta, METAPHLAN2COUNT.out.table, metadata)
         // Filtered - drop species with relative abundance less than 0.5% across samples
         filt_metaphlan_meta = Channel.of([mode: 'across_samples', filter_threshold : 0.5,
@@ -718,7 +718,7 @@ workflow read_based {
         filt_metaphlan_barplot_meta = Channel.of([group: "group",
                                feature: 'Species',
                                samples: 'sample_id',
-                               prefix:  'metaplan_filtered_species'])
+                               prefix:  'metaphlan_filtered_species'])
         METAPHLAN_FILTERED_BARPLOT(filt_metaphlan_barplot_meta, METAPHLAN_FILTER_RARE.out.table, metadata)
         
         if(params.sample_type == "low_biomass"){
@@ -731,7 +731,7 @@ workflow read_based {
             decontam_metaphlan_barplot_meta = Channel.of([group: "group",
                                feature: 'Species',
                                samples: 'sample_id',
-                               prefix:  'metaplan_decontam_species'])
+                               prefix:  'metaphlan_decontam_species'])
             METAPHLAN_DECONTAM_BARPLOT(decontam_metaphlan_barplot_meta, METAPHLAN_DECONTAM.out.table, metadata)
         }
          

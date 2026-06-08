@@ -251,10 +251,8 @@ feature_table <- feature_table[,samples]
 # Combined-gene-level-KO-function
 # Combined-gene-level-taxonomy
 
-type <- "species"
 if(method == "gene-function")  {
-       
-	type <- "KO" 
+        
         name <- "Combined-gene-level-KO-function"
 
 }else if( method == "gene-taxonomy") {
@@ -301,7 +299,19 @@ if(is.null(freq_col) && is.null(prev_col)){
 }
 
 # Write decontaminated feature table and decontam's primary results
-outfile <- glue("{prefix}{name}_decontam_results{suffix}.tsv")
+
+taxonomy_methods <- c('kaiju', 'kraken2', 'metaphlan', 'gene-taxonomy', 'contig-taxonomy')
+
+# Add _species string to output file name if it is a taxonomy method
+if (any( grepl(pattern = method, x=taxonomy_methods) ) ) {
+
+	outfile <- glue("{prefix}{name}_decontam_species_table{suffix}.tsv")
+}else{
+
+	outfile <- glue("{prefix}{name}_decontam_table{suffix}.tsv")
+
+}
+
 write_tsv(x = contamdf, file = outfile)
 
 
@@ -326,7 +336,6 @@ decontaminated_table <- feature_table %>%
 rownames(decontaminated_table) <- decontaminated_table[[feature_column]]
 decontaminated_table <- decontaminated_table[,-1] %>% as.matrix
 
-outfile <- glue("{prefix}{name}_decontam_{type}_table{suffix}.tsv")
 write_tsv(x = decontaminated_table, file = outfile)
 
 }else{

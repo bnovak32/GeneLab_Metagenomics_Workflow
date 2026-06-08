@@ -262,6 +262,7 @@ workflow assembly_based {
     
         // Generating a file with sample ids on a new line
         file_ch.map{row -> "${row.sample_id}"}
+              .unique()
               .collectFile(name: "${launchDir}/unique-sample-IDs.txt", newLine: true)
               .set{sample_ids_ch}
 
