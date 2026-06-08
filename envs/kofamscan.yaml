@@ -1,9 +1,9 @@
+name: kofamscan
 channels:
     - conda-forge
     - bioconda
-    - defaults
     - astrobiomike
 dependencies:
     - kofamscan=1.3.0
-    - hmmer=3.4
+    - hmmer=3.3.2
     - bit=1.13.15
