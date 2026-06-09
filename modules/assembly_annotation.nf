@@ -1,8 +1,5 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl = 2
-//params.cat_db = "/mnt/c/Users/olabi/Documents/bioinformatics/test/processing_info/ref-dbs/CAT_prepare_20210107/2021-01-07_CAT_database/"
-//params.ko_db_dir = "/mnt/c/Users/olabi/Documents/bioinformatics/test/processing_info/ref-dbs/kofamscan_db/"
-//params.block_size = 4
 
 /**************************************************************************************** 
 **************************  Sequence Assembly Annotation *******************************
@@ -176,7 +173,7 @@ process REMOVE_LINEWRAPS {
  */
 
 // This process runs the gene-level (KO) functional annotation for each sample.
-// KO annotatiuon of the predicted amino acids
+// KO annotation of the predicted amino acids
 process KO_ANNOTATION {
 
     tag "Running KO annotation of ${sample_id}-s predicted amino acids.."
@@ -371,8 +368,8 @@ workflow annotate_assembly {
     main:
         CALL_GENES(assembly_ch)
         genes_ch = CALL_GENES.out.genes | REMOVE_LINEWRAPS.out.genes
-        KO_ANNOTATION(assembly_ch.join(genes_ch) ko_db_dir)
+        KO_ANNOTATION(assembly_ch.join(genes_ch), ko_db_dir)
         KO_ANNOTATION.out.temp_table | FILTER_KFAMSCAN.out.ko_annotation
-        TAX_CLASSIFICATION(assembly_ch, genes_ch, cat_db)
+        TAX_CLASSIFICATION(assembly_ch.join(genes_ch), cat_db)
 
 }

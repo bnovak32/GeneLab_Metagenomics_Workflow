@@ -19,7 +19,7 @@ nextflow.enable.dsl = 2
  *      Description: Tuple input combining multiple channel elements
  *                 - sample_id: string specifying the input sample name
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *                 - isPaired: Boolean specifying whether input reads are paired or not 
  *
  * OUTPUTS:
  *   1. tuple: tuple val(sample_id), path("${sample_id}-kraken2-report.tsv") (emit: report)
@@ -161,7 +161,7 @@ process KRAKEN2TABLE {
  *      Description: Tuple input combining multiple channel elements
  *                 - sample_id: string specifying the input sample name
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *                 - isPaired: Boolean specifying whether input reads are paired or not 
  *
  * OUTPUTS:
  *   1. tuple: tuple val(sample_id), path("${sample_id}_kaiju.out") (emit: report)

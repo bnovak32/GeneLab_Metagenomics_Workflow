@@ -206,7 +206,7 @@
         },
         "metaphlan_index": {
           "type": "string",
-          "description": "Metaphan database index name to download/use from here: http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/bowtie2_indexes/",
+          "description": "Metaphlan database index name to download/use from here: http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/bowtie2_indexes/",
           "fa_icon": "fas fa-database",
           "default": "mpa_vJun23_CHOCOPhlAnSGB_202307"
         },

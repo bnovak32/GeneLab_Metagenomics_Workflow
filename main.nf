@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
-// Terminal text color defintions
+// Terminal text color definitions
 c_back_bright_red = "\u001b[41;1m";
 c_bright_green    = "\u001b[32;1m";
 c_blue            = "\033[0;34m";
@@ -76,7 +76,7 @@ if (params.help) {
   println("	 --max_mem [INT] Maximum memory allowed, passed to megahit assembler. Can be set either by proportion of available on system, e.g. 0.5")
   println("    or by absolute value in bytes, e.g. 100e9 would be 100 GB. Default: 100e9.")
   println()
-  println("	 --pileup_mem [STRING] pileup.sh paramater for calculating contig coverage and depth. Memory used by bbmap's pileup.sh (within the GET_COV_AND_DET process). ")
+  println("	 --pileup_mem [STRING] pileup.sh parameter for calculating contig coverage and depth. Memory used by bbmap's pileup.sh (within the GET_COV_AND_DET process). ")
   println("	   passed as the -Xmx parameter, 20g means 20 gigs of RAM, 20m means 20 megabytes.")
   println("	   5g should be sufficient for most assemblies, but if that rule is failing, this may need to be increased.Default: '5g' .")
   println("	 --block_size [int] Block size variable for CAT/diamond, lower value means less RAM usage; see https://github.com/bbuchfink/diamond/wiki/3.-Command-line-options#memory--performance-options. Default: 4.")
@@ -94,7 +94,7 @@ if (params.help) {
   println("      --logs_dir [PATH] Specifies where tool log outputs will be published.  Default: ../Logs/.")
   println("      --metadata_dir [PATH] Specifies where metadata outputs (e.g software versions) will be published.  Default: ../Metadata/.")
   println()
-  println("Genelab specific arguements:")
+  println("Genelab specific arguments:")
   println("      --accession [STRING]  A Genelab accession number if the --input_file parameter is not set. If this parameter is set, it will ignore the --input_file parameter. Default: null.")
   println("      --RawFilePattern [STRING]  If we do not want to download all files (which we often won't), we can specify a pattern here to subset the total files.")
   println("                                 For example, if we know we want to download just the fastq.gz files, we can say 'fastq.gz'. We can also provide multiple patterns")
@@ -113,7 +113,7 @@ if (params.help) {
   println("        --DB_ROOT [PATH]   FULL PATH to root directory where the databases will be downloaded if they don't exist.") 
   println("                  Relative paths such as '~/' and '../' will fail, please don't use them. Default: ../Reference_DBs/ ")
   println("CAT database directory strings:")
-  println("    The strings below will be added to the end of the --database.cat_db path arguement provided below.")
+  println("    The strings below will be added to the end of the --database.cat_db path argument provided below.")
   println("         --cat_taxonomy_dir [PATH] CAT taxonomy database directory. Default: 2021-01-07_taxonomy/.")
   println("         --cat_db_sub_dir [PATH] CAT database sub directory. Default: 2021-01-07_CAT_database/.")
   println("         --CAT_DB_LINK [URL] CAT database online download link. Default: https://tbb.bio.uu.nl/bastiaan/CAT_prepare/CAT_prepare_20210107.tar.gz.")
@@ -133,7 +133,7 @@ if (params.help) {
   println("      --metaphlan_db_dir [PATH] Path to metaphlan database. Example, /path/to/Reference_DBs/metaphlan4-db/. Default: null.")
   println("      --chocophlan_dir [PATH] Path to Humann's chocophlan nucleotide database. Example, /path/to/Reference_DBs/humann3-db/chocophlan/. Default: null.")
   println("      --uniref_dir [PATH] Path to Humann's Uniref protein database. Example, /path/to/Reference_DBs/humann3-db/uniref/. Default: null.")
-  println("      --utilities_dir [PATH] Path to Humann's untilities database. Example, /path/to/Reference_DBs/humann3-db/utility_mapping/.  Default: null.")
+  println("      --utilities_dir [PATH] Path to Humann's utilities database. Example, /path/to/Reference_DBs/humann3-db/utility_mapping/.  Default: null.")
   println("GTDBTK database:")
   println("      --GTDBTK_LINK [URL] GTDBTK database online download link. Default: https://data.gtdb.ecogenomic.org/releases/release220/220.0/auxillary_files/gtdbtk_package/full_package/gtdbtk_r220_data.tar.gz.")
   println("      --gtdbtk_db_dir  [PATH] Path to GTDBTK database. Example, /path/Reference_DBs/GTDB-tk-ref-db/. Default: null.")
@@ -449,7 +449,7 @@ workflow {
     }
 
 
-     // Software Version Capturing - combining all captured sofware versions
+     // Software Version Capturing - combining all captured software versions
      nf_version = "Nextflow Version ".concat("${nextflow.version}")
      nextflow_version_ch = Channel.value(nf_version)
      workflow_version = "Metagenomics ".concat("${workflow.manifest.version}")

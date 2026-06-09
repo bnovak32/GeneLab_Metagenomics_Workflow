@@ -5,7 +5,7 @@ nextflow.enable.dsl=2
 // Create GLDS runsheet
 include { GET_RUNSHEET } from "../modules/create_runsheet.nf"
 
-// Demxultiplexing
+// Demultiplexing
 include {DORADO_BASECALLER; DORADO_DEMUX} from "../modules/demultiplexing.nf"
 // Split fastq concatenation
 include {CAT_FASTQ_FILES; CAT_FASTQ_DIR} from "../modules/demultiplexing.nf"
@@ -81,7 +81,7 @@ workflow nanopore {
 
 
         if(sample_type == "low_biomass"){
-         // Get distinct sample metedata
+         // Get distinct sample metadata
          file_ch.map{
                 row -> tuple( "${row.sample_id}", deleteWS(row.group),
                                 deleteWS(row.NTC), deleteWS(row.concentration),
@@ -147,7 +147,7 @@ workflow nanopore {
          DORADO_BASECALLER(pod5_dir, params.kit_name)
          DORADO_DEMUX(DORADO_BASECALLER.out.bam, params.kit_name)
 
-         // Create 2-colum file to remame barcode names to sample names
+         // Create 2-colum file to rename barcode names to sample names
          // sample_id to barcode_id column in --input_file
         
         file_ch.map{  row ->
@@ -158,7 +158,7 @@ workflow nanopore {
 
          CAT_FASTQ_DIR(sample2barcode, DORADO_DEMUX.out.demux_dir)
          
-        // Read-in runsheet generated fromm conactenating fastq files above
+        // Read-in runsheet generated fromm concatenating fastq files above
         CAT_FASTQ_DIR.out.runsheet.splitCsv(header:true)
            .map{
                 row -> tuple( "${row.sample_id}", [file("${row.forward}", checkIfExists: true)])
@@ -173,7 +173,7 @@ workflow nanopore {
                                 deleteWS(row.paired) )
                 }.set{InFile_ch}
 
-        // Merge the genearted fastq files with their corresponding metadata
+        // Merge the generated fastq files with their corresponding metadata
         runsheet_ch.join(InFile_ch)
                     .map{sample_id, forward, group, NTC, concentration, paired -> 
                     tuple(sample_id, forward, paired)
@@ -186,7 +186,7 @@ workflow nanopore {
                 row -> tuple( "${row.sample_id}", deleteWS(row.group), deleteWS(row.paired) )
                 }.set{InFile_ch}
 
-        // Merge the genearted fastq files with their corresponding metadata
+        // Merge the generated fastq files with their corresponding metadata
         runsheet_ch.join(InFile_ch)
                     .map{sample_id, forward, group, paired ->
                     tuple(sample_id, forward, paired)
@@ -233,7 +233,7 @@ workflow nanopore {
     trimmed_qc.out.versions | mix(software_versions_ch) | set{software_versions_ch}
 
     // Get the number of reads per sample after read filtering
-    // relative abundance to count calcultaion for metaphalan results
+    // relative abundance to count calculation for metaphlan results
     reads_per_sample = trimmed_qc.out.reads_per_sample
 
     // Remove human reads and quality check
@@ -242,12 +242,12 @@ workflow nanopore {
     remove_human.out.versions | mix(software_versions_ch) | set{software_versions_ch}
 
     // By default trimmed reads are reads after quality filtering, trimming with filtlong 
-    // and porechop and human reads rexmoved with kraken2
+    // and porechop and human reads removed with kraken2
     trimmed_reads = remove_human.out.clean_reads
 
     if(sample_type == "low_biomass"){
 
-    // Remove contaminants and quality ckeck
+    // Remove contaminants and quality check
     remove_contaminants(file_ch, remove_human.out.clean_reads)
     noblank_qc(Channel.of("decontam"), params.multiqc_config,
                remove_contaminants.out.clean_reads, remove_contaminants.out.logs)
@@ -274,8 +274,8 @@ workflow nanopore {
    // are reads after contaminants (negative control) have been removed
    trimmed_reads = remove_contaminants.out.clean_reads
 
-   // Get the number of reads per sample after removing contaminats for
-   // relative abundance to count calcultaion for metaphalan results
+   // Get the number of reads per sample after removing contaminants for
+   // relative abundance to count calculation for metaphlan results
    reads_per_sample = noblank_qc.out.reads_per_sample
 
    }else{
@@ -308,14 +308,14 @@ workflow nanopore {
                 params.host_db_dir, trimmed_reads)
 
     //DECONTAMED_MAP2GENOME(params.custome_genome, Channel.of("decontamed"), clean_reads)
-    nohost_qc(Channel.of("HostRm"), params.multiqc_config, remove_host.out.clean_reads)
+    nohost_qc(Channel.of("HostRm"), params.multiqc_config, remove_host.out.clean_reads, remove_host.out.logs)
 
     //DECONTAMED_MAP2GENOME.out.version | mix(software_versions_ch) | set{software_versions_ch}
     remove_host.out.versions | mix(software_versions_ch) | set{software_versions_ch}
 
     clean_reads = remove_host.out.clean_reads
-    // Get the number of reads per sample after removing contaminats and host reads for
-    // relative abundance to count calcultaion for metaphalan results
+    // Get the number of reads per sample after removing contaminants and host reads for
+    // relative abundance to count calculation for metaphlan results
     reads_per_sample = nohost_qc.out.reads_per_sample
 
    }else{

@@ -198,7 +198,7 @@ process  GTDBTK_ON_MAG {
         path(MAG)
         path(gtdbtk_db_dir)
         val(use_gtdbtk_scratch_location)
-        env(GTDBTK_DATA_PATH)
+        env('GTDBTK_DATA_PATH')
            
     output:
         path("*.summary.tsv"), emit: summary

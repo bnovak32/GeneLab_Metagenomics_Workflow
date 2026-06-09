@@ -13,11 +13,8 @@ include { quality_check as filtered_qc } from "../modules/quality_assessment.nf"
 include { quality_check as noblank_qc } from "../modules/quality_assessment.nf"
 include { quality_check as nohost_qc } from "../modules/quality_assessment.nf"
 
-if(params.sample_type == "low_biomass"){
-
-   // Remove contaminant
-   include { illumina_remove_contaminants as remove_contaminants } from "../modules/remove_contaminant.nf"
-}
+// Remove contaminant (only used for low biomass mode)
+include { illumina_remove_contaminants as remove_contaminants } from "../modules/remove_contaminant.nf"
 
 // Remove host
 include { remove_host } from "../modules/remove_host.nf"
@@ -61,7 +58,7 @@ workflow illumina {
 
     //NODECONTAM_MAP2GENOME(params.custome_genome, Channel.of("no_decontam"), reads_ch)
     FASTP(Channel.of('false'), reads_ch) // no ployG trimming
-    POLYG_FASTP(Channel.of('true'), FASTP.out.reads) // ployg trimming
+    POLYG_FASTP(Channel.of('true'), FASTP.out.reads) // polyg trimming
     filtered_ch = POLYG_FASTP.out.reads
     json_ch = POLYG_FASTP.out.json.map{sample_id, json -> json}.collect()
     //FILTERED_MAP2GENOME(params.custome_genome, Channel.of("filtered"), filtered_ch)
@@ -77,13 +74,13 @@ workflow illumina {
     // By default filtered reads are reads after quality filtering with fastp
     filtered_reads = filtered_ch
     // Get the number of reads per sample after read filtering
-    // relative abundance to count calcultaion for metaphalan results
+    // relative abundance to count calculation for metaphlan results
    reads_per_sample = filtered_qc.out.reads_per_sample
 
 
     if(sample_type == "low_biomass"){
 
-    // Remove contaminants and quality ckeck
+    // Remove contaminants and quality check
     remove_contaminants(file_ch, filtered_ch)
     noblank_qc(Channel.of("decontam"), params.multiqc_config,remove_contaminants.out.clean_reads)
     remove_contaminants.out.versions | mix(software_versions_ch) | set{software_versions_ch}
@@ -107,8 +104,8 @@ workflow illumina {
    // If the dataset is a low biomass dataset then the filtered reads
    // are reads after contaminants (negative control) have been removed
    filtered_reads = remove_contaminants.out.clean_reads
-   // Get the number of reads per sample after removing contaminats for
-   // relative abundance to count calcultaion for metaphalan results
+   // Get the number of reads per sample after removing contaminants for
+   // relative abundance to count calculation for metaphlan results
    reads_per_sample = noblank_qc.out.reads_per_sample
 
 
@@ -149,8 +146,8 @@ workflow illumina {
 
     clean_reads = remove_host.out.clean_reads
 
-     // Get the number of reads per sample after removing contaminats and host reads for
-     // relative abundance to count calcultaion for metaphalan results
+     // Get the number of reads per sample after removing contaminants and host reads for
+     // relative abundance to count calculation for metaphlan results
      reads_per_sample = nohost_qc.out.reads_per_sample
 
 
