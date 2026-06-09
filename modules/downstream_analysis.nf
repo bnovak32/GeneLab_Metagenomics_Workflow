@@ -149,7 +149,7 @@ process KAIJU2SPECIES_TABLE  {
  *      Description: Parameter value: a mapping with the following keys:
  *                  mode: filtering mode. 'across_samples' and 'values_sum' for read and assembly based analysis, respectively.  
  *                  filter_threshold : threshold for filtering out rare taxa
- *                  output_file: Output tsv filem name
+ *                  output_file: Output tsv file name
  *
  *   2. path: feature_table
  *      Cardinality: one

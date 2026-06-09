@@ -219,7 +219,7 @@ process SETUP_GTDBTK_DB {
  * ========================================================================================
  *
  * SUMMARY:
- *   Download and set up Humann's chocoplan nucleotide database
+ *   Download and set up Humann's chocophlan nucleotide database
  *
  * INPUTS:
  *   No inputs defined
@@ -246,7 +246,7 @@ process SETUP_GTDBTK_DB {
 
 process SETUP_CHOCOPHLAN {
 
-    tag "Downloading and setting up Humann-s chocoplan nucleotide database..."
+    tag "Downloading and setting up Humann-s ChocoPhlAn nucleotide database..."
     label "humann_setup"
     label "db_setup"
 
@@ -261,7 +261,7 @@ process SETUP_CHOCOPHLAN {
 
         if [ ! -f humann3-db/CHOCOPHLAN_DB_SETUP ]; then
             printf "  Downloading full chocophlan db:\\n\\n" 
-            # No need to update locations since I pass them as arguaments to the script
+            # No need to update locations since I pass them as arguments to the script
             humann3_databases --update-config no --download chocophlan full humann3-db/ && \\
             touch humann3-db/CHOCOPHLAN_DB_SETUP
             humann3 --version  > versions.txt
@@ -319,7 +319,7 @@ process SETUP_UNIREF {
         printf "### Setting up humann3's uniref database ###\\n\\n"
         if [ ! -f humann3-db/UNIREF_DB_SETUP ];then
             printf "\\n\\n  Downloading uniref90_ec_filtered_diamond db:\\n\\n"
-            # No need to update locations since I pass them as arguaments to the script
+            # No need to update locations since I pass them as arguments to the script
             humann3_databases  --update-config no --download uniref uniref90_ec_filtered_diamond humann3-db/ && \\
             touch humann3-db/UNIREF_DB_SETUP
             humann3 --version  > versions.txt
@@ -666,6 +666,6 @@ workflow make_databases {
 
 workflow {
      make_databases(Channel.of(params.CAT_DB_LINK), Channel.of(params.GTDBTK_LINK),
-                    params.kaijudb_name, Channel.of(params.krakendb_url))
+                    params.kaijudb_name, Channel.of(params.krakendb_url), params.metaphlan_index)
 }
        

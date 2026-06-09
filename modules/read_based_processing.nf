@@ -69,7 +69,7 @@ if(params.sample_type == "low_biomass"){
  *      Description: Tuple input combining multiple channel elements
  *                 - sample_id: string specifying the input sample name
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *                 - isPaired: Boolean specifying whether input reads are paired or not 
  *
  *   2. path: chocophlan_dir
  *      Cardinality: one
@@ -199,7 +199,7 @@ process HUMANN {
 
 /*
     This process combines the read-based humann3 output functional 
-    tables from indiviual samples into single tables across the GLDS dataset.
+    tables from individual samples into single tables across the GLDS dataset.
 */
 
 process COMBINE_READ_BASED_PROCESSING_TABLES {
@@ -449,7 +449,7 @@ process GEN_NORMALIZED_READ_BASED_PROCESSING_TABLES {
  */
 
 /*
-    This process summarizes the read-based humann annotations based on Kegg Orthlogy terms.
+    This process summarizes the read-based humann annotations based on Kegg Orthology terms.
 */
 
 process GEN_READ_BASED_PROCESSING_KO_TABLE {
@@ -834,18 +834,4 @@ workflow read_based {
         ko_table        = ko_table_ch
         taxonomy        = taxonomy_ch 
         versions        = software_versions_ch
-}
-
-
-workflow {
-
-     read_based(reads_per_sample,
-                metadata,
-                filtered_ch, 
-                params.krakendb_dir,
-                params.kaijudb_dir,
-                params.chocophlan_dir,
-                params.uniref_dir,
-                params.metaphlan_db_dir,
-                params.utilities_dir)
 }

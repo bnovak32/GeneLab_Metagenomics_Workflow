@@ -21,7 +21,7 @@ nextflow.enable.dsl = 2
  *      Description: Tuple input combining multiple channel elements
  *                 - sample_id: string specifying the input sample name
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *                 - isPaired: Boolean specifying whether input reads are paired or not 
  *
  * OUTPUTS:
  *   1. tuple: tuple val(sample_id), path("${sample_id}_final.contigs.fa") (emit: contigs)
@@ -56,7 +56,7 @@ process ASSEMBLE {
     script:
         """
         # Removing output directory if exists already but process still needs to be 
-        # run (because there is no --force option to megahit i dont't think):        
+        # run (because there is no --force option to megahit i don't think):        
         [ -d ${sample_id}-megahit-out/ ] && rm -rf ${sample_id}-megahit-out/
 
         if [ ${isPaired} == true ]; then
@@ -99,7 +99,7 @@ process ASSEMBLE {
  *      Description: Tuple input combining multiple channel elements.
  *                 - sample_id: string specifying the input sample name
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *                 - isPaired: Boolean specifying whether input reads are paired or not 
  *
  * OUTPUTS:
  *   1. tuple: tuple val(sample_id), path("${sample_id}-assembly.fasta") (emit: contigs)
@@ -166,7 +166,7 @@ process FLYE {
  *                 - sample_id: string specifying the input sample name
  *                 - assembly: path to sample assembly/contigs
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *                 - isPaired: Boolean specifying whether input reads are paired or not 
  *
  * OUTPUTS:
  *   1. tuple: tuple val(sample_id), path("${sample_id}_polished.fasta") (emit: contigs)
@@ -202,7 +202,7 @@ process POLISH_ASSEMBLY {
 
     script:
     """
-    # Check if contig assembly was successul before attempting to polish with medaka
+    # Check if contig assembly was successful before attempting to polish with medaka
     if [ -s ${assembly} ]; then
 
         medaka_consensus \\
@@ -238,7 +238,7 @@ process POLISH_ASSEMBLY {
  *      Description: Tuple input combining multiple channel elements
  *                 - sample_id: string specifying the input sample name
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *                 - isPaired: Boolean specifying whether input reads are paired or not 
  *
  *   2. val: type
  *      Cardinality: one

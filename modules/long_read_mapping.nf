@@ -63,7 +63,7 @@ process MINIMAP_INDEX {
  * ========================================================================================
  *
  * SUMMARY:
- *   Map sample reads to sample assembly with mimimap2
+ *   Map sample reads to sample assembly with minimap2
  *
  * INPUTS:
  *   1. tuple: tuple val(sample_id), path(assembly), path(reads)

@@ -71,10 +71,10 @@ process BUILD_HOSTDB {
             # Cleaning up
             [ -f  ${host_name}.tar.gz ] && rm -rf  ${host_name}.tar.gz
 
-        # Build custome host reference
+        # Build custom host reference
         elif [ "${host_fasta.name}" != 'empty.txt' ]; then
 
-            echo "Attempting to build a custome ${host_name} reference database from ${host_fasta}"
+            echo "Attempting to build a custom ${host_name} reference database from ${host_fasta}"
 
             if [ ! -e "${host_fasta}" ]; then
 
@@ -140,7 +140,7 @@ process BUILD_HOSTDB {
  *      Description: Tuple input combining multiple channel elements
  *                 - sample_id: string specifying the input sample name
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not  
+ *                 - isPaired: Boolean specifying whether input reads are paired or not  
  *
  * OUTPUTS:
  *   1. tuple: tuple val(sample_id), path("*_${host_suffix}${params.assay_suffix}.fastq.gz"), val(isPaired) (emit: reads)
@@ -244,7 +244,7 @@ workflow remove_host {
        // Build database if path to existing database isn't supplied
        }else{
 
-           fasta = file_path = host_fasta ?: file('empty.txt')
+           fasta = host_fasta ?: file('empty.txt')
            input_ch = Channel.of([host_name, host_url , fasta])
            BUILD_HOSTDB(input_ch)
            host_db =  BUILD_HOSTDB.out.krakendb_dir

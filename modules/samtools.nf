@@ -158,7 +158,7 @@ process SAMTOOLS_STATS {
         
     script:
     """
-    # Collect mapping stats to be used by mutiqc to generate summary reports
+    # Collect mapping stats to be used by multiqc to generate summary reports
     samtools flagstat ${bam} > \\
              ${sample_id}_flagstats.txt  \\
              2> ${sample_id}_flagstats.log
@@ -182,7 +182,7 @@ process SAMTOOLS_STATS {
  * ========================================================================================
  *
  * SUMMARY:
- *   Retreive unmapped sample reads with samtools fastq
+ *   Retrieve unmapped sample reads with samtools fastq
  *
  * INPUTS:
  *   1. tuple: tuple val(meta), path(bam), path(bai)
@@ -213,7 +213,7 @@ process SAMTOOLS_STATS {
 // Filter Unmapped reads
 process SAMTOOLS_FASTQ {
    
-    tag "Retreiving ${sample_id}-s unmapped reads..."
+    tag "Retrieving ${meta.sample_id}-s unmapped reads..."
     label "samtools"
 
     input:
@@ -249,7 +249,7 @@ process SAMTOOLS_FASTQ {
  * ========================================================================================
  *
  * SUMMARY:
- *   Retreive sample unmapped reads with samtools fastq. Includes prior steps of sorting, indexing and alignment stats.
+ *   Retrieve sample unmapped reads with samtools fastq. Includes prior steps of sorting, indexing and alignment stats.
  *
  * INPUTS:
  *   1. tuple: tuple val(meta), path(sam), path(mapping_info)
@@ -285,7 +285,7 @@ process SAMTOOLS_FASTQ {
 
 process SAMTOOLS_FILTER_FASTQ {
 
-    tag "Retreiving ${sample_id}-s unmapped reads..."
+    tag "Retrieving ${meta.sample_id}-s unmapped reads..."
     label "samtools"
 
     input:
@@ -304,7 +304,7 @@ process SAMTOOLS_FILTER_FASTQ {
         samtools index ${meta.sample_id}.bam ${meta.sample_id}.bam.bai  \\
                 > ${meta.sample_id}.log 2>&1
 
-        # Collect mapping stats to be used by mutiqc to generate summary reports
+        # Collect mapping stats to be used by multiqc to generate summary reports
         samtools flagstat ${meta.sample_id}.bam \\
              > ${meta.sample_id}_flagstats.txt  \\
              2> ${meta.sample_id}_flagstats.log

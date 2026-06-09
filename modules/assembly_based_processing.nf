@@ -12,8 +12,8 @@ include { SETUP_CAT_DB; SETUP_KOFAMSCAN_DB; SETUP_GTDBTK_DB;
 
 if(params.technology == "illumina"){
 
-include { ASSEMBLE } from "./assembly.nf"
-include { MAPPING as SHORT_MAPPING; SAM_TO_BAM } from "./read_mapping.nf"
+    include { ASSEMBLE } from "./assembly.nf"
+    include { MAPPING as SHORT_MAPPING; SAM_TO_BAM } from "./read_mapping.nf"
 
 }else{
 
@@ -277,7 +277,7 @@ workflow assembly_based {
                                                     bins_ch,
                                                     bam_files)
 
-       // Decontaminated - using decontam threshold of 0.5 sice it was more likely to detect contaminats than 0.1.
+       // Decontaminated - using decontam threshold of 0.5 since it was more likely to detect contaminants than 0.1.
         if(params.sample_type == "low_biomass"){ 
 
         // Gene taxonomy
@@ -292,7 +292,7 @@ workflow assembly_based {
         GT_DECONTAM_HEATMAP(decontam_gene_taxonomy_heatmap_meta, GT_DECONTAM.out.table, metadata)
 
 
-        // Gene funtions (KO)
+        // Gene functions (KO)
        decontam_gene_function_meta = Channel.of([feature: 'KO_ID', samples: 'sample_id',
                                    prevalence: 'NTC', frequency: 'concentration',
                                    decontam_threshold: 0.5, method: 'gene-function',
