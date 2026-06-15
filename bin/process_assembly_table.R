@@ -176,9 +176,8 @@ get_samples <- function(df, sample_names, end_col='species') {
 
   # Get common samples 
   cols <- colnames(df)
-  index <- grep(end_col, cols)
   start <- grep(end_col, cols)+1
-  end <- (length(cols)-index)
+  end <- length(cols)
   df_samples <- cols[start:end]
   sample_names <- intersect(df_samples, sample_names)
 
