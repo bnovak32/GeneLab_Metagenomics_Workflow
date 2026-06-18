@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://github.com/nasa/GeneLab_Metagenomics_Workflow/blob/main/nextflow_schema.json",
   "title": "GeneLab Metagenomics Workflow",
-  "description": "Metagenomics workflow for pipeline documents GL-DPPD-7107-A, GL-DPPD-7116, and GL-DPPD-7117",
+  "description": "Metagenomics workflow for pipeline documents GL-DPPD-7107-B, GL-DPPD-7116, and GL-DPPD-7117",
   "type": "object",
   "definitions": {
     "input_output_options": {
@@ -200,13 +200,13 @@
         "ko_db_dir": {
           "type": "string",
           "format": "directory-path",
-          "description": "Path to KOFAM Scan database",
+          "description": "Path to KOFamScan database",
           "fa_icon": "fas fa-database",
           "help_text": "Example: /path/to/Reference_DBs/kofamscan_db/"
         },
         "metaphlan_index": {
           "type": "string",
-          "description": "Metaphan database index name to download/use from here: http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/bowtie2_indexes/",
+          "description": "Metaphlan database index name to download/use from here: http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/bowtie2_indexes/",
           "fa_icon": "fas fa-database",
           "default": "mpa_vJun23_CHOCOPhlAnSGB_202307"
         },
@@ -300,7 +300,7 @@
           "description": "Path to custom host database",
           "fa_icon": "fas fa-database"
         },
-        "custome_genome": {
+        "custom_genome": {
           "type": "string",
           "format": "file-path",
           "description": "Path to custom genome FASTA file",
@@ -334,6 +334,22 @@
           "description": "Path to host genome FASTA for custom database building",
           "fa_icon": "fas fa-file",
           "pattern": "\\.(fasta|fa|fna)$"
+        }
+      }
+    },
+    "decontam_options": {
+      "title": "Feature Decontamination Options",
+      "type": "object",
+      "fa_icon": "fas fa-puzzle-piece",
+      "description": "Parameters for feature decontamination in downstream analysis",
+      "properties": {
+        "decontam_threshold": {
+          "type": "number",
+          "description": "",
+          "default": 0.5,
+          "help_text": "Decontam's threshold for both prevalence and frequency based analyses.",
+          "minimum": 0.0,
+          "maximum": 1.0
         }
       }
     },
@@ -516,13 +532,13 @@
         "conda_kegg_decoder": {
           "type": "string",
           "format": "directory-path",
-          "description": "Path to KEGG Decoder conda environment",
+          "description": "Path to KEGG-Decoder conda environment",
           "fa_icon": "fas fa-folder"
         },
         "conda_kofamscan": {
           "type": "string",
           "format": "directory-path",
-          "description": "Path to KOFAM Scan conda environment",
+          "description": "Path to KOFamScan conda environment",
           "fa_icon": "fas fa-folder"
         },
         "conda_kraken2": {

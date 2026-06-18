@@ -20,7 +20,7 @@ nextflow.enable.dsl = 2
  *      Description: Tuple input combining multiple channel elements
  *                 - sample_id: string specifying the input sample name
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not  
+ *                 - isPaired: Boolean specifying whether input reads are paired or not  
  *
  * OUTPUTS:
  *   1. tuple: tuple path("*.html"), path("*.zip") (emit: html)
@@ -299,7 +299,7 @@ process ZIP_MULTIQC {
  *      Description: Tuple input combining multiple channel elements
  *                 - sample_id: string specifying the input sample name
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *                 - isPaired: Boolean specifying whether input reads are paired or not 
  *
  * OUTPUTS:
  *   1. tuple: tuple val(sample_id), path("*fastq.gz"), val(isPaired) (emit: reads)
@@ -396,7 +396,7 @@ process FASTP {
  *      Description: Tuple input combining multiple channel elements
  *                 - sample_id: string specifying the input sample name
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not  
+ *                 - isPaired: Boolean specifying whether input reads are paired or not  
  *
  * OUTPUTS:
  *   1. tuple: tuple val(sample_id), path("${sample_id}_filtered.fastq.gz"), val(isPaired) (emit: reads)
@@ -457,7 +457,7 @@ process FILTLONG {
  *      Description: Tuple input combining multiple channel elements
  *                 - sample_id: string specifying the input sample name
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not  
+ *                 - isPaired: Boolean specifying whether input reads are paired or not  
  *
  * OUTPUTS:
  *   1. tuple: tuple val(sample_id), path("${sample_id}_trimmed.fastq.gz"), val(isPaired) (emit: reads)

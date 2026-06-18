@@ -23,7 +23,7 @@ nextflow.enable.dsl = 2
  *      Description: Tuple input combining multiple channel elements
  *                 - sample_id: string specifying the input sample name
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *                 - isPaired: Boolean specifying whether input reads are paired or not 
  *
  * OUTPUTS:
  *   1. tuple: tuple val(sample_id) , path("${prefix}-${sample_id}_scaffold_stats.txt") (emit: stats)
@@ -42,10 +42,10 @@ nextflow.enable.dsl = 2
  * ========================================================================================
  */
 
-// Process to count the number / percentage of reads mapping to a custome genome
+// Process to count the number / percentage of reads mapping to a custom genome
 process LONG_MAP2GENOME {
 
-    tag "mapping ${sample_id}-s reads to a custome reference"
+    tag "mapping ${sample_id}-s reads to a custom reference"
     label "bbtools"
 
     input:
@@ -94,7 +94,7 @@ process LONG_MAP2GENOME {
  *      Description: Tuple input combining multiple channel elements
  *                 - sample_id: string specifying the input sample name
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *                 - isPaired: Boolean specifying whether input reads are paired or not 
  *
  * OUTPUTS:
  *   1. tuple: tuple val(sample_id) , path("${prefix}-${sample_id}_scaffold_stats.txt") (emit: stats)
@@ -115,7 +115,7 @@ process LONG_MAP2GENOME {
 
 process SHORT_MAP2GENOME {
 
-    tag "mapping ${sample_id}-s reads to a custome reference"
+    tag "mapping ${sample_id}-s reads to a custom reference"
     label "bbtools"
 
     input:

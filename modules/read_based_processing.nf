@@ -9,12 +9,10 @@ nextflow.enable.dsl = 2
 // Make Kraken, Kaiju and Humann3 databases
 include { SETUP_KAIJU; SETUP_KRAKEN; make_humann_db } from "./database_creation.nf"
 
-if(params.technology == "illumina"){
-    // Metaphlan
-    include { METAPHLAN2KRONA; KRONA_REPORT as METAPHLAN_REPORT } from "./visualize_taxonomy.nf"
-    include { METAPHLAN2COUNT; BARPLOT as METAPHLAN_UNFILTERED_BARPLOT } from "./downstream_analysis.nf"
-    include { FILTER_RARE as METAPHLAN_FILTER_RARE; BARPLOT as METAPHLAN_FILTERED_BARPLOT } from "./downstream_analysis.nf"
-}
+// Metaphlan (used for Illumina only)
+include { METAPHLAN2KRONA; KRONA_REPORT as METAPHLAN_REPORT } from "./visualize_taxonomy.nf"
+include { METAPHLAN2COUNT; BARPLOT as METAPHLAN_UNFILTERED_BARPLOT } from "./downstream_analysis.nf"
+include { FILTER_RARE as METAPHLAN_FILTER_RARE; BARPLOT as METAPHLAN_FILTERED_BARPLOT } from "./downstream_analysis.nf"
 
 // Kraken2
 include { KRAKEN_CLASSIFY; KRAKEN2TABLE } from "./assign_taxonomy.nf"
@@ -44,16 +42,13 @@ include { FILTER_RARE as GKO_FILTER_RARE; HEATMAP as GKO_FILTERED_HEATMAP } from
 include { HUMANN_TABLE as PATH_HUMANN_TABLE; HEATMAP as PATH_UNFILTERED_HEATMAP } from "./downstream_analysis.nf"
 include { FILTER_RARE as PATH_FILTER_RARE; HEATMAP as PATH_FILTERED_HEATMAP } from "./downstream_analysis.nf"
 
-
-if(params.sample_type == "low_biomass"){
-
-    include { DECONTAM as METAPHLAN_DECONTAM; BARPLOT as METAPHLAN_DECONTAM_BARPLOT } from "./downstream_analysis.nf"
-    include { DECONTAM as KRAKEN_DECONTAM; BARPLOT as KRAKEN_DECONTAM_BARPLOT } from "./downstream_analysis.nf"
-    include { DECONTAM as KAIJU_DECONTAM; BARPLOT as KAIJU_DECONTAM_BARPLOT } from "./downstream_analysis.nf"
-    include { DECONTAM as GFU_DECONTAM; HEATMAP as GFU_DECONTAM_HEATMAP } from "./downstream_analysis.nf"
-    include { DECONTAM as GKO_DECONTAM; HEATMAP as GKO_DECONTAM_HEATMAP } from "./downstream_analysis.nf"
-    include { DECONTAM as PATH_DECONTAM; HEATMAP as PATH_DECONTAM_HEATMAP } from "./downstream_analysis.nf"
-}
+// Low Biomass decontam 
+include { DECONTAM as METAPHLAN_DECONTAM; BARPLOT as METAPHLAN_DECONTAM_BARPLOT } from "./downstream_analysis.nf"
+include { DECONTAM as KRAKEN_DECONTAM; BARPLOT as KRAKEN_DECONTAM_BARPLOT } from "./downstream_analysis.nf"
+include { DECONTAM as KAIJU_DECONTAM; BARPLOT as KAIJU_DECONTAM_BARPLOT } from "./downstream_analysis.nf"
+include { DECONTAM as GFU_DECONTAM; HEATMAP as GFU_DECONTAM_HEATMAP } from "./downstream_analysis.nf"
+include { DECONTAM as GKO_DECONTAM; HEATMAP as GKO_DECONTAM_HEATMAP } from "./downstream_analysis.nf"
+include { DECONTAM as PATH_DECONTAM; HEATMAP as PATH_DECONTAM_HEATMAP } from "./downstream_analysis.nf"
 
 /*
  * ========================================================================================
@@ -69,7 +64,7 @@ if(params.sample_type == "low_biomass"){
  *      Description: Tuple input combining multiple channel elements
  *                 - sample_id: string specifying the input sample name
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *                 - isPaired: Boolean specifying whether input reads are paired or not 
  *
  *   2. path: chocophlan_dir
  *      Cardinality: one
@@ -199,7 +194,7 @@ process HUMANN {
 
 /*
     This process combines the read-based humann3 output functional 
-    tables from indiviual samples into single tables across the GLDS dataset.
+    tables from individual samples into single tables across the GLDS dataset.
 */
 
 process COMBINE_READ_BASED_PROCESSING_TABLES {
@@ -449,7 +444,7 @@ process GEN_NORMALIZED_READ_BASED_PROCESSING_TABLES {
  */
 
 /*
-    This process summarizes the read-based humann annotations based on Kegg Orthlogy terms.
+    This process summarizes the read-based humann annotations based on Kegg Orthology terms.
 */
 
 process GEN_READ_BASED_PROCESSING_KO_TABLE {
@@ -550,7 +545,7 @@ workflow read_based {
 
     main:
         
-        software_versions_ch = Channel.empty()
+        software_versions_ch = channel.empty()
 
         
         // ------------------------ Kraken
@@ -562,22 +557,20 @@ workflow read_based {
             SETUP_KRAKEN.out.version | mix(software_versions_ch) | set{software_versions_ch}
         }
         kraken_reports = KRAKEN_CLASSIFY.out.report.map{sample_id, report -> report}.collect()
-        KRAKEN_MULTIQC(Channel.of('kraken2'), params.multiqc_config, kraken_reports)
-        KRAKEN_ZIP_MULTIQC(Channel.of('kraken2'), KRAKEN_MULTIQC.out.data)
+        KRAKEN_MULTIQC(channel.of('kraken2'), params.multiqc_config, kraken_reports)
+        KRAKEN_ZIP_MULTIQC(channel.of('kraken2'), KRAKEN_MULTIQC.out.data)
         KRAKEN2TABLE(kraken_reports)
         KRAKEN2KRONA(KRAKEN_CLASSIFY.out.report)
         // Unfiltered
-        unfilt_kraken_barplot_meta = Channel.of([group: "group",
-                               feature: 'Species',
+        unfilt_kraken_barplot_meta = channel.of([group: "group",
                                samples: 'sample_id',
                                prefix:  'kraken2_unfiltered_species'])
         KRAKEN_UNFILTERED_BARPLOT(unfilt_kraken_barplot_meta, KRAKEN2TABLE.out.table, metadata)
         // Filtered - drop species with relative abundance less than 0.5% across samples
-        filt_kraken_meta = Channel.of([mode: 'across_samples', filter_threshold : 0.5,
+        filt_kraken_meta = channel.of([mode: 'across_samples', filter_threshold : 0.5,
                             output_file: "kraken2_filtered_species_table${params.assay_suffix}.tsv"])
         KRAKEN_FILTER_RARE(filt_kraken_meta, KRAKEN2TABLE.out.table)
-        filt_kraken_barplot_meta = Channel.of([group: "group",
-                               feature: 'Species',
+        filt_kraken_barplot_meta = channel.of([group: "group",
                                samples: 'sample_id',
                                prefix:  'kraken2_filtered_species'])
         KRAKEN_FILTERED_BARPLOT(filt_kraken_barplot_meta, KRAKEN_FILTER_RARE.out.table, metadata)
@@ -600,17 +593,15 @@ workflow read_based {
 
         // Unfiltered
         KAIJU2SPECIES_TABLE(KAIJU2TABLE.out.table)
-        unfilt_kaiju_barplot_meta = Channel.of([group: "group",
-                               feature: 'Species',
+        unfilt_kaiju_barplot_meta = channel.of([group: "group",
                                samples: 'sample_id',
                                prefix:  'kaiju_unfiltered_species'])
         KAIJU_UNFILTERED_BARPLOT(unfilt_kaiju_barplot_meta, KAIJU2SPECIES_TABLE.out.table, metadata)
         // Filtered - drop species with relative abundance less than 0.5% across samples
-        filt_kaiju_meta = Channel.of([mode: 'across_samples', filter_threshold : 0.5,
+        filt_kaiju_meta = channel.of([mode: 'across_samples', filter_threshold : 0.5,
                             output_file: "kaiju_filtered_species_table${params.assay_suffix}.tsv"])
         KAIJU_FILTER_RARE(filt_kaiju_meta, KAIJU2SPECIES_TABLE.out.table)
-        filt_kaiju_barplot_meta = Channel.of([group: "group",
-                               feature: 'Species',
+        filt_kaiju_barplot_meta = channel.of([group: "group",
                                samples: 'sample_id',
                                prefix:  'kaiju_filtered_species'])
         KAIJU_FILTERED_BARPLOT(filt_kaiju_barplot_meta, KAIJU_FILTER_RARE.out.table, metadata)
@@ -654,42 +645,42 @@ workflow read_based {
         // ------------------------- Gene families UNIREF 90
         // Unfiltered
         GFU_HUMANN_TABLE('uniref', uniref_table_ch)
-        unfilt_uniref_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
+        unfilt_uniref_heatmap_meta = channel.of([group: "group", samples: 'sample_id',
                                                prefix:  'Gene-families-uniref_unfiltered']) 
         GFU_UNFILTERED_HEATMAP(unfilt_uniref_heatmap_meta, GFU_HUMANN_TABLE.out.table, metadata)
         // Filtered - filter out uniref less than 500 CPM across samples
-        filt_uniref_meta = Channel.of([mode: 'values_sum', filter_threshold : 500,
+        filt_uniref_meta = channel.of([mode: 'values_sum', filter_threshold : 500,
                             output_file: "Gene-families-uniref_filtered${params.assay_suffix}.tsv"])
         GFU_FILTER_RARE(filt_uniref_meta, GFU_HUMANN_TABLE.out.table)
-        filt_uniref_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
+        filt_uniref_heatmap_meta = channel.of([group: "group", samples: 'sample_id',
                                              prefix:  'Gene-families-uniref_filtered'])
         GFU_FILTERED_HEATMAP(filt_uniref_heatmap_meta, GFU_FILTER_RARE.out.table, metadata)
 
         // ------------------------- Gene families KO
         // Unfiltered
         GKO_HUMANN_TABLE('KO', ko_table_ch)
-        unfilt_KO_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
+        unfilt_KO_heatmap_meta = channel.of([group: "group", samples: 'sample_id',
                                                prefix:  'Gene-families-KO_unfiltered'])
         GKO_UNFILTERED_HEATMAP(unfilt_KO_heatmap_meta, GKO_HUMANN_TABLE.out.table, metadata)
         // Filtered - filter out KO less than 500 CPM across samples
-        filt_KO_meta = Channel.of([mode: 'values_sum', filter_threshold : 500,
+        filt_KO_meta = channel.of([mode: 'values_sum', filter_threshold : 500,
                             output_file: "Gene-families-KO_filtered${params.assay_suffix}.tsv"])
         GKO_FILTER_RARE(filt_KO_meta, GKO_HUMANN_TABLE.out.table)
-        filt_KO_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
+        filt_KO_heatmap_meta = channel.of([group: "group", samples: 'sample_id',
                                              prefix:  'Gene-families-KO_filtered'])
         GKO_FILTERED_HEATMAP(filt_KO_heatmap_meta, GKO_FILTER_RARE.out.table, metadata)
 
         // ------------------------- Pathway abundances
         // Unfiltered
         PATH_HUMANN_TABLE('pathway', pathway_table_ch)
-        unfilt_pathway_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
+        unfilt_pathway_heatmap_meta = channel.of([group: "group", samples: 'sample_id',
                                                prefix:  'Pathway-abundances_unfiltered'])
         PATH_UNFILTERED_HEATMAP(unfilt_pathway_heatmap_meta, PATH_HUMANN_TABLE.out.table, metadata)
         // Filtered - filter out pathways less than 500 CPM across samples
-        filt_pathway_meta = Channel.of([mode: 'values_sum', filter_threshold : 500,
+        filt_pathway_meta = channel.of([mode: 'values_sum', filter_threshold : 500,
                             output_file: "Pathway-abundances_filtered${params.assay_suffix}.tsv"])
         PATH_FILTER_RARE(filt_pathway_meta, PATH_HUMANN_TABLE.out.table)
-        filt_pathway_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
+        filt_pathway_heatmap_meta = channel.of([group: "group", samples: 'sample_id',
                                              prefix:  'Pathway-abundances_filtered'])
         PATH_FILTERED_HEATMAP(filt_pathway_heatmap_meta, PATH_FILTER_RARE.out.table, metadata)
 
@@ -706,30 +697,27 @@ workflow read_based {
         // Unfiltered
         // Create raw table
         METAPHLAN2COUNT(taxonomy_ch, reads_per_sample)
-        unfilt_metaphlan_barplot_meta = Channel.of([group: "group",
-                               feature: 'Species',
+        unfilt_metaphlan_barplot_meta = channel.of([group: "group",
                                samples: 'sample_id',
                                prefix:  'metaphlan_unfiltered_species'])
         METAPHLAN_UNFILTERED_BARPLOT(unfilt_metaphlan_barplot_meta, METAPHLAN2COUNT.out.table, metadata)
         // Filtered - drop species with relative abundance less than 0.5% across samples
-        filt_metaphlan_meta = Channel.of([mode: 'across_samples', filter_threshold : 0.5,
+        filt_metaphlan_meta = channel.of([mode: 'across_samples', filter_threshold : 0.5,
                             output_file: "metaphlan_filtered_species_table${params.assay_suffix}.tsv"])
         METAPHLAN_FILTER_RARE(filt_metaphlan_meta, METAPHLAN2COUNT.out.table)
-        filt_metaphlan_barplot_meta = Channel.of([group: "group",
-                               feature: 'Species',
+        filt_metaphlan_barplot_meta = channel.of([group: "group",
                                samples: 'sample_id',
                                prefix:  'metaphlan_filtered_species'])
         METAPHLAN_FILTERED_BARPLOT(filt_metaphlan_barplot_meta, METAPHLAN_FILTER_RARE.out.table, metadata)
         
         if(params.sample_type == "low_biomass"){
             // Decontaminate with decontam
-            decontam_metaphlan_meta = Channel.of([feature: 'Species', samples: 'sample_id',
+            decontam_metaphlan_meta = channel.of([feature: 'Species', samples: 'sample_id',
                                    prevalence: 'NTC', frequency: 'concentration',
-                                   decontam_threshold: 0.5, method: 'metaphlan',
+                                   decontam_threshold: params.decontam_threshold, method: 'metaphlan',
                                    ntc_name: 'true'])
             METAPHLAN_DECONTAM(decontam_metaphlan_meta, metadata, METAPHLAN_FILTER_RARE.out.table)
-            decontam_metaphlan_barplot_meta = Channel.of([group: "group",
-                               feature: 'Species',
+            decontam_metaphlan_barplot_meta = channel.of([group: "group",
                                samples: 'sample_id',
                                prefix:  'metaphlan_decontam_species'])
             METAPHLAN_DECONTAM_BARPLOT(decontam_metaphlan_barplot_meta, METAPHLAN_DECONTAM.out.table, metadata)
@@ -743,62 +731,60 @@ workflow read_based {
         if(params.sample_type == "low_biomass"){
 
         // Kraken2
-        decontam_kraken_meta = Channel.of([feature: 'Species', samples: 'sample_id',
+        decontam_kraken_meta = channel.of([feature: 'species', samples: 'sample_id',
                                    prevalence: 'NTC', frequency: 'concentration',
-                                   decontam_threshold: 0.5, method: 'kraken2',
+                                   decontam_threshold: params.decontam_threshold, method: 'kraken2',
                                    ntc_name: 'true'])
         KRAKEN_DECONTAM(decontam_kraken_meta, metadata, KRAKEN_FILTER_RARE.out.table)
-        decontam_kraken_barplot_meta = Channel.of([group: "group",
-                               feature: 'Species',
+        decontam_kraken_barplot_meta = channel.of([group: "group",
                                samples: 'sample_id',
                                prefix:  'kraken2_decontam_species'])
         KRAKEN_DECONTAM_BARPLOT(decontam_kraken_barplot_meta, KRAKEN_DECONTAM.out.table, metadata)
 
 
         // Kaiju
-        decontam_kaiju_meta = Channel.of([feature: 'Species', samples: 'sample_id',
+        decontam_kaiju_meta = channel.of([feature: 'Species', samples: 'sample_id',
                                    prevalence: 'NTC', frequency: 'concentration',
-                                   decontam_threshold: 0.5, method: 'kaiju',
+                                   decontam_threshold: params.decontam_threshold, method: 'kaiju',
                                    ntc_name: 'true'])
         KAIJU_DECONTAM(decontam_kaiju_meta, metadata, KAIJU_FILTER_RARE.out.table)
-        decontam_kaiju_barplot_meta = Channel.of([group: "group",
-                               feature: 'Species',
+        decontam_kaiju_barplot_meta = channel.of([group: "group",
                                samples: 'sample_id',
                                prefix:  'kaiju_decontam_species'])
         KAIJU_DECONTAM_BARPLOT(decontam_kaiju_barplot_meta, KAIJU_DECONTAM.out.table, metadata)
 
 
         // Gene families UNIREF90
-        decontam_uniref_meta = Channel.of([feature: 'Uniref90', samples: 'sample_id',
+        decontam_uniref_meta = channel.of([feature: 'Uniref90', samples: 'sample_id',
                                    prevalence: 'NTC', frequency: 'concentration',
-                                   decontam_threshold: 0.5, method: 'Gene-families-uniref',
+                                   decontam_threshold: params.decontam_threshold, method: 'Gene-families-uniref',
                                    ntc_name: 'true'])
 
         GFU_DECONTAM(decontam_uniref_meta, metadata, GFU_FILTER_RARE.out.table)
-        decontam_uniref_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
+        decontam_uniref_heatmap_meta = channel.of([group: "group", samples: 'sample_id',
                                                   prefix:  'Gene-families-uniref_decontam'])        
         GFU_DECONTAM_HEATMAP(decontam_uniref_heatmap_meta, GFU_DECONTAM.out.table, metadata)
 
         // Gene families KO
-        decontam_KO_meta = Channel.of([feature: 'KO', samples: 'sample_id',
+        decontam_KO_meta = channel.of([feature: 'KO', samples: 'sample_id',
                                    prevalence: 'NTC', frequency: 'concentration',
-                                   decontam_threshold: 0.5, method: 'Gene-families-KO',
+                                   decontam_threshold: params.decontam_threshold, method: 'Gene-families-KO',
                                    ntc_name: 'true'])
 
         GKO_DECONTAM(decontam_KO_meta, metadata, GKO_FILTER_RARE.out.table)
-        decontam_KO_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
+        decontam_KO_heatmap_meta = channel.of([group: "group", samples: 'sample_id',
                                                   prefix:  'Gene-families-KO_decontam'])
         GKO_DECONTAM_HEATMAP(decontam_KO_heatmap_meta, GKO_DECONTAM.out.table, metadata)
 
 
         // Pathway
-        decontam_pathway_meta = Channel.of([feature: 'Pathway', samples: 'sample_id',
+        decontam_pathway_meta = channel.of([feature: 'Pathway', samples: 'sample_id',
                                    prevalence: 'NTC', frequency: 'concentration',
-                                   decontam_threshold: 0.5, method: 'Pathway-abundances',
+                                   decontam_threshold: params.decontam_threshold, method: 'Pathway-abundances',
                                    ntc_name: 'true'])
 
         PATH_DECONTAM(decontam_pathway_meta, metadata, PATH_FILTER_RARE.out.table)
-        decontam_pathway_heatmap_meta = Channel.of([group: "group", samples: 'sample_id',
+        decontam_pathway_heatmap_meta = channel.of([group: "group", samples: 'sample_id',
                                                   prefix:  'Pathway-abundances_decontam'])
         PATH_DECONTAM_HEATMAP(decontam_pathway_heatmap_meta, PATH_DECONTAM.out.table, metadata)
 
@@ -834,18 +820,4 @@ workflow read_based {
         ko_table        = ko_table_ch
         taxonomy        = taxonomy_ch 
         versions        = software_versions_ch
-}
-
-
-workflow {
-
-     read_based(reads_per_sample,
-                metadata,
-                filtered_ch, 
-                params.krakendb_dir,
-                params.kaijudb_dir,
-                params.chocophlan_dir,
-                params.uniref_dir,
-                params.metaphlan_db_dir,
-                params.utilities_dir)
 }

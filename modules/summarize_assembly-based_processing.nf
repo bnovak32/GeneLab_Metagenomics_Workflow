@@ -77,7 +77,11 @@ process GENERATE_ASSEMBLY_PROCESSING_OVERVIEW_TABLE {
         mkdir assemblies_dir/ && mv *-assembly.fasta assemblies_dir/
         mkdir genes_dir/ && mv *-genes.faa genes_dir/ 
         mkdir mapping_dir/ && mv *-metabat-assembly-depth.tsv *.bam  mapping_dir/
-        mkdir bins_dir/ && mv  *-bin*.fasta  bins_dir/
+
+        mkdir bins_dir/
+        if compgen -G *-bin*.fasta > /dev/null; then
+            mv  *-bin*.fasta  bins_dir/
+        fi
         bash generate-assembly-based-overview-table.sh \\
                 ${sample_IDs_file} \\
                 assemblies_dir/ \\

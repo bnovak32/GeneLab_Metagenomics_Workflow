@@ -20,7 +20,7 @@ nextflow.enable.dsl = 2
  *      Cardinality: one
  *      Description: Tuple input combining multiple channel elements
  *                 - sample_id: string specifying the input sample name
- *                 - gene_coverages: path to sample gene converages
+ *                 - gene_coverages: path to sample gene coverages
  *                 - contig_coverages: path to sample contig coverages
  *                 - gene_tax: path to sample gene taxonomy
  *                 - contig_tax: path to sample contig taxonomy
@@ -180,7 +180,7 @@ process MAKE_COMBINED_GENE_LEVEL_TABLES {
  *      Cardinality: one
  *      Description: Tuple input combining multiple channel elements
  *                 - sample_id: string specifying the input sample name
- *                 - gene_coverages: path to sample gene converages
+ *                 - gene_coverages: path to sample gene coverages
  *                 - contig_coverages: path to sample contig coverages
  *                 - gene_tax: path to sample gene taxonomy
  *                 - contig_tax: path to sample contig taxonomy
@@ -325,7 +325,7 @@ process MAKE_COMBINED_CONTIG_TAX_TABLES {
 
 
 
-workflow {
+workflow combine_contig_coverage {
     take:
         coverages_ch 
         annotations_ch 

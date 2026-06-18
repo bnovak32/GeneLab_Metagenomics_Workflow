@@ -1,9 +1,7 @@
 name: R_vis
 channels:
-    - r
     - conda-forge
     - bioconda
-    - defaults
 dependencies:
     - r-base=4.5.3
     - r-optparse=1.7.5

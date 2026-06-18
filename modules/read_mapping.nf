@@ -20,7 +20,7 @@ nextflow.enable.dsl = 2
  *                 - sample_id: string specifying the input sample name
  *                 - assembly: path to sample assembly/contigs
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not 
+ *                 - isPaired: Boolean specifying whether input reads are paired or not 
  *
  * OUTPUTS:
  *   1. tuple: tuple val(sample_id), path("${sample_id}.sam"), path("${sample_id}-mapping-info${params.assay_suffix}.txt") (emit: sam)
@@ -111,7 +111,7 @@ process MAPPING {
  *                 - sample_id: string specifying the input sample name
  *                 - assembly: path to sample assembly/contigs
  *                 - reads: path to sample fastq reads
- *                 - isPaired: Bolean specifying whether input reads are paired or not  
+ *                 - isPaired: Boolean specifying whether input reads are paired or not  
  *
  * OUTPUTS:
  *   1. tuple: tuple val(sample_id), path("${sample_id}.sam"), path("${sample_id}-mapping-info${params.assay_suffix}.txt") (emit: sam)

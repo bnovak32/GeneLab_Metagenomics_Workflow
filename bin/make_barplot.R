@@ -38,11 +38,6 @@ option_list <- list(
               and samples as other columns.",
               metavar="path"),
   
-  make_option(c("-f", "--feature-column"), type="character", default=NULL, 
-              help="Feature column name in feature table ['Species', 'species', 'KO_ID'].
-              Default: empty string",
-              metavar="Feature_Column"),
-  
   make_option(c("-s", "--samples-column"), type="character", default="Sample Name", 
               help="Column in metadata containing the sample names in the feature table. \
                     Deafault: 'Sample Name' ",
@@ -52,7 +47,6 @@ option_list <- list(
               help="Column in metadata to be use to facet/group plot. 
               Default: NULL ",
               metavar="group_column"),
-  
   
   make_option(c("-o", "--output-prefix"), type="character", default="", 
               help="Unique name to tag onto output files. Default: empty string.",
@@ -128,46 +122,45 @@ library(scales)
 
 # Convert species count matrix to relative abundance matrix
 count_to_rel_abundance <- function(species_table) {
-  
-  abund_table <- species_table %>% 
-    as.data.frame %>% 
-    mutate( across(everything(), function(x) (x/sum(x, na.rm = TRUE))*100 ) )  %>% # calculate species relative abundance per sample
+
+  abund_table <- species_table %>%
+    as.data.frame %>%
+    mutate( across(everything(), function(x) (x/sum(x, na.rm = TRUE)) * 100 )) %>% # calculate species relative abundance per sample
     select(
-      where( ~all(!is.na(.)) )
-    )  %>% # drop columns where none of the reads were classified or were non-microbial (NA)
-    rownames_to_column("Species") 
-  
-  # Set rownames as species name and drop species column  
+      where(~all(!is.na(.)))
+    ) %>% # drop columns where none of the reads were classified or were non-microbial (NA)
+    rownames_to_column("Species")
+
+  # Set rownames as species name and drop species column
   rownames(abund_table) <- abund_table$Species
   abund_table <- abund_table[, -match(x = "Species", colnames(abund_table))] %>% t
-  
+
   return(abund_table)
 }
 
 # Make bar plot
 make_plot <- function(abund_table, metadata, colors2use, publication_format,
-                      samples_column="Sample_ID", prefix_to_remove="barcode"){
-  
+                      samples_column = "Sample_ID", prefix_to_remove = "barcode") {
+
   abund_table_wide <- abund_table %>% 
     as.data.frame() %>% 
     rownames_to_column(samples_column) %>% 
     inner_join(metadata) %>% 
     select(!!!colnames(metadata), everything()) %>% 
     mutate(!!samples_column := !!sym(samples_column) %>% str_remove(prefix_to_remove))
-  
-  
+
   abund_table_long <- abund_table_wide  %>%
-    pivot_longer(-colnames(metadata), 
+    pivot_longer(-colnames(metadata),
                  names_to = "Species",
                  values_to = "relative_abundance")
-  
+
   p <- ggplot(abund_table_long, mapping = aes(x=!!sym(samples_column), 
                                               y=relative_abundance, fill=Species)) +
     geom_col() +
-    scale_fill_manual(values = colors2use) + 
-    labs(x=NULL, y="Relative Abundance (%)") + 
+    scale_fill_manual(values = colors2use) +
+    labs(x=NULL, y="Relative Abundance (%)") +
     publication_format
-  
+
   return(p)
 }
 
@@ -197,7 +190,6 @@ colors2use  <- c("#A6CEE3","#1F78B4","#B2DF8A","#33A02C","#FB9A99","#E31A1C","#F
 feature_table_file <- opt[["feature-table"]] # 'kaiju_species_table_GLlbnMetag.csv'
 metdata_file <- opt[["metadata-table"]] # "metadata.csv"
 samples_column <- opt[["samples-column"]] # 'Sample_ID'
-feature_column <- opt[["feature-column"]] # 'Species'
 prefix <-  opt[["output-prefix"]] # "filtered-kaiju_species"
 suffix <- opt[["assay-suffix"]]
 facet_by <- reformulate(opt[["group-column"]]) # 'Description'
@@ -222,7 +214,7 @@ row.names(metadata) <- metadata[,samples_column]
 
 abund_table <- count_to_rel_abundance(feature_table)
 
-metadata <- metadata %>% 
+metadata <- metadata %>%
 	       mutate(!!sym(group_column) := str_wrap(!!sym(group_column) %>%
 						      str_replace_all("_", " "), width=10)
 	       )

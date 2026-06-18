@@ -3,4 +3,4 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconductor-decontam=1.26.0
+  - bioconductor-decontam=1.30.0
