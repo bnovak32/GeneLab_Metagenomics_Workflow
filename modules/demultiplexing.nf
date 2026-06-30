@@ -21,12 +21,12 @@ nextflow.enable.dsl = 2
  * ========================================================================================
  *
  * SUMMARY:
- *   Bascall pod5 files with dorado
+ *   Basecall pod5 files with dorado
  *
  * INPUTS:
  *   1. path: input_dir
  *      Cardinality: one
- *      Description: Input file: input directory contaning pod5 files to basecall
+ *      Description: Input file: input directory containing pod5 files to basecall
  *
  *   2. val: kit_name
  *      Cardinality: one
@@ -54,11 +54,11 @@ nextflow.enable.dsl = 2
 process DORADO_BASECALLER {
 
 
-    tag "Bascalling pod5 files using dorado"
+    tag "Basecalling pod5 files using dorado"
     label "dorado"
 
     input:
-        path(input_dir) // pod5 didrectory
+        path(input_dir) // pod5 directory
         val(kit_name)
 
     output:
@@ -274,7 +274,7 @@ process CAT_FASTQ_DIR {
     # from the split fastq process above
     cd ${demux_dir} # demultiplexed/
 
-    # Concat separate barcode/sample fastq files into per sample fastq gzippped files
+    # Concat separate barcode/sample fastq files into per sample fastq gzipped files
     for sample in "\${!SAMPLE_TO_BARCODE[@]}"; do
 
 
@@ -308,13 +308,11 @@ process CAT_FASTQ_DIR {
     """
 }
 
-workflow{
-
+workflow {
 
      pod5_dir   = Channel.fromPath(params.input_dir, checkIfExists: true)
-     config_file = Channel.fromPath(params.config_file, checkIfExists: true)
  
-     DORADO_BASECALLER(pod5_dir, config_file, params.kit_name)
+     DORADO_BASECALLER(pod5_dir, params.kit_name)
 
      DORADO_DEMUX(DORADO_BASECALLER.out.bam, params.kit_name)
 }

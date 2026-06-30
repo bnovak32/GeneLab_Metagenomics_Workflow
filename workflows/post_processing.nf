@@ -53,13 +53,13 @@ if(params.help){
   println()
   println("Files:")
   println("    --run_command  [PATH] File containing the nextflow run command used in processing. Default: ./processing_scripts/command.txt")
-  println("    --processing_commands  [PATH] File containing all the process names and scripts used during processing. Default: ./processing_scripts/nextflow_processing_info_GLAmpliseq.txt")
+  println("    --processing_commands  [PATH] File containing all the process names and scripts used during processing. Default: ./processing_scripts/nextflow_processing_info_GLmetagenomics.txt")
   println("    --samples  [PATH] A single column file with sample ids on each line generated after running the processing pipeline. Default: ./unique-sample-IDs.txt")
   println("    --assay_table  [PATH] GLDS assay table generated after running the processing pipeline with accession number as input.")
   println("                   Example, ../Genelab/a_OSD-574_metagenomic-sequencing_whole-genome-shotgun-sequencing_illumina.txt. Default: empty string")
-  println("    --isa_zip  [PATH] Genelab ISA zip files containing an assay atable for the OSD accession. This is only required if --files.assay_table is not set.")
+  println("    --isa_zip  [PATH] Genelab ISA zip files containing an assay table for the OSD accession. This is only required if --files.assay_table is not set.")
   println("                   Example, ../Genelab/OSD-574_metadata_OSD-574-ISA.zip. Default: empty string")
-  println("    --runsheet  [PATH] A 3-column (single-end) or 4-column (paired-end) input file (sample_id, forward, [reverse,] paired) used to run the processing pipeline. This is the value set to the paremater --input_file when run the processing pipeline with a csv file as input otherwise it is the GLfile.csv in the GeneLab directory if --GLDS_accession was used as input. Example '../GeneLab/GLfile.csv'.  Default: null")
+  println("    --runsheet  [PATH] A 3-column (single-end) or 4-column (paired-end) input file (sample_id, forward, [reverse,] paired) used to run the processing pipeline. This is the value set to the parameter --input_file when run the processing pipeline with a csv file as input otherwise it is the GLfile.csv in the GeneLab directory if --GLDS_accession was used as input. Example '../GeneLab/GLfile.csv'.  Default: null")
 
 
  println("    --software_versions  [PATH] A file generated after running the processing pipeline listing the software versions used. Default: ../Metadata/software_versions.txt")
@@ -202,7 +202,7 @@ workflow {
 
         file_label_ch = Channel.of([params.processing_zip_file, params.readme])
 
-        // processed as paths but utilized as labels in the genberate curation association table script 
+        // processed as paths but utilized as labels in the generate curation association table script 
         dir_label_ch = Channel.of([params.Raw_Sequence_Data,
                                    params.Filtered_Sequence_Data,
                                    params.Read_Based_Processing,

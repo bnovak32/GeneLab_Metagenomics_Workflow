@@ -69,9 +69,10 @@ process FILTER_CHECKM_RESULTS_AND_COPY_MAGS {
         path(bins) 
     output:
         path("${params.additional_filename_prefix}MAGs-checkm-out.tsv"), emit: MAGs_checkm_out
-        path("MAGs_dir/"), emit: MAGs_dir 
+        path("MAGs_dir/"), emit: MAGs_dir
     script:
         """        
+        mkdir MAGs_dir/
         # Only running if there were bins recovered
         if [ `find -L . -name '*.fasta' | wc -l | sed 's/^ *//'` -gt 0 ]; then
 
@@ -81,7 +82,6 @@ process FILTER_CHECKM_RESULTS_AND_COPY_MAGS {
 
             sed 's/-bin\\./-MAG-/' MAGs-checkm-out.tmp > ${params.additional_filename_prefix}MAGs-checkm-out.tsv
             
-            [ -d MAGs_dir/ ] || mkdir MAGs_dir/
             for MAG in `cut -f 1 MAGs-checkm-out.tmp | tail -n +2`
             do
                 new_ID=`echo \$MAG | sed 's/-bin\\./-MAG-/'`
@@ -198,7 +198,7 @@ process  GTDBTK_ON_MAG {
         path(MAG)
         path(gtdbtk_db_dir)
         val(use_gtdbtk_scratch_location)
-        env(GTDBTK_DATA_PATH)
+        env('GTDBTK_DATA_PATH')
            
     output:
         path("*.summary.tsv"), emit: summary

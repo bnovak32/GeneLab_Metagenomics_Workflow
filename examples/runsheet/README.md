@@ -27,21 +27,21 @@
 > *Note: NTC and concentration columns are only required for low biomass datasets
 
 ### Approach 1: Start with pod5 or fast5 files as input
-> *Note: There should be one row per sample. See the [input_dir_barcodes.csv](input_dir_barcodes.csv) as an example.*
+> *Note: There should be one row per sample. See [input_dir_barcodes.csv](input_dir_barcodes.csv) as an example.*
 
 | Column Name | Type | Description | Example |
 |:------------|:-----|:------------|:--------|
 | sample_id | string | Unique sample name, added as a prefix to sample-specific processed data output files. Should not include spaces or weird characters. | sample-1 |
 | barcode_id | string | Unique barcode ID associated with the respective sample. Should not include spaces or weird characters. | barcode01 |
 | group | string | Name of the treatment group that the sample belongs to. Should not include spaces or weird characters. | cleanroom_floor |
-| NTC | bool | Set to TRUE if the sample is a non-template control (NTC), and FALSE if it is not. | FALSE |
+| NTC | bool | Set to TRUE if the sample is a No Template Control (NTC), and FALSE if it is not. | FALSE |
 | concentration (ng) | float | The amount of input DNA used for library preparation. | 0.005 |
 | paired | bool | Set to TRUE if the samples were sequenced as paired-end. If set to FALSE, samples are assumed to be single-end. | FALSE |
 
 <br> 
 
 ### Approach 2: Start with multiple FASTQ files per sample as input
-> *Note: There should be one row per fastq file. So there will be multiple rows for each sample depending on the number of fastq files associated with that sample. See the [multiple.csv](multiple.csv) as an example.*
+> *Note: There should be one row per fastq file. So there will be multiple rows for each sample depending on the number of fastq files associated with that sample. See [multiple.csv](multiple.csv) as an example.*
 
 | Column Name | Type | Description | Example |
 |:------------|:-----|:------------|:--------|
@@ -49,7 +49,7 @@
 | barcode_id | string | Unique barcode ID associated with the respective sample. Should not include spaces or weird characters. | barcode01 |
 | forward | string (local path or URL) | Location of one of the raw FASTQ files associated with the respective sample. *Note: If more than one FASTQ file is associated with the sample, add an additional row for each FASTQ file.* | /fastq_pass/barcode01/PBC13394_pass_barcode01_6db14c65_7b9d01fc_51.fastq.gz |
 | group | string | Name of the treatment group that the sample belongs to. Should not include spaces or weird characters. | cleanroom_floor |
-| NTC | bool | Set to TRUE if the sample is a non-template control (NTC), and FALSE if it is not. | FALSE |
+| NTC | bool | Set to TRUE if the sample is a No Template Control (NTC), and FALSE if it is not. | FALSE |
 | concentration (ng) | float | The amount of input DNA used for library preparation. | 0.005 |
 | paired | bool | Set to TRUE if the samples were sequenced as paired-end. If set to FALSE, samples are assumed to be single-end. | FALSE |
 
@@ -64,7 +64,7 @@
 | barcode_id | string | Unique barcode ID associated with the respective sample. Should not include spaces or weird characters. | barcode01 |
 | forward | string (local path or URL) | Location of the raw FASTQ file associated with the respective sample. | /raw_fastqs/sample1.fastq.gz |
 | group | string | Name of the treatment group that the sample belongs to. Should not include spaces or weird characters. | cleanroom_floor |
-| NTC | bool | Set to TRUE if the sample is a non-template control (NTC), and FALSE if it is not. | FALSE |
+| NTC | bool | Set to TRUE if the sample is a No Template Control (NTC), and FALSE if it is not. | FALSE |
 | concentration (ng) | float | The amount of input DNA used for library preparation. | 0.005 |
 | paired | bool | Set to TRUE if the samples were sequenced as paired-end. If set to FALSE, samples are assumed to be single-end. | FALSE |
 
@@ -89,7 +89,7 @@
 | forward | string (local path or URL) | Location of the raw FASTQ file associated with the respective sample. For paired-end data, this specifies the forward reads fastq.gz file. | /raw_fastqs/sample1_R1_raw.fastq.gz |
 | reverse | string (local path or URL) | Location of the raw FASTQ file associated with the respective sample. For paired-end data, this specifies the reverse reads fastq.gz file. | /raw_fastqs/sample1_R2_raw.fastq.gz |
 | group | string | Name of the treatment group that the sample belongs to. Should not include spaces or weird characters. | cleanroom_floor |
-| NTC | bool | Set to TRUE if the sample is a non-template control (NTC), and FALSE if it is not. | FALSE |
+| NTC | bool | Set to TRUE if the sample is a No Template Control (NTC), and FALSE if it is not. | FALSE |
 | concentration (ng) | float | The amount of input DNA used for library preparation. | 0.005 |
 | paired | bool | Set to TRUE if the samples were sequenced as paired-end. If set to FALSE, samples are assumed to be single-end. | TRUE |
 
@@ -103,7 +103,7 @@
 | sample_id | string | Unique sample name, added as a prefix to sample-specific processed data output files. Should not include spaces or weird characters. | sample-1 |
 | forward | string (local path or URL) | Location of the raw FASTQ file associated with the respective sample. | /raw_fastqs/sample1_raw.fastq.gz |
 | group | string | Name of the treatment group that the sample belongs to. Should not include spaces or weird characters. | cleanroom_floor |
-| NTC | bool | Set to TRUE if the sample is a non-template control (NTC), and FALSE if it is not. | FALSE |
+| NTC | bool | Set to TRUE if the sample is a No Template Control (NTC), and FALSE if it is not. | FALSE |
 | concentration (ng) | float | The amount of input DNA used for library preparation. | 0.005 |
 | paired | bool | Set to TRUE if the samples were sequenced as paired-end. If set to FALSE, samples are assumed to be single-end. | TRUE |
 

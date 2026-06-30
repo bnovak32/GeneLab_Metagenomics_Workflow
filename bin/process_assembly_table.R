@@ -217,7 +217,7 @@ overview_table <-  read_input_table(assembly_summary) %>%
     where( ~all(!is.na(.)) )
   )
 
-col_names <- names(overview_table) %>% str_remove_all("-assembly.*")
+col_names <- names(overview_table) %>% str_remove_all("-assembly")
 
 if(any(str_detect(col_names, "gene_calls_identified"))){
  # Input file is an Assembly passed processing overview file
@@ -238,7 +238,6 @@ if(any(str_detect(col_names, "gene_calls_identified"))){
 if(type == "KO"){
 
   df <- read_input_table(assembly_table)
-  colnames(df) <- colnames(df)  %>% str_remove_all(suffix)
   # Get common sample ids
   sample_order <- get_samples(df, sample_order, "KO_function")
   
@@ -249,7 +248,6 @@ if(type == "KO"){
 # Deduplicate rows by summing together species values
 
   df <- read_input_table(assembly_table)
-  colnames(df) <- colnames(df)  %>% str_remove_all(suffix)
   # Get common sample ids
   sample_order <- get_samples(df, sample_order)
   table2write <- read_taxonomy_table(df, sample_order) %>%
