@@ -22,63 +22,50 @@ if(params.help){
   println("   > nextflow -C post_processing.config run post_processing.nf -resume -profile slurm,singularity")
   println()
   println("Required Parameters:")
+  println("  --technology [STRING]  Sequencing technology. Options are 'illumina' or 'nanopore'. Default: null.")
+  println("  --sample_type [STRING] Sample type. Options are 'standard' or 'low_biomass'. Default: null.")
   println("""-profile [STRING] Specifies the profile to be used to run the workflow. Options are [slurm, singularity, docker, and  conda].
 	                    singularity, docker and conda will run the workflow locally using singularity, docker, and conda, respectively.
                       To combine profiles, separate two or more profiles with a comma. 
                       For example, to combine slurm and singularity profiles, pass 'slurm,singularity' as argument. """)	
   println("  --publishDir_mode [STRING]  Specifies how nextflow handles output file publishing. Options can be found here https://www.nextflow.io/docs/latest/process.html#publishdir Default: link.")
-  println("  --GLDS_accession [STRING]  A Genelab GLDS accession number. Example GLDS-574. Default: empty string")
-  println("  --OSD_accession [STRING]  A Genelab OSD accession number. Example OSD-574. Default: empty string")
+  println("  --glds_accession [STRING]  A Genelab GLDS accession number. Example GLDS-574. Default: empty string")
+  println("  --osd_accession [STRING]  A Genelab OSD accession number. Example OSD-574. Default: empty string")
   println("  --name [STRING] The analyst's full name. E.g. 'FirstName A. LastName'.  Default: FirstName A. LastName")
   println("  --email [STRING] The analyst's email address. E.g. 'mail@nasa.gov'.  Default: mail@nasa.gov")
-  println("  --logs_dir_basename [STRING]  Base directory name of directory containing per sample logs from processing - should always end with '/'. E.g. 'Logs/'.  Default: Logs/")
-  println("  --runsheet_basename  [String] The runsheets base name. Example 'GLfile.csv' or 'PE_file.csv'. Default: null")
   println("  --assay_suffix [STRING]  Genelab's assay suffix. Default: _GLmetagenomics.")
   println("  --output_prefix [STRING] Unique name to tag onto output files. Default: empty string.")
-  println("  --V_V_guidelines_link [URL] Genelab metagenomics data validation and verification guidelines link. Default: https://genelab-tools.arc.nasa.gov/confluence/pages/viewpage.action?pageId=8225175.")
-  println("  --target_files [STRING] A comma separated list of target files and/or directories to find in processing_info.zip. Default: main.nf,nextflow.config,unique-sample-IDs.txt,envs/,bin/,config/,modules/,<--logs>.")
+  println("  --v_v_guidelines_link [URL] Genelab metagenomics data validation and verification guidelines link. Default: https://genelab-tools.arc.nasa.gov/confluence/pages/viewpage.action?pageId=8225175.")
   println("File Suffixes:")
-  println("      --raw_suffix [STRING]  Suffix used for the raw reads during processing. Only applicable when input reads are single-end. Default: _HRremoved_raw.fastq.gz.")  
-  println("      --raw_R1_suffix [STRING]  Suffix used for the raw forward reads during processing. Default: _R1_HRremoved_raw.fastq.gz.")
-  println("      --raw_R2_suffix [STRING]  Suffix used for the raw reverse reads during processing. Default: _R2_HRremoved_raw.fastq.gz.")
-
-  println("      --filtered_suffix [STRING]  Suffix used for quality filtered reads during processing. Only applicable when input reads are single-end. Default: _filtered.fastq.gz.")
-  println("      --filtered_R1_suffix [STRING]  Suffix to use for quality filtered forward reads during processing. Default: _R1_filtered.fastq.gz.")
-  println("      --filtered_R2_suffix [STRING]  Suffix to use for quality filtered reverse reads during processing. Default: _R2_filtered.fastq.gz.")
-  println()
-  println("Extra parameters to scripts:")
-  println("      --readme_extra [STRING] Extra parameters and arguments to GL-gen-processed-metagenomics-data-readme command. Run 'GL-gen-processed-metagenomics-readme --help' for extra parameters that can be set. Example '--raw-reads-dir  ../Raw_Sequence_Data/'. Default: empty string")
-  println("      --validation_extra [STRING] Extra parameters and arguments to GL-validate-processed-metagenomics-data command. Run 'GL-validate-processed-metagenomics-data --help' for extra parameters that can be set. Example '--single-ended --R1-used-as-single-ended-data --skip_raw_multiqc'. Default: '--skip_raw_multiqc' ")
-  println("      --file_association_extra [STRING] Extra parameters and arguments to GL-gen-metagenomics-file-associations-table command. Run 'GL-gen-metagenomics-file-associations-table --help' for extra parameters that can be set. Example '--single-ended --R1-used-as-single-ended-data'. Default: '--use-sample-names-from-assay-table' ")
-  println()
+  println("      --raw_suffix [STRING]  Raw reads suffix for datasets during processing. Default: _HRrm.fastq.gz.")  
+  println("      --raw_R1_suffix [STRING]  Raw forward reads suffix for illumina datasets. Default: _R1_HRrm.fastq.gz.")
+  println("      --raw_R2_suffix [STRING]  Raw reverse reads suffix for illumina datasets. Default: _R2_HRrm.fastq.gz.")
+  println("      --filtered_suffix [STRING]  Filtered reads suffix for datasets during processing. Default: _filtered.fastq.gz.")
+  println("      --filtered_R1_suffix [STRING]  Filtered forward reads suffix for illumina datasets. Default: _R1_filtered.fastq.gz.")
+  println("      --filtered_R2_suffix [STRING]  Filtered reverse reads suffix for illumina datasets. Default: _R2_filtered.fastq.gz.")
+  println("      --trimmed_suffix [STRING]  Trimmed reads suffix for nanopore datasets. Default: _trimmed.fastq.gz.")
+  println("      --human_suffix [STRING]  Human removed reads suffix for datasets during processing. Default: _HRrm.fastq.gz.")
+  println("      --decontam_suffix [STRING]  Decontaminated reads suffix for datasets during processing. Default: _decontam.fastq.gz.")
+  println("      --decontam_R1_suffix [STRING]  Decontaminated forward reads suffix for illumina datasets. Default: _R1_decontam.fastq.gz.")
+  println("      --decontam_R2_suffix [STRING]  Decontaminated reverse reads suffix for illumina datasets. Default: _R2_decontam.fastq.gz.")
+  println("      --host_removed [BOOLEAN]  Indicates if host sequences were removed from the dataset. Default: false")
+  println("      --host_suffix [STRING]  Host removed reads suffix for datasets during processing. Only used if --host-removed is true. Default: _HostRm.fastq.gz.")
+  println("      --host_R1_suffix [STRING]  Host removed forward reads suffix for illumina datasets. Only used if --host-removed is true. Default: _R1_HostRm.fastq.gz.")
+  println("      --host_R2_suffix [STRING]  Host removed reverse reads suffix for illumina datasets. Only used if --host-removed is true. Default: _R2_HostRm.fastq.gz.")
   println("Files:")
+  println("    --human_removed_summary  [PATH]  Path to the human reads removed summary file. Default: empty string")
   println("    --run_command  [PATH] File containing the nextflow run command used in processing. Default: ./processing_scripts/command.txt")
-  println("    --processing_commands  [PATH] File containing all the process names and scripts used during processing. Default: ./processing_scripts/nextflow_processing_info_GLmetagenomics.txt")
-  println("    --samples  [PATH] A single column file with sample ids on each line generated after running the processing pipeline. Default: ./unique-sample-IDs.txt")
+  println("    --processing_commands  [PATH] File containing all the process names and scripts used during processing. Default: ./processing_scripts/nextflow_processing_info_GLAmpliseq.txt")
   println("    --assay_table  [PATH] GLDS assay table generated after running the processing pipeline with accession number as input.")
   println("                   Example, ../Genelab/a_OSD-574_metagenomic-sequencing_whole-genome-shotgun-sequencing_illumina.txt. Default: empty string")
-  println("    --isa_zip  [PATH] Genelab ISA zip files containing an assay table for the OSD accession. This is only required if --files.assay_table is not set.")
+  println("    --isa_zip  [PATH] Genelab ISA zip files containing an assay atable for the OSD accession. This is only required if --files.assay_table is not set.")
   println("                   Example, ../Genelab/OSD-574_metadata_OSD-574-ISA.zip. Default: empty string")
-  println("    --runsheet  [PATH] A 3-column (single-end) or 4-column (paired-end) input file (sample_id, forward, [reverse,] paired) used to run the processing pipeline. This is the value set to the parameter --input_file when run the processing pipeline with a csv file as input otherwise it is the GLfile.csv in the GeneLab directory if --GLDS_accession was used as input. Example '../GeneLab/GLfile.csv'.  Default: null")
-
-
- println("    --software_versions  [PATH] A file generated after running the processing pipeline listing the software versions used. Default: ../Metadata/software_versions.txt")
+  println("    --runsheet  [PATH] Input csv file used to run the processing pipeline with the first column containing sample names. This is the value set to the paremater --input_file when run the processing pipeline with a csv file as input otherwise it is the GLfile.csv in the GeneLab directory if --GLDS_accession was used as input. Example '../GeneLab/GLfile.csv'.  Default: null")
+  println("    --software_versions  [PATH] A file generated after running the processing pipeline listing the software versions used. Default: ../Metadata/software_versions.txt")
   println()
   println("Directories:")
-  println("  --logs_dir [PATH]  Full or relative path to directory name of directory containing per sample logs from processing - should always end with '/'. E.g. 'Logs/'.  Default: Logs/")
-  println("    --Raw_Sequence_Data [PATH] A directory containing raw sequence and raw sequence outputs. Default: ../Raw_Sequence_Data/")
-  println("    --FastQC_Outputs [PATH] A directory containing fastqc and multiqc zip reports. Default: ../FastQC_Outputs/")
-  println("    --Filtered_Sequence_Data  [PATH] A directory containing the outputs of read filtering after running the processing pipeline. Default: ../Filtered_Sequence_Data/")  
-  println("    --Read_based_Processing  [PATH] A directory containing the outputs of read based processing after running the processing pipeline. Default: ../Read_based_Processing/")
-  println("    --Assembly_based_Processing  [PATH] A directory containing the outputs of assembly based processing after running the processing pipeline. Default: ../Assembly_based_Processing/")
-  println("    --Assemblies  [PATH] A directory containing sample contig assemblies after running the processing pipeline. Default: ../Assembly_based_Processing/assemblies/")
-  println("    --Genes  [PATH] A directory containing sample predicted genes after running the processing pipeline. Default: ../Assembly_based_Processing/predicted-genes/")
-  println("    --Annotations_And_Tax  [PATH] A directory containing sample gene and contig annotations after running the processing pipeline. Default: ../Assembly_based_Processing/annotations-and-taxonomy/")
-  println("    --Mapping  [PATH] A directory containing sample read mapping (bam) files after running the processing pipeline. Default: ../Assembly_based_Processing/read-mapping/")
-  println("    --Combined_Output  [PATH] A directory containing assembly summaries and reports across samples after running the processing pipeline. Default: ../Assembly_based_Processing/combined-outputs/")
-  println("    --Bins  [PATH] A directory containing metagenome bins after running the processing pipeline. Default: ../Assembly_based_Processing/bins/")
-  println("    --MAGS  [PATH] A directory containing metagenome assembled genomes (MAGS) after running the processing pipeline. Default: ../Assembly_based_Processing/MAGs/")
-  println("    --Output_dir  [PATH] Specifies the directory where outputs of this post-processing workflow will be published. Default: ../Post_Processing/")
+  println("    --output_dir  [PATH] Specifies the directory where outputs of this post-processing workflow will be published. Default: ../Post_Processing/")
+  println("    --processing_dir  [PATH] Specifies the directory where outputs of the main processing workflow were published. Default: ../../processing/")
   println()
   println("Optional arguments:")  
   println("    --help [BOOLEAN] Print this help message and exit")
@@ -99,20 +86,18 @@ log.info """${c_blue}
          GeneLab Post Processing Pipeline: $workflow.manifest.version
          
          You have set the following parameters:
+         Technology: ${params.technology}
+         Sample Type: ${params.sample_type}
          Profile: ${workflow.profile} 
          Analyst's Name: ${params.name}
          Analyst's Email: ${params.email}
-         GLDS Accession: ${params.GLDS_accession}
-         OSD Accession: ${params.OSD_accession}
+         GLDS Accession: ${params.glds_accession}
+         OSD Accession: ${params.osd_accession}
          Assay Suffix: ${params.assay_suffix}
          Output Prefix: ${params.output_prefix}
-         V & V Link: ${params.V_V_guidelines_link}
-         Target Files: ${params.target_files} 
-         Nextflow Directory publishing mode: ${params.publishDir_mode}
+         V & V Link: ${params.v_v_guidelines_link}
+         Nextflow directory publishing mode: ${params.publishDir_mode}
         
-         Base Names:
-         Run sheet: ${params.runsheet_basename}
-         Log Directory: ${params.logs_dir_basename}
 
          Suffixes:
          Raw Suffix: ${params.raw_suffix}
@@ -121,213 +106,160 @@ log.info """${c_blue}
          Filtered Suffix: ${params.filtered_suffix}
          Filtered R1 suffix: ${params.filtered_R1_suffix}
          Filtered R2 suffix: ${params.filtered_R2_suffix}
+         Trimmed Suffix: ${params.trimmed_suffix}
+         Human Removed Suffix: ${params.human_suffix}
+         Decontaminated Suffix: ${params.decontam_suffix}
+         Decontaminated R1 Suffix: ${params.decontam_R1_suffix} 
+         Decontaminated R2 Suffix: ${params.decontam_R2_suffix}
+         Host Removed Suffix: ${params.host_suffix}
+         Host Removed R1 Suffix: ${params.host_R1_suffix}
+         Host Removed R2 Suffix: ${params.host_R2_suffix} 
 
-         Extra scripts parameters:
-         Readme Script Extra: ${params.readme_extra}
-         Validation Script Extra: ${params.validation_extra}
-         File association Script Extra: ${params.file_association_extra}
 
          Files:
+         Human Removed Summary: ${params.human_summary}
          Nextflow Command: ${params.run_command}
          Processing Commands: ${params.processing_commands}
-         Samples: ${params.samples}
          Assay Table: ${params.assay_table}
          ISA Zip: ${params.isa_zip}
          Input Runsheet: ${params.runsheet}
          Software Versions: ${params.software_versions}
+        
+         Boolean Flags:
+         Host Removed: ${params.host_removed}
+         Single Ended: ${params.single_end}
 
          Directories:
-         Logs directory: ${params.logs_dir}
-         Raw Reads Directory: ${params.Raw_Sequence_Data}
-         Filtered Sequence Data: ${params.Filtered_Sequence_Data}
-         FastQC Outputs: ${params.FastQC_Outputs}
-         Read-based Processing: ${params.Read_based_Processing}
-         Assemblies: ${params.Assemblies}
-         Genes: ${params.Genes}
-         Annotations And Taxonomy: ${params.Annotations_And_Tax}
-         Mapping: ${params.Mapping}
-         Combined Output: ${params.Combined_Output}
-         Bins: ${params.Bins}
-         MAGS: ${params.MAGS}
-         Pipeline Outputs: ${params.Output_dir}
+         Pipeline Outputs: ${params.output_dir}
          """
-
 }
 
 
-include { CLEAN_FASTQC_PATHS; PACKAGE_PROCESSING_INFO; GENERATE_README; VALIDATE_PROCESSING;
-           GENERATE_CURATION_TABLE; GENERATE_MD5SUMS; GENERATE_PROTOCOL} from './modules/genelab.nf'
+include { CLEAN_MULTIQC_PATHS as CLEAN_RAW_PATHS; 
+          CLEAN_MULTIQC_PATHS as CLEAN_FILTERED_PATHS;
+          CLEAN_MULTIQC_PATHS as CLEAN_TRIMMED_PATHS;
+          CLEAN_MULTIQC_PATHS as CLEAN_HUMAN_PATHS;
+          CLEAN_MULTIQC_PATHS as CLEAN_DECONTAM_PATHS;
+          CLEAN_MULTIQC_PATHS as CLEAN_HOST_PATHS} from './modules/genelab.nf'
+
+include { PACKAGE_PROCESSING_INFO;  GENERATE_READ_STATS; VALIDATE_PROCESSING;
+           GENERATE_CURATION_TABLE; GENERATE_README; 
+           GENERATE_MD5SUMS; GENERATE_PROTOCOL} from './modules/genelab.nf'
 
 workflow {
 
         // Make sure accession numbers are set
-        if(!params.GLDS_accession || !params.OSD_accession){
+        if(!params.glds_accession || !params.osd_accession){
            error("""${c_back_bright_red}ACCESSION ERROR!. 
-                    Please supply both --GLDS_accession and --OSD_accession.
-                    They can be any string you choose but they must be set.
+                    Please supply both --glds_accession and --osd_accession.
+                    They can be any string you choose but must be set.
                  ${c_reset}""")
         }
 
+        // Make sure technology is set
+        if(!params.technology ){
+           error("""${c_back_bright_red}PARAMETER ERROR!. 
+                    Please supply the --technology.
+                    One of illumina or nanopore must be set.
+                 ${c_reset}""")
+        }
+
+        // Make sure  sample type is set
+        if(!params.sample_type){
+           error("""${c_back_bright_red}PARAMETER ERROR!. 
+                    Please supply the --sample_type.
+                    One of standard or low_biomass must be set.
+                 ${c_reset}""")
+        }
 
        // ---------------------- Input channels -------------------------------- //
-       // Input files
-       sample_ids_file     =  Channel.fromPath(params.samples, checkIfExists: true)
-       software_versions   =  Channel.fromPath(params.software_versions, checkIfExists: true)
-
-       // Directories
-       Bins                =  Channel.fromPath(params.Bins,  type: 'dir', checkIfExists: true)
-       MAGS                =  Channel.fromPath(params.MAGS,  type: 'dir', checkIfExists: true)
-
        // Input Value channels
-       OSD_ch    =  Channel.of([params.name, params.email, params.output_prefix,
-                                params.OSD_accession, params.protocol_id,
-                                params.FastQC_Outputs, 
-                                params.Filtered_Sequence_Data,
-                                params.Read_Based_Processing,
-                                params.Assembly_Based_Processing,
-                                params.Assemblies, 
-                                params.Genes,
-                                params.Annotations_And_Tax,
-                                params.Mapping,
-                                params.Combined_Output])
-      
-       GLDS_ch   =  Channel.of([params.GLDS_accession, params.V_V_guidelines_link, params.output_prefix,
-                                params.target_files, params.assay_suffix, params.logs_dir_basename,
-                                params.raw_suffix, params.raw_R1_suffix, params.raw_R2_suffix,
-                                params.filtered_suffix, params.filtered_R1_suffix, params.filtered_R2_suffix])
+       meta_ch   =  channel.of([name: params.name, email: params.email, output_prefix: params.output_prefix,
+                                protocol_id: params.protocol_id, technology: params.technology, sample_type: params.sample_type,
+                                osd_accession: params.osd_accession, glds_accession: params.glds_accession, 
+                                v_v_guidelines_link: params.v_v_guidelines_link, assay_suffix: params.assay_suffix,  
+                                raw_suffix: params.raw_suffix, raw_R1_suffix: params.raw_R1_suffix, raw_R2_suffix: params.raw_R2_suffix,
+                                filtered_suffix: params.filtered_suffix, filtered_R1_suffix: params.filtered_R1_suffix,
+                                filtered_R2_suffix: params.filtered_R2_suffix,
+                                trimmed_suffix: params.trimmed_suffix, human_suffix: params.human_suffix,
+                                decontam_suffix: params.decontam_suffix, decontam_R1_suffix: params.decontam_R1_suffix,
+                                decontam_R2_suffix: params.decontam_R2_suffix,
+                                host_removed: params.host_removed, host_suffix: params.host_suffix, host_R1_suffix: params.host_R1_suffix,
+                                host_R2_suffix: params.host_R2_suffix])
 
-       suffix_ch =  Channel.of([params.GLDS_accession, params.output_prefix, params.assay_suffix,
-                                params.raw_suffix, params.raw_R1_suffix, params.raw_R2_suffix,
-                                params.filtered_suffix, params.filtered_R1_suffix, params.filtered_R2_suffix]) 
+       // Input files
+       software_versions   =  channel.fromPath(params.software_versions, checkIfExists: true)
 
-        file_label_ch = Channel.of([params.processing_zip_file, params.readme])
+       // Processing directory containing files to be validated and packaged for OSDR release
+       processing_dir = channel.fromPath(params.processing_dir, type: 'dir', checkIfExists: true)
 
-        // processed as paths but utilized as labels in the generate curation association table script 
-        dir_label_ch = Channel.of([params.Raw_Sequence_Data,
-                                   params.Filtered_Sequence_Data,
-                                   params.Read_Based_Processing,
-                                   params.Assembly_Based_Processing,
-                                   params.Annotations_And_Tax,
-                                   params.Combined_Output])
-                                  .collect()
-                                  .map{ Raw_Sequence_Data, Filtered_Sequence_Data, Read_Based_Processing,
-                                        Assembly_Based_Processing, Annotations_And_Tax, Combined_Output -> 
-                                        tuple(    file(Raw_Sequence_Data, checkIfExists: true),
-                                                   file(Filtered_Sequence_Data, checkIfExists: true),
-                                                   file(Read_Based_Processing, checkIfExists: true),
-                                                   file(Assembly_Based_Processing, checkIfExists: true),
-                                                   file(Annotations_And_Tax, checkIfExists: true),
-                                                   file(Combined_Output, checkIfExists: true)
-                                              )
-                                      }  
-
-        // If the assay table is provided use it as the input table otherwise use the isa_zip
-        assay_table_ch = Channel.fromPath( params.assay_table ?  params.assay_table : params.isa_zip,
+       // If the assay table is provided use it as the input table otherwise use the isa_zip
+       assay_table_ch = channel.fromPath(params.assay_table ?  params.assay_table : params.isa_zip,
                                           checkIfExists: true)
 
-        // Runsheet used to execute the processing workflow
-        runsheet_ch = Channel.fromPath(params.runsheet, checkIfExists: true)
+      // Runsheet used to execute the processing workflow
+      runsheet_ch = channel.fromPath(params.runsheet, checkIfExists: true)
 
+      // Human removed reads summary generated after running the human reads removal workflow
+      human_summary_ch = params.human_summary ? channel.fromPath(params.human_summary, checkIfExists: true) : file('empty.txt')
 
-
-       // Files and directories to be packaged in processing_info.zip
-        files_and_dirs_ch = Channel.of(params.logs_dir, params.run_command, params.processing_commands,
-                                       params.software_versions, params.runsheet, params.samples)
-                                       .collect()
-                                       .map{ logs, run_command, processing_commands, software_versions, runsheet, samples ->
-                                            tuple( file(logs, checkIfExists: true),
-                                                   file(run_command, checkIfExists: true),
+      // Files to be packaged in processing_info.zip
+      files_ch = channel.of(params.run_command, params.processing_commands,
+                            params.software_versions, params.runsheet)
+                                      .collect()
+                                      .map{ run_command, processing_commands, software_versions, runsheet ->
+                                            tuple( file(run_command, checkIfExists: true),
                                                    file(processing_commands, checkIfExists: true),
                                                    file(software_versions, checkIfExists: true),
-                                                   file(runsheet, checkIfExists: true),
-                                                   file(samples, checkIfExists: true)
+                                                   file(runsheet, checkIfExists: true)
                                                  ) }
 
         // ---------------------- Post-processing begins ---------------------------------//
-        PACKAGE_PROCESSING_INFO(files_and_dirs_ch)
+        PACKAGE_PROCESSING_INFO(files_ch)
+       
+        // Clean paths in mutiqc reports  
+        raw_multiqc      =  channel.fromPath(params.raw_zip,  checkIfExists: true)
+        filtered_multiqc =  channel.fromPath(params.filtered_zip,  checkIfExists: true)
+        trimmed_multiqc  =  params.trimmed_zip ? channel.fromPath(params.trimmed_zip,  checkIfExists: true) : channel.empty()
+        human_multiqc    =  params.human_zip ? channel.fromPath(params.human_zip,  checkIfExists: true) : channel.empty()
+        decontam_multiqc =  params.decontam_zip ? channel.fromPath(params.decontam_zip,  checkIfExists: true) : channel.empty()
+        host_multiqc     =  params.host_zip ? channel.fromPath(params.host_zip,  checkIfExists: true) : channel.empty()
 
+        CLEAN_RAW_PATHS(raw_multiqc)
+        CLEAN_FILTERED_PATHS(filtered_multiqc)
+        if (params.technology == "nanopore") {
+          CLEAN_TRIMMED_PATHS(trimmed_multiqc)
+          CLEAN_HUMAN_PATHS(human_multiqc)
+        }
 
-        GENERATE_README(OSD_ch, PACKAGE_PROCESSING_INFO.out.zip, Bins, MAGS)
-
+        if (params.sample_type == "low_biomass"){ CLEAN_DECONTAM_PATHS(decontam_multiqc) } 
         
-        FastQC_Outputs_dir  =  Channel.fromPath(params.FastQC_Outputs, type: 'dir',  checkIfExists: true)
-        CLEAN_FASTQC_PATHS(FastQC_Outputs_dir)
+        CLEAN_HOST_PATHS(host_multiqc)
 
-        validation_dirs_ch =  Channel.of(params.Filtered_Sequence_Data,
-                                         params.Read_Based_Processing,
-                                         params.Assembly_Based_Processing, 
-                                         params.Assemblies,
-                                         params.Mapping,
-                                         params.Genes, 
-                                         params.Annotations_And_Tax,
-                                         params.Bins, 
-                                         params.MAGS,
-                                         params.Combined_Output)
-                            .concat(CLEAN_FASTQC_PATHS.out.clean_dir)
-                            .collect()
-                            .map{ filtered_sequence, read_based, assembly_based, assemblies, 
-                                  mapping, genes, annotation, bins, mags, combined_output, fastqc ->
-                                    tuple( file(filtered_sequence, checkIfExists: true),
-                                           file(read_based, checkIfExists: true),
-                                           file(assembly_based, checkIfExists: true),
-                                           file(assemblies, checkIfExists: true),
-                                           file(mapping, checkIfExists: true),
-                                           file(genes, checkIfExists: true),
-                                           file(annotation, checkIfExists: true),
-                                           file(bins, checkIfExists: true),
-                                           file(mags, checkIfExists: true),
-                                           file(combined_output, checkIfExists: true),
-                                           file(fastqc, checkIfExists: true)
-                                          ) }
 
         // Automatic verification and validation
-        VALIDATE_PROCESSING(GLDS_ch, validation_dirs_ch,
-                            sample_ids_file, 
-                            GENERATE_README.out.readme,
-                            PACKAGE_PROCESSING_INFO.out.zip) 
+        VALIDATE_PROCESSING(meta_ch, runsheet_ch, PACKAGE_PROCESSING_INFO.out.zip) 
 
+        GENERATE_READ_STATS(raw_multiqc,  human_summary_ch, filtered_multiqc,
+                            trimmed_multiqc.ifEmpty(file('empty.txt')), 
+                            human_multiqc.ifEmpty(file('empty.txt')), 
+                            decontam_multiqc.ifEmpty(file('empty.txt')), 
+                            host_multiqc.ifEmpty(file('empty.txt')))
+
+        // Generate curation file association table
+        GENERATE_CURATION_TABLE(meta_ch, processing_dir, assay_table_ch, runsheet_ch,
+                                human_summary_ch, GENERATE_READ_STATS.out.stats, 
+                                VALIDATE_PROCESSING.out.json)
+
+        // Generate README file
+        GENERATE_README(meta_ch, PACKAGE_PROCESSING_INFO.out.zip, 
+                      runsheet_ch, VALIDATE_PROCESSING.out.json)
         // Generate md5sums
-        dirs_ch = Channel.of(params.Read_Based_Processing,
-                             params.Filtered_Sequence_Data,
-                             params.Assembly_Based_Processing)
-                              .concat(CLEAN_FASTQC_PATHS.out.clean_dir)
-                              .collect()
-                              .map{ read_based, filtered_sequence, assembly_based, fastqc ->
-                                    tuple( file(read_based, checkIfExists: true),
-                                           file(filtered_sequence, checkIfExists: true),
-                                           file(assembly_based, checkIfExists: true),
-                                           file(fastqc, checkIfExists: true)
-                                          ) }
+        GENERATE_MD5SUMS(processing_dir, PACKAGE_PROCESSING_INFO.out.zip,
+                            GENERATE_README.out.readme)
 
-         GENERATE_MD5SUMS(PACKAGE_PROCESSING_INFO.out.zip,
-                            GENERATE_README.out.readme, dirs_ch)
-
-
-          // Generate curation file association table
-          curation_dirs_ch =   Channel.of(params.Assemblies,
-                                          params.Genes,
-                                          params.Mapping,
-                                          params.Bins,
-                                          params.MAGS)
-                              .concat(CLEAN_FASTQC_PATHS.out.clean_dir)
-                              .collect()
-                              .map{ assemblies, genes, mapping, bins, mags, fastqc ->
-                                    tuple( file(assemblies, checkIfExists: true),
-                                           file(genes, checkIfExists: true),
-                                           file(mapping, checkIfExists: true),
-                                           file(bins, checkIfExists: true),
-                                           file(mags, checkIfExists: true),
-                                           file(fastqc, checkIfExists: true)
-                                          ) } 
-
-          GENERATE_CURATION_TABLE(suffix_ch, file_label_ch, 
-                                  dir_label_ch, 
-                                  curation_dirs_ch, 
-                                  assay_table_ch, runsheet_ch)
-
-
-         // Write methods
-         GENERATE_PROTOCOL(software_versions, params.protocol_id)
+        // Write methods
+        GENERATE_PROTOCOL(software_versions, params.protocol_id)
 }
 
 
@@ -339,7 +271,7 @@ workflow.onComplete {
 
     if ( workflow.success ) {
 
-    println("Post-processing Outputs: ${params.Output_dir} ${c_reset}")
+    println("Post-processing Outputs: ${params.output_dir} ${c_reset}")
     println()
 
     }
