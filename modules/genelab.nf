@@ -584,7 +584,10 @@ process GENERATE_PROTOCOL {
         path("protocol.txt")
     script:
         """
-        generate_protocol.sh ${software_versions} ${meta.protocol_id} ${meta.sample_type} ${meta.technology}  > protocol.txt
+        generate_protocol.py --versions-file ${software_versions} \\
+                             --protocol-id ${meta.protocol_id} \\
+                             --sample-type ${meta.sample_type} \\
+                             --technology ${meta.technology}  > protocol.txt
         """
 }
 
