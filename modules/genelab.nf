@@ -1,6 +1,7 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl = 2
 
+//params.bin_dir = "${projectDir}/bin"
 /*
  * ========================================================================================
  * PROCESS: PACKAGE_PROCESSING_INFO
@@ -30,6 +31,7 @@ nextflow.enable.dsl = 2
 
 process PACKAGE_PROCESSING_INFO {
 
+    beforeScript "chmod +x ${params.bin_dir}/*"
     tag "Purging file paths and zipping processing info"
 
     input:
@@ -82,16 +84,19 @@ process PACKAGE_PROCESSING_INFO {
  */
 
 process CLEAN_MULTIQC_PATHS {
+    
+    beforeScript "chmod +x ${params.bin_dir}/*"
     tag "Purging genelab paths from MultiQC zip file..."
+
     input:
         path(zip_file) // e.g. raw_multiqc_data.zip
     output:
-        path("*.zip"), emit: clean_zip
+        path("*.zip"), includeInputs: true, emit: clean_zip
     script:
         """ 
         dirname=`basename -s .zip ${zip_file}`
         unzip ${zip_file} && rm ${zip_file}
-        clean_multiqc_paths.py ${dirname} .
+        clean_multiqc_paths.py \${dirname} .
         """
 }
 
@@ -109,13 +114,17 @@ process CLEAN_MULTIQC_PATHS {
  *      Cardinality: one
  *      Description: Metadata object containing multiple channel elements
  *
+ *   2. path: processing_dir
+ *      Cardinality: one
+ *      Description: Input directory: processing directory with files to generate md5sums for
  *
- *   2. path: runsheet
+ *
+ *   3. path: runsheet
  *      Cardinality: one
  *      Description: Input file: run sheet csv file with sample names in the first column.
  *
  *
- *   3. path: processing_info
+ *   4. path: processing_info
  *      Cardinality: one
  *      Description: Input file: processing info zip file
  *
@@ -141,6 +150,7 @@ process VALIDATE_PROCESSING {
     input:
         // Labeling and suffixes
         val(meta)
+        path(processing_dir)
         // File paths
         path(runsheet)
         path(processing_info) 
@@ -191,6 +201,7 @@ process VALIDATE_PROCESSING {
 
         # Illumina
         GL-validate-processed-metagenomics-data \\
+             --outdir ${processing_dir} \\
              --technology '${meta.technology}' \\
              --sample-type '${meta.sample_type}' \\  
              --output '${meta.glds_accession}_${meta.output_prefix}metagenomics-validation.log' \\
@@ -213,13 +224,14 @@ process VALIDATE_PROCESSING {
 
         # Nanopore
         GL-validate-processed-metagenomics-data \\
+             --outdir ${processing_dir} \\
              --technology '${meta.technology}' \\
              --sample-type '${meta.sample_type}' \\  
              --output '${meta.glds_accession}_${meta.output_prefix}metagenomics-validation.log' \\
-             --manifest '${meta.glds_accession}_${meta.output_prefix}metagenomics-validation.manifest.json"' \\
+             --manifest '${meta.glds_accession}_${meta.output_prefix}metagenomics-validation.manifest.json' \\
              --glds-id '${meta.glds_accession}' \\
              --runsheet '${runsheet}' \\
-             --V-V-guidelines_link '${meta.V_V_guidelines_link}' \\
+             --V-V-guidelines_link '${meta.v_v_guidelines_link}' \\
              --processing-zip-file '${processing_info}' \\
              --output-prefix '${meta.output_prefix}' \\
              --assay-suffix '${meta.assay_suffix}' \\
@@ -289,7 +301,10 @@ process VALIDATE_PROCESSING {
 
 
 process GENERATE_READ_STATS {
+
+    beforeScript "chmod +x ${params.bin_dir}/*"
     tag "Generating read statistics..."
+
     input:
         path(raw_zip) // raw_multiqc_data.zip
         path(human_summary) // human_removed_summary.tsv
@@ -379,7 +394,7 @@ process GENERATE_READ_STATS {
 
 process GENERATE_CURATION_TABLE {
 
-    beforeScript "chmod +x ${projectDir}/bin/*"
+    beforeScript "chmod +x ${params.bin_dir}/*"
     tag "Generating a file association table for curation..."
 
     input:
@@ -457,7 +472,7 @@ process GENERATE_CURATION_TABLE {
 
 process GENERATE_README {
 
-    beforeScript "chmod +x ${projectDir}/bin/*"
+    beforeScript "chmod +x ${params.bin_dir}/*"
     tag "Generating README for ${meta.osd_accession}"
     input:
         val(meta)
@@ -529,7 +544,7 @@ process GENERATE_MD5SUMS {
     input:
         path(processing_dir)
         path(processing_info)
-        path(README)
+        //path(README)
 
     output:
         path("${params.output_prefix}processed_md5sum${params.assay_suffix}.tsv"), emit: md5sum
@@ -537,7 +552,7 @@ process GENERATE_MD5SUMS {
         """
         # Generate md5sums
         generate_md5sums.py --outdir ${processing_dir} \\
-                            --output_prefix '${params.output_prefix}' \\
+                            --output-prefix '${params.output_prefix}' \\
                             --assay-suffix '${params.assay_suffix}'  
         """
 }
@@ -574,7 +589,7 @@ process GENERATE_MD5SUMS {
 
 process GENERATE_PROTOCOL {
 
-    beforeScript "chmod +x ${projectDir}/bin/*"
+    beforeScript "chmod +x ${params.bin_dir}/*"
     tag "Generating your analysis protocol..."
 
     input:

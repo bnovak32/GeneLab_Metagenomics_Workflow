@@ -201,7 +201,7 @@ workflow {
       runsheet_ch = channel.fromPath(params.runsheet, checkIfExists: true)
 
       // Human removed reads summary generated after running the human reads removal workflow
-      human_summary_ch = params.human_summary ? channel.fromPath(params.human_summary, checkIfExists: true) : file('empty.txt')
+      human_summary_ch = params.human_summary ? channel.fromPath(params.human_summary, checkIfExists: true) : file('hsempty.txt')
 
       // Files to be packaged in processing_info.zip
       files_ch = channel.of(params.run_command, params.processing_commands,
@@ -236,16 +236,17 @@ workflow {
         
         CLEAN_HOST_PATHS(host_multiqc)
 
-
+         
         // Automatic verification and validation
-        VALIDATE_PROCESSING(meta_ch, runsheet_ch, PACKAGE_PROCESSING_INFO.out.zip) 
+        VALIDATE_PROCESSING(meta_ch, processing_dir, runsheet_ch, PACKAGE_PROCESSING_INFO.out.zip) 
 
-        GENERATE_READ_STATS(raw_multiqc,  human_summary_ch, filtered_multiqc,
-                            trimmed_multiqc.ifEmpty(file('empty.txt')), 
-                            human_multiqc.ifEmpty(file('empty.txt')), 
-                            decontam_multiqc.ifEmpty(file('empty.txt')), 
-                            host_multiqc.ifEmpty(file('empty.txt')))
-
+        GENERATE_READ_STATS(raw_multiqc, human_summary_ch, filtered_multiqc,
+                            trimmed_multiqc.ifEmpty(file('trim_empty.txt')), 
+                            human_multiqc.ifEmpty(file('human_empty.txt')), 
+                            decontam_multiqc.ifEmpty(file('decontam_empty.txt')), 
+                            host_multiqc.ifEmpty(file('host_empty.txt')))
+        
+        /*
         // Generate curation file association table
         GENERATE_CURATION_TABLE(meta_ch, processing_dir, assay_table_ch, runsheet_ch,
                                 human_summary_ch, GENERATE_READ_STATS.out.stats, 
@@ -257,9 +258,12 @@ workflow {
         // Generate md5sums
         GENERATE_MD5SUMS(processing_dir, PACKAGE_PROCESSING_INFO.out.zip,
                             GENERATE_README.out.readme)
+        */
+
+        GENERATE_MD5SUMS(processing_dir, PACKAGE_PROCESSING_INFO.out.zip)
 
         // Write methods
-        GENERATE_PROTOCOL(software_versions, params.protocol_id)
+        GENERATE_PROTOCOL(meta_ch, software_versions)
 }
 
 
