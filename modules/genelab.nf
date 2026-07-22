@@ -173,7 +173,7 @@ process VALIDATE_PROCESSING {
 
         }else if (params.technology == "illumina") {
          // illumina paired-end
-         host_removed_flag = " --host-removed  --host-suffix ${meta.host_suffix} --host_R1-suffix  ${meta.host_R1_suffix} --host_R2-suffix  ${meta.host_R2_suffix}"
+         host_removed_flag = " --host-removed  --host-suffix ${meta.host_suffix} --host-R1-suffix  ${meta.host_R1_suffix} --host-R2-suffix  ${meta.host_R2_suffix}"
 
         } 
 
@@ -190,7 +190,7 @@ process VALIDATE_PROCESSING {
         }else if (params.technology == "illumina") {
 
             // illumina paired-end
-            decontam_flag = "--decontam-suffix ${meta.decontam_suffix} --decontam_R1-suffix ${meta.decontam_R1_suffix} --decontam_R2-suffix ${meta.decontam_R2_suffix}"
+            decontam_flag = "--decontam-suffix ${meta.decontam_suffix} --decontam-R1-suffix ${meta.decontam_R1_suffix} --decontam-R2-suffix ${meta.decontam_R2_suffix}"
 
        }
 
