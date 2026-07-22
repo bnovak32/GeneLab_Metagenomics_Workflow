@@ -28,7 +28,7 @@ required.add_argument("--outdir", help="Directory of generated output files to b
 parser.add_argument("--output", help = 'Name of output log file (default: "<GLDS-ID>_<output_prefix>metagenomics-validation.log")', default = "", action = "store")
 parser.add_argument("--manifest", help = 'Name of output structural JSON manifest (default: "<GLDS-ID>_<output_prefix>metagenomics-validation.manifest.json")', default = "", action = "store")
 parser.add_argument("-p", "--output-prefix", help = "Output additional file prefix if there is one", action = "store", default = "")
-parser.add_argument("-l", "--V-V-guidelines-link", help = "Validation and verification guidelines link", action = "store", 
+parser.add_argument("-l", "--v-v-guidelines-link", help = "Validation and verification guidelines link", action = "store", 
                     default = "https://genelab-tools.arc.nasa.gov/confluence/pages/viewpage.action?pageId=8225175")
 parser.add_argument('--assay-suffix', default='_GLmetagenomics', help="GeneLab assay suffix. One of '_GLmetagenomics', '_GLlbsMetag', '_GLlblMetag', and '_GLlongMetag'")
 parser.add_argument("--raw-suffix", help = "Raw reads suffix for datasets", action = "store", default ="_HRrm.fastq.gz")
@@ -497,7 +497,7 @@ def main():
     else:
         manifest_output_file = str(args.manifest)
 
-    setup_log(validation_log, args.V_V_guidelines_link)
+    setup_log(validation_log, args.v_v_guidelines_link)
     
     check_expected_directories(validation_log, expected_dirs, optional_dirs)
     append_message_to_log(validation_log, "    - expected pipeline subdirectories detected")
@@ -732,7 +732,7 @@ def main():
     append_message_to_log(validation_log, f"    - {assembly_based_overview_table} was successfully validated")
 
     # ------------------ RUNTIME ZIP METADATA AUDIT ------------------
-    zip_archive_path = os.path.join(args.outdir, args.processing_zip_file) if not os.path.dirname(args.processing_zip_file) else args.processing_zip_file
+    zip_archive_path = args.processing_zip_file
     runsheet = os.path.basename(args.runsheet)
     expected_zip_contents = ["command.txt","nextflow_processing_info.txt","software_versions.txt", runsheet]
     check_metagenomics_processing_zip(validation_log, zip_archive_path, expected_zip_contents)

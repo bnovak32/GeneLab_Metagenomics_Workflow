@@ -156,8 +156,8 @@ process VALIDATE_PROCESSING {
         path(processing_info) 
 
     output:
-        path("${meta.GLDS_accession}_${meta.output_prefix}metagenomics-validation.log"), emit: log
-        path("${meta.GLDS_accession}_${meta.output_prefix}metagenomics-validation.manifest.json"), emit: json
+        path("${meta.glds_accession}_${meta.output_prefix}metagenomics-validation.log"), emit: log
+        path("${meta.glds_accession}_${meta.output_prefix}metagenomics-validation.manifest.json"), emit: json
 
     script:
       def single_end_flag = params.single_end ? "--single-ended" : ""
@@ -203,12 +203,12 @@ process VALIDATE_PROCESSING {
         GL-validate-processed-metagenomics-data \\
              --outdir ${processing_dir} \\
              --technology '${meta.technology}' \\
-             --sample-type '${meta.sample_type}' \\  
+             --sample-type '${meta.sample_type}' \\
              --output '${meta.glds_accession}_${meta.output_prefix}metagenomics-validation.log' \\
              --manifest '${meta.glds_accession}_${meta.output_prefix}metagenomics-validation.manifest.json' \\
              --glds-id '${meta.glds_accession}' \\
              --runsheet '${runsheet}' \\
-             --V-V-guidelines_link '${meta.v_v_guidelines_link}' \\
+             --v-v-guidelines-link '${meta.v_v_guidelines_link}' \\
              --processing-zip-file '${processing_info}' \\
              --output-prefix '${meta.output_prefix}' \\
              --assay-suffix '${meta.assay_suffix}' \\
@@ -226,12 +226,12 @@ process VALIDATE_PROCESSING {
         GL-validate-processed-metagenomics-data \\
              --outdir ${processing_dir} \\
              --technology '${meta.technology}' \\
-             --sample-type '${meta.sample_type}' \\  
+             --sample-type '${meta.sample_type}' \\
              --output '${meta.glds_accession}_${meta.output_prefix}metagenomics-validation.log' \\
              --manifest '${meta.glds_accession}_${meta.output_prefix}metagenomics-validation.manifest.json' \\
              --glds-id '${meta.glds_accession}' \\
              --runsheet '${runsheet}' \\
-             --V-V-guidelines_link '${meta.v_v_guidelines_link}' \\
+             --v-v-guidelines-link '${meta.v_v_guidelines_link}' \\
              --processing-zip-file '${processing_info}' \\
              --output-prefix '${meta.output_prefix}' \\
              --assay-suffix '${meta.assay_suffix}' \\
