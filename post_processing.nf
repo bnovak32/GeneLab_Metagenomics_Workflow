@@ -234,7 +234,7 @@ workflow {
 
         if (params.sample_type == "low_biomass"){ CLEAN_DECONTAM_PATHS(decontam_multiqc) } 
         
-        CLEAN_HOST_PATHS(host_multiqc)
+        if (params.host_removed) { CLEAN_HOST_PATHS(host_multiqc) }
 
          
         // Automatic verification and validation
