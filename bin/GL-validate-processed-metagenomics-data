@@ -18,12 +18,13 @@ import textwrap
 import pandas as pd
 import zipfile
 from statistics import mean, median
+from pathlib import Path
 
 parser = argparse.ArgumentParser(description = "This program validates a GeneLab pipeline processed metagenomics dataset.")
 required = parser.add_argument_group('required arguments')
 
 required.add_argument("--glds-id", "--osd-id", help='GLDS or OSDR ID (e.g. "OSD-944")', action="store", required=True)
-required.add_argument("-s", "--runsheet", help = "Run sheet csvfile with sample names in the first column", action = "store", required = True)
+required.add_argument("-s", "--runsheet", help = "Run sheet CSV file with sample names in the first column", action = "store", required = True)
 required.add_argument("--outdir", help="Directory of generated output files to be validated.", action="store", required=True)
 parser.add_argument("--output", help = 'Name of output log file (default: "<GLDS-ID>_<output_prefix>metagenomics-validation.log")', default = "", action = "store")
 parser.add_argument("--manifest", help = 'Name of output structural JSON manifest (default: "<GLDS-ID>_<output_prefix>metagenomics-validation.manifest.json")', default = "", action = "store")
@@ -61,7 +62,9 @@ args = parser.parse_args()
 manifest_data = {
     "verified": [],
     "missing_optional": [],
-    "failed_missing": []
+    "failed_missing": [],
+    "failed_empty": [],
+    "assembly_failed": []
 }
 
 # Setting some colors
@@ -78,45 +81,42 @@ def color_text(text, color='green'):
 
 def wprint(text):
     """ Print wrapper """
-    print(textwrap.fill(text, width = 80, initial_indent="  ", subsequent_indent="  ", break_on_hyphens=False))
+    print(textwrap.fill(text, width = 120, initial_indent="  ", subsequent_indent="  ", break_on_hyphens=False))
 
 def write_manifest_to_disk(manifest_path):
     """ Exports the structured JSON overview tracking results """
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest_data, f, indent=4)
 
-def report_failure(validation_log, message, color = "yellow", write_log = True, missing_file = None):
+def report_failure(validation_log, message, color = "yellow", write_log = True, missing_file = None, failure_type = "missing"):
     print("")
     wprint(color_text(message, color))
-    print("\nValidation failed.\n")
-    if missing_file and missing_file not in manifest_data["failed_missing"]:
-        manifest_data["failed_missing"].append(missing_file)
-    if args.manifest:
-        write_manifest_to_disk(args.manifest)
-    elif hasattr(args, 'default_manifest_path'):
-        write_manifest_to_disk(args.default_manifest_path)
+    if missing_file and missing_file not in manifest_data["failed_missing"] and missing_file not in manifest_data["failed_empty"]:
+        if failure_type == "empty":
+            manifest_data["failed_empty"].append(str(missing_file))
+        else:
+            manifest_data["failed_missing"].append(str(missing_file))
         
     if write_log:
         with open(validation_log, "a") as log:
-            log.write(f"{message} \nValidation failed.\n\n")
-    sys.exit(1)
+            log.write(f"{message}\n")
 
-def report_no_exist(validation_log, message, color = "yellow", write_log = True, optional_file = None):
+def report_no_exist(validation_log, message, color = "yellow", write_log = True, optional_file = None, failure_type = "missing"):
     """ Reports that an expected file was not found, but does not fail validation since some files may be conditionally expected """
     print("")
     wprint(color_text(message, color))
     if optional_file and optional_file not in manifest_data["missing_optional"]:
-        manifest_data["missing_optional"].append(optional_file)
+        manifest_data["missing_optional"].append(str(optional_file))
     if write_log:
         with open(validation_log, "a") as log:
             log.write(f"{message}.\n\n")
 
 def is_optional_file(file_path):
     """ Evaluates whether a file is structurally optional (e.g. top 50 heatmap metrics, filtered, bins, or MAGs) """
-    norm_path = file_path.lower()
+    norm_path = str(file_path).lower()
     if "top_50" in norm_path:
         return True
-    if ("filtered" in norm_path) and ("multiqc" not in norm_path) and ("unfiltered" not in norm_path):
+    if ("filtered" in norm_path and 'fastq' not in norm_path) and ("multiqc" not in norm_path) and ("unfiltered" not in norm_path):
         return True
     if "assembly-based_processing/bins" in norm_path or "assembly-based_processing/mags" in norm_path:
         return True
@@ -127,7 +127,7 @@ def modify_symbolic_link(file_path):
     full_path = os.path.realpath(file_path)
     parent_dir = os.path.basename(os.path.dirname(full_path))
     base_name = os.path.basename(full_path)
-    return os.path.join(parent_dir, base_name)
+    return Path(parent_dir, base_name)
 
 def setup_log(validation_log, V_V_guidelines_link):
     """ Writes validation log's header """
@@ -141,34 +141,34 @@ def append_message_to_log(validation_log, message):
     with open(validation_log, "a") as log:
         log.write(f"{message}\n")
 
-def check_for_file_and_contents(validation_log, file_path):
+def check_for_file_and_contents(validation_log, file_path: Path):
     """ Checks if a file exists and that it is not empty """
     is_opt = is_optional_file(file_path)
 
-    # Check for optional decontamination file
-    if not os.path.exists(file_path) and 'decontam' in file_path:
+    # Check for optional decontamination file (fastq files are not optional, only feature decontamination output is optional)
+    if not file_path.exists() and 'decontam' in file_path.name and '.fastq' not in file_path.suffixes:
         report_no_exist(validation_log, f"The expected decontamination file '{file_path}' does not exist. This maybe because decontamination with decontam failed. Please check!", optional_file=file_path)
         return
     
-    if not os.path.exists(file_path):
+    if not file_path.exists():
         # Check for other optional files
         if is_opt:
             report_no_exist(validation_log, f"The optional file '{file_path}' does not exist.", optional_file=file_path)
             return
         else:
-            report_failure(validation_log, f"The expected file '{file_path}' does not exist.", missing_file=file_path)
+            report_failure(validation_log, f"The expected file '{file_path}' does not exist.", missing_file=file_path, failure_type="missing")
             return
 
-    if not os.path.getsize(file_path) > 0:
+    if not file_path.stat().st_size > 0:
         if is_opt:
-            report_no_exist(validation_log, f"The optional file '{file_path}' is empty.", optional_file=file_path)
+            report_no_exist(validation_log, f"The optional file '{file_path}' is empty.", optional_file=file_path, failure_type="empty")
             return
         else:
-            report_failure(validation_log, f"The file '{file_path}' is empty.", missing_file=file_path)
+            report_failure(validation_log, f"The file '{file_path}' is empty.", missing_file=file_path, failure_type="empty")
             return
         
     if file_path not in manifest_data["verified"]:
-        manifest_data["verified"].append(file_path)
+        manifest_data["verified"].append(str(file_path))
 
 def check_expected_directories(validation_log, expected_dirs, optional_dirs=None):
     """ Checks that the expected directories exist """
@@ -251,16 +251,16 @@ def check_fastq_files(validation_log, technology, sample_names, reads_dir,
     for sample in sample_names:
         if technology == "illumina":
             if not isSingle_ended:
-                check_for_file_and_contents(validation_log, os.path.join(reads_dir, f"{sample}{R1_suffix}"))
-                check_for_file_and_contents(validation_log, os.path.join(reads_dir, f"{sample}{R2_suffix}"))
+                check_for_file_and_contents(validation_log, Path(reads_dir, f"{sample}{R1_suffix}"))
+                check_for_file_and_contents(validation_log, Path(reads_dir, f"{sample}{R2_suffix}"))
             else:
-                check_for_file_and_contents(validation_log, os.path.join(reads_dir, f"{sample}{unpaired_suffix}"))
+                check_for_file_and_contents(validation_log, Path(reads_dir, f"{sample}{unpaired_suffix}"))
         else:
-            check_for_file_and_contents(validation_log, os.path.join(reads_dir, f"{sample}{unpaired_suffix}"))
+            check_for_file_and_contents(validation_log, Path(reads_dir, f"{sample}{unpaired_suffix}"))
 
 def check_plots_for_samples(validation_log, sample_names, plot_path):
     """ Checks text & binary image encodings for unique sample keywords to guarantee plot completeness """
-    if not os.path.exists(plot_path) and 'decontam' in plot_path:
+    if not os.path.exists(plot_path) and 'decontam' in plot_path.name:
         report_no_exist(validation_log, f"The expected decontamination plot '{plot_path}' does not exist.", optional_file=plot_path)
         return
         
@@ -275,13 +275,13 @@ def check_plots_for_samples(validation_log, sample_names, plot_path):
 
     check_for_file_and_contents(validation_log, plot_path)
     
-    if plot_path.endswith('.html'):
+    if plot_path.suffix == '.html':
         with open(plot_path, 'r', encoding='utf-8', errors='ignore') as f:
             content = f.read()
         for sample in sample_names:
             if sample not in content:
                 report_no_exist(validation_log, f"Plot structure integrity audit failed: Sample '{sample}' was missing in interactive asset '{plot_path}'.", optional_file=f"{plot_path}::sample:{sample}")
-    elif plot_path.endswith('.png'):
+    elif plot_path.suffix == '.png':
         with open(plot_path, 'rb') as f:
             content_bytes = f.read()
         for sample in sample_names:
@@ -291,12 +291,12 @@ def check_plots_for_samples(validation_log, sample_names, plot_path):
 
 def get_files_in_dir(dir_path):
     if not os.path.exists(dir_path): return []
-    return [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
+    return [f for f in os.listdir(dir_path) if os.path.isfile(Path(dir_path, f))]
 
 def check_read_based_outputs(validation_log, filenames, read_based_dir):
     """ Assures globally combined read-based tables are intact """
     for file in filenames:
-        check_for_file_and_contents(validation_log, os.path.join(read_based_dir, file))
+        check_for_file_and_contents(validation_log, Path(read_based_dir, file))
 
 def check_general_fasta_format(validation_log, file_path):
     """ Explicitly audits header alignment with structural fasta properties """
@@ -315,19 +315,23 @@ def check_general_fasta_format(validation_log, file_path):
 
 def get_failed_assemblies(failed_assemblies):
     failed_assemblies_list = []
-    if os.path.exists(failed_assemblies):
+    if failed_assemblies.exists():
+        manifest_data["verified"].append(str(failed_assemblies))
         with open(failed_assemblies) as failed:
             for line in failed:
-                failed_assemblies_list.append(line.strip().split("\t")[0])
+                sample = line.strip().split("\t")[0]
+                failed_assemblies_list.append(sample)
+                manifest_data["assembly_failed"].append(sample)
     return failed_assemblies_list
 
 def check_assembly_based_file(validation_log, sample, file_path, failed_assemblies_list, assembly = True):
-    if not os.path.exists(file_path):
+    if os.path.exists(file_path):
+        if os.path.getsize(file_path) == 0:
+            if sample not in failed_assemblies_list and assembly == True:
+                report_failure(validation_log, f"The file '{file_path}' is empty, but sample is not in Failed-assemblies tracking logs.", missing_file=file_path)
+    else:
         report_failure(validation_log, f"The expected file '{file_path}' does not exist.", missing_file=file_path)
-    if not os.path.getsize(file_path) > 0:
-        if sample not in failed_assemblies_list and assembly == True:
-            report_failure(validation_log, f"The file '{file_path}' is empty, but sample is not in Failed-assemblies tracking logs.", missing_file=file_path)
-
+    
 def check_assembly_based_genes_file(validation_log, sample, file_path, failed_assemblies_list):
     if os.path.exists(file_path) and sample not in failed_assemblies_list:
         if not os.path.getsize(file_path) > 0:
@@ -336,14 +340,14 @@ def check_assembly_based_genes_file(validation_log, sample, file_path, failed_as
 def check_assemblies(validation_log, sample_names, failed_assemblies_list,
                      assembly_suffix, assemblies_dir, assembly_summary):
     for sample in sample_names:
-        curr_fasta_path = os.path.join(assemblies_dir, f"{sample}{assembly_suffix}")
+        curr_fasta_path = Path(assemblies_dir, f"{sample}{assembly_suffix}")
         if sample not in failed_assemblies_list:
             check_assembly_based_file(validation_log, sample, curr_fasta_path, failed_assemblies_list)
             check_general_fasta_format(validation_log, curr_fasta_path)
             if curr_fasta_path not in manifest_data["verified"]:
-                manifest_data["verified"].append(curr_fasta_path)
+                manifest_data["verified"].append(str(curr_fasta_path))
     
-    assembly_summary_path = os.path.join(assemblies_dir, assembly_summary)
+    assembly_summary_path = Path(assemblies_dir, assembly_summary)
     check_for_file_and_contents(validation_log, assembly_summary_path)
 
 def check_genes(validation_log, sample_names, failed_assemblies_list, genes_dir,
@@ -351,58 +355,58 @@ def check_genes(validation_log, sample_names, failed_assemblies_list, genes_dir,
     for sample in sample_names:
         if sample not in failed_assemblies_list:
             for suffix in predicted_gene_file_suffixes:
-                curr_file_path = os.path.join(genes_dir, f"{sample}{suffix}")
+                curr_file_path = Path(genes_dir, f"{sample}{suffix}")
                 check_assembly_based_genes_file(validation_log, sample, curr_file_path, failed_assemblies_list)
                 if os.path.exists(curr_file_path) and os.path.getsize(curr_file_path) > 0:
                     if curr_file_path not in manifest_data["verified"]:
-                        manifest_data["verified"].append(curr_file_path)
+                        manifest_data["verified"].append(str(curr_file_path))
             for suffix in gene_fasta_suffixes:
-                curr_fasta_path = os.path.join(genes_dir, f"{sample}{suffix}")
+                curr_fasta_path = Path(genes_dir, f"{sample}{suffix}")
                 if os.path.exists(curr_fasta_path) and os.path.getsize(curr_fasta_path) > 0:
                     check_general_fasta_format(validation_log, curr_fasta_path)
 
 def check_contig_annotation(validation_log, sample_names, annotations_and_tax_dir, annotations_suffixes):
     for sample in sample_names:
         for suffix in annotations_suffixes:
-            curr_file_path = os.path.join(annotations_and_tax_dir, f"{sample}{suffix}")
+            curr_file_path = Path(annotations_and_tax_dir, f"{sample}{suffix}")
             check_for_file_and_contents(validation_log, curr_file_path)
 
 def check_mapping(validation_log, sample_names, mapping_dir, failed_assemblies_list,
                   mapping_dir_suffixes_all_have, mapping_info_suffix):
     for sample in sample_names:
         for suffix in mapping_dir_suffixes_all_have:
-            curr_file_path = os.path.join(mapping_dir, f"{sample}{suffix}")
+            curr_file_path = Path(mapping_dir, f"{sample}{suffix}")
             if sample not in failed_assemblies_list:
                 check_assembly_based_file(validation_log, sample, curr_file_path, failed_assemblies_list)
                 if os.path.exists(curr_file_path) and os.path.getsize(curr_file_path) > 0:
                     if curr_file_path not in manifest_data["verified"]:
-                        manifest_data["verified"].append(curr_file_path)
+                        manifest_data["verified"].append(str(curr_file_path))
         if sample not in failed_assemblies_list:
-            curr_file_path = os.path.join(mapping_dir, f"{sample}{mapping_info_suffix}")
+            curr_file_path = Path(mapping_dir, f"{sample}{mapping_info_suffix}")
             check_assembly_based_file(validation_log, sample, curr_file_path, failed_assemblies_list)
             if os.path.exists(curr_file_path) and os.path.getsize(curr_file_path) > 0:
                 if curr_file_path not in manifest_data["verified"]:
-                    manifest_data["verified"].append(curr_file_path)
+                    manifest_data["verified"].append(str(curr_file_path))
 
 def check_combined_outputs(validation_log, combined_output_dir, expected_assembly_combined_outputs):
     for filename in expected_assembly_combined_outputs:
-        curr_file_path = os.path.join(combined_output_dir, filename)
+        curr_file_path = Path(combined_output_dir, filename)
         check_for_file_and_contents(validation_log, curr_file_path)
 
 def check_bins(validation_log, bins_dir, bins_summary, output_fasta_bins):
     for bin_file in output_fasta_bins:
-        curr_file_path = os.path.join(bins_dir, bin_file)
+        curr_file_path = Path(bins_dir, bin_file)
         check_for_file_and_contents(validation_log, curr_file_path)
     if len(output_fasta_bins) > 0:
-        bins_summary_path = os.path.join(bins_dir, bins_summary)
+        bins_summary_path = Path(bins_dir, bins_summary)
         check_for_file_and_contents(validation_log, bins_summary_path)
 
 def check_mags(validation_log, MAGs_dir, output_fasta_MAGs, output_fasta_bins, MAGs_summary):
     for MAG_file in output_fasta_MAGs:
-        curr_file_path = os.path.join(MAGs_dir, MAG_file)
+        curr_file_path = Path(MAGs_dir, MAG_file)
         check_for_file_and_contents(validation_log, curr_file_path)
     if len(output_fasta_bins) > 0:
-        MAGs_summary_path = os.path.join(MAGs_dir, MAGs_summary)
+        MAGs_summary_path = Path(MAGs_dir, MAGs_summary)
         check_for_file_and_contents(validation_log, MAGs_summary_path)
 
 def check_assembly_based_overview_table(validation_log, expected_samples, overview_table_path):
@@ -457,24 +461,26 @@ def main():
     assay_suffix = str(args.assay_suffix)
     tech = str(args.technology)
     stype = str(args.sample_type)
+
+    outdir = args.outdir
     
-    raw_dir = f"{args.outdir}/Merged_Sequence_Data"
-    filtered_dir = f"{args.outdir}/Filtered_Sequence_Data"
-    decontam_dir = f"{args.outdir}/Decontaminated_Sequence_Data"
-    host_dir = f"{args.outdir}/HostRm-removed_Sequence_Data"
-    trimmed_dir = f"{args.outdir}/Trimmed_Sequence_Data"
-    hrrm_dir = f"{args.outdir}/HR-removed_Sequence_Data"
+    raw_dir = Path(outdir, "Merged_Sequence_Data")
+    filtered_dir = Path(outdir, "Filtered_Sequence_Data")
+    decontam_dir = Path(outdir, "Decontaminated_Sequence_Data")
+    host_dir = Path(outdir, "HostRm-removed_Sequence_Data")
+    trimmed_dir = Path(outdir, "Trimmed_Sequence_Data")
+    hrrm_dir = Path(outdir, "HR-removed_Sequence_Data")
     
-    read_based_dir = f"{args.outdir}/Read-based_Processing"
-    assembly_based_dir = f"{args.outdir}/Assembly-based_Processing"
+    read_based_dir = Path(outdir, "Read-based_Processing")
+    assembly_based_dir = Path(outdir, "Assembly-based_Processing")
     
-    assemblies_dir = f"{assembly_based_dir}/assemblies/"
-    genes_dir = f"{assembly_based_dir}/predicted-genes/"
-    annotations_and_tax_dir = f"{assembly_based_dir}/annotations-and-taxonomy/"
-    mapping_dir = f"{assembly_based_dir}/read-mapping/"
-    bins_dir = f"{assembly_based_dir}/bins/"
-    MAGs_dir = f"{assembly_based_dir}/MAGs/"
-    combined_output_dir = f"{assembly_based_dir}/combined-outputs/"
+    assemblies_dir = Path(assembly_based_dir, "assemblies")
+    genes_dir = Path(assembly_based_dir, "predicted-genes")
+    annotations_and_tax_dir = Path(assembly_based_dir, "annotations-and-taxonomy")
+    mapping_dir = Path(assembly_based_dir, "read-mapping")
+    bins_dir = Path(assembly_based_dir, "bins")
+    MAGs_dir = Path(assembly_based_dir, "MAGs")
+    combined_output_dir = Path(assembly_based_dir, "combined-outputs")
 
     expected_dirs = [raw_dir, filtered_dir, read_based_dir, assembly_based_dir,
                      assemblies_dir, genes_dir, annotations_and_tax_dir, mapping_dir,
@@ -506,52 +512,52 @@ def main():
 
     # ------------------ FASTQ SEQUENCE ANALYSIS AND VALIDATION ------------------
     raw_prefix = "raw" if tech == "nanopore" else "HRrm"
-    raw_multiqc_zip = f"{raw_dir}/MultiQC_Reports/{output_prefix}{raw_prefix}_multiqc{assay_suffix}_data.zip"
+    raw_multiqc_zip = Path(raw_dir, f"MultiQC_Reports/{output_prefix}{raw_prefix}_multiqc{assay_suffix}_data.zip")
     check_multiqc_outputs(validation_log, tech, sample_names, raw_multiqc_zip, raw_prefix, 
                           args.raw_R1_suffix, args.raw_R2_suffix, args.raw_suffix, args.single_ended)
     append_message_to_log(validation_log, f"    - all expected samples were found in raw multiqc files in {raw_dir}/MultiQC_Reports")
     
-    filtered_multiqc_zip = f"{filtered_dir}/MultiQC_Reports/{output_prefix}filtered_multiqc{assay_suffix}_data.zip"
+    filtered_multiqc_zip = Path(filtered_dir, f"MultiQC_Reports/{output_prefix}filtered_multiqc{assay_suffix}_data.zip")
     check_multiqc_outputs(validation_log, tech, sample_names, filtered_multiqc_zip, "filtered", 
                           args.filtered_R1_suffix, args.filtered_R2_suffix, args.filtered_suffix, args.single_ended)
     append_message_to_log(validation_log, f"    - all expected samples were found in filtered multiqc files in {filtered_dir}/MultiQC_Reports")
 
     if stype == "low_biomass":
-        decontam_zip = f"{decontam_dir}/MultiQC_Reports/{output_prefix}decontam_multiqc{assay_suffix}_data.zip"
+        decontam_zip = Path(decontam_dir, f"MultiQC_Reports/{output_prefix}decontam_multiqc{assay_suffix}_data.zip")
         check_multiqc_outputs(validation_log, tech, sample_names, decontam_zip, "decontam", 
                               args.decontam_R1_suffix, args.decontam_R2_suffix, args.decontam_suffix, args.single_ended)
         append_message_to_log(validation_log, f"    - all expected samples were found in decontam multiqc files in {decontam_dir}/MultiQC_Reports")
         
     if args.host_removed:
-        host_zip = f"{host_dir}/MultiQC_Reports/{output_prefix}HostRm_multiqc{assay_suffix}_data.zip"
+        host_zip = Path(host_dir, f"MultiQC_Reports/{output_prefix}HostRm_multiqc{assay_suffix}_data.zip")
         check_multiqc_outputs(validation_log, tech, sample_names, host_zip, "host", 
                               args.host_R1_suffix, args.host_R2_suffix, args.host_suffix, args.single_ended)
         append_message_to_log(validation_log, f"    - all expected samples were found in host multiqc files in {host_dir}/MultiQC_Reports")
         
     if tech == "nanopore":
-        trimmed_zip = f"{trimmed_dir}/MultiQC_Reports/{output_prefix}trimmed_multiqc{assay_suffix}_data.zip"
+        trimmed_zip = Path(trimmed_dir, f"MultiQC_Reports/{output_prefix}trimmed_multiqc{assay_suffix}_data.zip")
         check_multiqc_outputs(validation_log, tech, sample_names, trimmed_zip, "trimmed", "", "", args.trimmed_suffix, True)
         append_message_to_log(validation_log, f"    - all expected samples were found in trimmed multiqc files in {trimmed_dir}/MultiQC_Reports")
         
-        hrrm_zip = f"{hrrm_dir}/MultiQC_Reports/{output_prefix}HRrm_multiqc{assay_suffix}_data.zip"
+        hrrm_zip = Path(hrrm_dir, f"MultiQC_Reports/{output_prefix}HRrm_multiqc{assay_suffix}_data.zip")
         check_multiqc_outputs(validation_log, tech, sample_names, hrrm_zip, "HRrm", "", "", args.human_suffix, True)
         append_message_to_log(validation_log, f"    - all expected samples were found in human removed multiqc files in {hrrm_dir}/MultiQC_Reports")
 
     # ---------------  Fastq files validation ---------------------------------------------
     if tech == "illumina":
-       check_fastq_files(validation_log, tech, sample_names, os.path.join(filtered_dir, "Fastq/Fastp"), args.filtered_suffix, args.filtered_R1_suffix, args.filtered_R2_suffix, args.single_ended)
+       check_fastq_files(validation_log, tech, sample_names, Path(filtered_dir, "Fastq/Fastp"), args.filtered_suffix, args.filtered_R1_suffix, args.filtered_R2_suffix, args.single_ended)
        append_message_to_log(validation_log, f"    - all expected fastq read files were found in {filtered_dir}/Fastq/Fastp")
 
     if tech == "nanopore":
-        check_fastq_files(validation_log, tech, sample_names, os.path.join(hrrm_dir, "Fastq"), args.human_suffix)
+        check_fastq_files(validation_log, tech, sample_names, Path(hrrm_dir, "Fastq"), args.human_suffix)
         append_message_to_log(validation_log, f"    - all expected fastq read files were found in {hrrm_dir}/Fastq")
  
     if stype == "low_biomass":
-        check_fastq_files(validation_log, tech, sample_names, os.path.join(decontam_dir, "Fastq"), args.decontam_suffix, args.decontam_R1_suffix, args.decontam_R2_suffix, args.single_ended)
+        check_fastq_files(validation_log, tech, sample_names, Path(decontam_dir, "Fastq"), args.decontam_suffix, args.decontam_R1_suffix, args.decontam_R2_suffix, args.single_ended)
         append_message_to_log(validation_log, f"    - all expected decontaminated fastq read files were found in {decontam_dir}/Fastq")
 
     if args.host_removed:
-         check_fastq_files(validation_log, tech, sample_names, os.path.join(host_dir, "Fastq"), args.host_suffix, args.host_R1_suffix, args.host_R2_suffix, args.single_ended)
+         check_fastq_files(validation_log, tech, sample_names, Path(host_dir, "Fastq"), args.host_suffix, args.host_R1_suffix, args.host_R2_suffix, args.single_ended)
          append_message_to_log(validation_log, f"    - all expected host removed fastq read files were found in {host_dir}/Fastq")
 
 
@@ -609,33 +615,35 @@ def main():
             f"Humann_Outputs/Pathway_Abundances/Pathway-abundances_decontam_top_50_heatmap{assay_suffix}.png"
         ])
     for h_plot in humann_plots:
-        check_plots_for_samples(validation_log, sample_names, os.path.join(read_based_dir, h_plot))
+        check_plots_for_samples(validation_log, sample_names, Path(read_based_dir, h_plot))
     append_message_to_log(validation_log, f"    - all generated functional heatmaps contain entries for all expected samples")
 
     # Profilers profiling arrays
     profs = ["Kaiju", "Kraken2"]
     if tech == "illumina": profs.append("Metaphlan")
     for p in profs:
-        p_dir = f"{read_based_dir}/{p}_Outputs"
+        p_dir = Path(read_based_dir, f"{p}_Outputs")
         if p == "Kraken2":
-            check_for_file_and_contents(validation_log, f"{p_dir}/MultiQC_Reports/kraken2_multiqc{assay_suffix}.html")
-        check_for_file_and_contents(validation_log, f"{p_dir}/Count_Tables/{p.lower()}_filtered_species_table{assay_suffix}.tsv")
-        check_for_file_and_contents(validation_log, f"{p_dir}/Count_Tables/{p.lower()}_species_table{assay_suffix}.tsv")
+            check_for_file_and_contents(validation_log, Path(p_dir, f"MultiQC_Reports/kraken2_multiqc{assay_suffix}.html"))
+        check_for_file_and_contents(validation_log, Path(p_dir, f"Count_Tables/{p.lower()}_filtered_species_table{assay_suffix}.tsv"))
+        check_for_file_and_contents(validation_log, Path(p_dir, f"Count_Tables/{p.lower()}_species_table{assay_suffix}.tsv"))
+        if p == "Metaphlan":
+            check_for_file_and_contents(validation_log, Path(p_dir, f"Count_Tables/metaphlan-taxonomy{assay_suffix}.tsv"))
         
         # Plot verification
-        check_plots_for_samples(validation_log, sample_names, f"{p_dir}/Barplots/{p.lower()}_filtered_species_barplot{assay_suffix}.html")
-        check_plots_for_samples(validation_log, sample_names, f"{p_dir}/Barplots/{p.lower()}_unfiltered_species_barplot{assay_suffix}.html")
-        check_plots_for_samples(validation_log, sample_names, f"{p_dir}/Krona_Reports/{p.lower()}-report{assay_suffix}.html")
+        check_plots_for_samples(validation_log, sample_names, Path(p_dir, f"Barplots/{p.lower()}_filtered_species_barplot{assay_suffix}.html"))
+        check_plots_for_samples(validation_log, sample_names, Path(p_dir, f"Barplots/{p.lower()}_unfiltered_species_barplot{assay_suffix}.html"))
+        check_plots_for_samples(validation_log, sample_names, Path(p_dir, f"Krona_Reports/{p.lower()}-report{assay_suffix}.html"))
         
         if stype == "low_biomass":
-            check_for_file_and_contents(validation_log, f"{p_dir}/Count_Tables/{p.lower()}_decontam_results{assay_suffix}.tsv")
-            check_for_file_and_contents(validation_log, f"{p_dir}/Count_Tables/{p.lower()}_decontam_species_table{assay_suffix}.tsv")
-            check_plots_for_samples(validation_log, sample_names, f"{p_dir}/Barplots/{p.lower()}_decontam_species_barplot{assay_suffix}.html")
+            check_for_file_and_contents(validation_log, Path(p_dir, f"Count_Tables/{p.lower()}_decontam_results{assay_suffix}.tsv"))
+            check_for_file_and_contents(validation_log, Path(p_dir, f"Count_Tables/{p.lower()}_decontam_species_table{assay_suffix}.tsv"))
+            check_plots_for_samples(validation_log, sample_names, Path(p_dir, f"Barplots/{p.lower()}_decontam_species_barplot{assay_suffix}.html"))
     append_message_to_log(validation_log, f"    - all taxonomic profiler tables and interactive barplots/Krona reports verified complete")
 
     # ------------------ ASSEMBLY-BASED VALIDATION MATRIX ------------------
     assembly_summary = f"assembly-summaries{assay_suffix}.tsv"
-    failed_assemblies = os.path.join(assemblies_dir, f"Failed-assemblies{assay_suffix}.tsv")
+    failed_assemblies = Path(assemblies_dir, f"Failed-assemblies{assay_suffix}.tsv")
     failed_assemblies_list = get_failed_assemblies(failed_assemblies)
 
     check_assemblies(validation_log, sample_names, failed_assemblies_list, f"-assembly{assay_suffix}.fasta", assemblies_dir, assembly_summary)
@@ -697,7 +705,7 @@ def main():
         ])
     assembled_samples = [s for s in sample_names if s not in failed_assemblies_list]
     for c_plot in combined_plots:
-        check_plots_for_samples(validation_log, assembled_samples, os.path.join(combined_output_dir, c_plot))
+        check_plots_for_samples(validation_log, assembled_samples, Path(combined_output_dir, c_plot))
     append_message_to_log(validation_log, f"    - all cross-sample combined heatmaps verified for complete sample pixel matrix inclusion")
 
     output_fasta_bins = [f for f in get_files_in_dir(bins_dir) if f.endswith(".zip")]
@@ -705,43 +713,47 @@ def main():
         check_bins(validation_log, bins_dir, f"bins-overview{assay_suffix}.tsv", output_fasta_bins) 
         append_message_to_log(validation_log, f"    - recovered genomic bins and summaries found in {bins_dir}")
     else:
-        if f"{bins_dir}/bins-overview{assay_suffix}.tsv" not in manifest_data["missing_optional"]:
-            manifest_data["missing_optional"].append(f"{bins_dir}/bins-overview{assay_suffix}.tsv")
+        if Path(bins_dir, f"bins-overview{assay_suffix}.tsv") not in manifest_data["missing_optional"]:
+            manifest_data["missing_optional"].append(str(Path(bins_dir, f"bins-overview{assay_suffix}.tsv")))
         append_message_to_log(validation_log, f"    - no recovered genomic bins were found in {bins_dir}")
     
     output_fasta_mags = [f for f in get_files_in_dir(MAGs_dir) if f.endswith(".zip")]
     # If MAGs are present then check for the KEGG Decoder outputs
-    KEGG_files = [os.path.join(MAGs_dir, f"KEGG_Outputs/MAG-KEGG-Decoder-out{assay_suffix}.tsv"),
-                  os.path.join(MAGs_dir, f"KEGG_Outputs/MAG-KEGG-Decoder-out{assay_suffix}.html"), 
-                  os.path.join(MAGs_dir, f"KEGG_Outputs/MAG-level-KO-annotations{assay_suffix}.tsv")]
+    KEGG_files = [Path(MAGs_dir, f"KEGG_Outputs/MAG-KEGG-Decoder-out{assay_suffix}.tsv"),
+                  Path(MAGs_dir, f"KEGG_Outputs/MAG-KEGG-Decoder-out{assay_suffix}.html"), 
+                  Path(MAGs_dir, f"KEGG_Outputs/MAG-level-KO-annotations{assay_suffix}.tsv")]
     if output_fasta_mags:
         check_mags(validation_log, MAGs_dir, output_fasta_mags, output_fasta_bins, f"MAGs-overview{assay_suffix}.tsv")
         for file in KEGG_files:
             check_for_file_and_contents(validation_log, file)
         append_message_to_log(validation_log, f"    - recovered meta-assembled genomes and summaries found in {MAGs_dir}")
     else:
-        if f"{MAGs_dir}/MAGs-overview{assay_suffix}.tsv" not in manifest_data["missing_optional"]:
-            manifest_data["missing_optional"].append(f"{MAGs_dir}/MAGs-overview{assay_suffix}.tsv")
+        if Path(MAGs_dir, f"MAGs-overview{assay_suffix}.tsv") not in manifest_data["missing_optional"]:
+            manifest_data["missing_optional"].append(str(Path(MAGs_dir, f"MAGs-overview{assay_suffix}.tsv")))
         for file in KEGG_files:
             if file not in manifest_data["missing_optional"]:
-                manifest_data["missing_optional"].append(file)
+                manifest_data["missing_optional"].append(str(file))
         append_message_to_log(validation_log, f"    - no recovered meta-assembled genomes were found in {MAGs_dir}")    
 
-    assembly_based_overview_table = os.path.join(assembly_based_dir, f"Assembly-based-processing-overview{assay_suffix}.tsv")
+    assembly_based_overview_table = Path(assembly_based_dir, f"Assembly-based-processing-overview{assay_suffix}.tsv")
     check_assembly_based_overview_table(validation_log, sample_names, assembly_based_overview_table)
     append_message_to_log(validation_log, f"    - {assembly_based_overview_table} was successfully validated")
 
     # ------------------ RUNTIME ZIP METADATA AUDIT ------------------
-    zip_archive_path = args.processing_zip_file
+    zip_archive_path = Path(outdir, args.processing_zip_file) if not os.path.dirname(args.processing_zip_file) else args.processing_zip_file
     runsheet = os.path.basename(args.runsheet)
     expected_zip_contents = ["command.txt","nextflow_processing_info.txt","software_versions.txt", runsheet]
     check_metagenomics_processing_zip(validation_log, zip_archive_path, expected_zip_contents)
     append_message_to_log(validation_log, f"    - processing zip file verified complete")
 
     # ------------------ PRINT METRIC SUMMARIES AND EXPORT MANIFEST ------------------
-    append_message_to_log(validation_log, "Validation completed successfully.")
     write_manifest_to_disk(manifest_output_file)
-    print(f"\n{color_text('Validation has completed successfully :)', 'green')}")
+    if len(manifest_data['failed_missing']) > 0:
+        append_message_to_log(validation_log, "Validation failed.")
+        print(f"\n{color_text("Validation failed, see manifest for list of missing files.", "red")}")
+    else:
+        append_message_to_log(validation_log, "Validation completed successfully.")
+        print(f"\n{color_text("Validation has completed successfully :)", "green")}")
     print(f"  Manifest JSON summary written to: '{manifest_output_file}'")
     
     get_read_count_stats(validation_log, "raw", raw_multiqc_zip, tech)
