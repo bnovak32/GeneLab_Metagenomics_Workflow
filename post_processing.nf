@@ -96,6 +96,7 @@ log.info """${c_blue}
          Assay Suffix: ${params.assay_suffix}
          Output Prefix: ${params.output_prefix}
          V & V Link: ${params.v_v_guidelines_link}
+         Human Genome Reference: ${params.genome}
          Nextflow directory publishing mode: ${params.publishDir_mode}
         
 
@@ -128,9 +129,12 @@ log.info """${c_blue}
          Boolean Flags:
          Host Removed: ${params.host_removed}
          Single Ended: ${params.single_end}
+         Concated Reads: ${params.concated}
 
          Directories:
          Pipeline Outputs: ${params.output_dir}
+         Processing : ${params.processing_dir}
+         Jinja Templates: ${params.templates}
          """
 }
 
@@ -174,9 +178,9 @@ workflow {
 
        // ---------------------- Input channels -------------------------------- //
        // Input Value channels
-       meta_ch   =  channel.of([name: params.name, email: params.email, output_prefix: params.output_prefix,
+       meta_ch   =  channel.of([name: params.name, email: params.email, output_prefix: params.output_prefix, genome: params.genome,
                                 protocol_id: params.protocol_id, technology: params.technology, sample_type: params.sample_type,
-                                osd_accession: params.osd_accession, glds_accession: params.glds_accession, 
+                                osd_accession: params.osd_accession, glds_accession: params.glds_accession, concated: params.concated,
                                 v_v_guidelines_link: params.v_v_guidelines_link, assay_suffix: params.assay_suffix,  
                                 raw_suffix: params.raw_suffix, raw_R1_suffix: params.raw_R1_suffix, raw_R2_suffix: params.raw_R2_suffix,
                                 filtered_suffix: params.filtered_suffix, filtered_R1_suffix: params.filtered_R1_suffix,
@@ -192,6 +196,8 @@ workflow {
 
        // Processing directory containing files to be validated and packaged for OSDR release
        processing_dir = channel.fromPath(params.processing_dir, type: 'dir', checkIfExists: true)
+       // Jinja templates for protocol generation
+       templates = channel.fromPath(params.templates, type: 'dir', checkIfExists: true)
 
        // If the assay table is provided use it as the input table otherwise use the isa_zip
        assay_table_ch = channel.fromPath(params.assay_table ?  params.assay_table : params.isa_zip,
@@ -251,19 +257,18 @@ workflow {
         GENERATE_CURATION_TABLE(meta_ch, processing_dir, assay_table_ch, runsheet_ch,
                                 human_summary_ch, GENERATE_READ_STATS.out.stats, 
                                 VALIDATE_PROCESSING.out.json)
+        */
 
         // Generate README file
         GENERATE_README(meta_ch, PACKAGE_PROCESSING_INFO.out.zip, 
                       runsheet_ch, VALIDATE_PROCESSING.out.json)
+        
         // Generate md5sums
         GENERATE_MD5SUMS(processing_dir, PACKAGE_PROCESSING_INFO.out.zip,
                             GENERATE_README.out.readme)
-        */
-
-        GENERATE_MD5SUMS(processing_dir, PACKAGE_PROCESSING_INFO.out.zip)
-
+        
         // Write methods
-        GENERATE_PROTOCOL(meta_ch, software_versions)
+        GENERATE_PROTOCOL(meta_ch, software_versions, templates)
 }
 
 

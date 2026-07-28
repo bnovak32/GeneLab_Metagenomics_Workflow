@@ -28,7 +28,7 @@ WORKFLOW_DIR='/path/to/workflow_code/'
 # ---------------------------------------------------------------------------- Nanopore ---------------------------------------------------------------------------------------- #
 
 # ---- Low biomass
-
+# Processing
 # Input dir
 bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "low_biomass" --input_type "directory"  --input_file input_dir_barcodes.csv --errorStrategy "ignore" --technology "nanopore" --assay_suffix "_GLlblMetag" --input_dir "/path/to/pod5/directory/" --kit_name "SQK-RPB114-24"'
 
@@ -38,9 +38,19 @@ bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.con
 # Multiple
 bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "low_biomass" --input_type "multiple" --input_file multiple.csv  --errorStrategy "ignore" --technology "nanopore" --assay_suffix "_GLlblMetag"'
 
+# Post-proscessing
+bash ./launch.sh post_processing  ${WORKFLOW_DIR}/post_processing.nf  ${WORKFLOW_DIR}/config/post_processing.config \
+           '--name "First M. Last" --email "username@nasa.com" --glds_accession "OSD-944" --osd_accession "OSD-944" 
+           --assay_table assay_table.txt --runsheet "multiple.csv" 
+           --technology "nanopore" --sample_type "low_biomass" --protocol_id "GL-DPPD-7116" --raw_suffix ".fastq.gz" 
+           --raw_zip "../Merged_Sequence_Data/MultiQC_Reports/raw_multiqc_data.zip" 
+           --filtered_zip "../Filtered_Sequence_Data/MultiQC_Reports/filtered_multiqc_data.zip" 
+           --trimmed_zip "../Trimmed_Sequence_Data/MultiQC_Reports/trimmed_multiqc_data.zip" 
+           --human_zip "../HR-removed_Sequence_Data/MultiQC_Reports/HRrm_multiqc_data.zip" 
+           --decontam_zip "../Decontaminated_Sequence_Data/MultiQC_Reports/decontam_multiqc_data.zip" ' 
 
 # ----- Standard
-
+# Processing
 # Input dir
 bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "standard" --input_type "directory"  --input_file input_dir_barcodes.csv --errorStrategy "ignore" --technology "nanopore" --assay_suffix "_GLlMetag" --input_dir "/path/to/pod5/directory/" --kit_name "SQK-RPB114-24"'
 
@@ -50,19 +60,45 @@ bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.con
 # Multiple
 bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "standard" --input_type "multiple" --input_file multiple.csv  --errorStrategy "ignore" --technology "nanopore" --assay_suffix "_GLlMetag"'
 
+# Post processing 
+bash ./launch.sh post_processing  ${UPDATED_WORKFLOW_DIR}/post_processing.nf  ${UPDATED_WORKFLOW_DIR}/config/post_processing.config \
+           '--name "First M. Last" --email "username@nasa.com" --glds_accession "OSD-944" --osd_accession "OSD-944" 
+           --assay_table assay_table.txt --runsheet "multiple.csv" --technology "nanopore" --sample_type "standard" 
+           --protocol_id "GL-DPPD-7116" --raw_suffix ".fastq.gz" 
+           --raw_zip "../Merged_Sequence_Data/MultiQC_Reports/raw_multiqc_data.zip" 
+           --filtered_zip "../Filtered_Sequence_Data/MultiQC_Reports/filtered_multiqc_data.zip" 
+           --trimmed_zip "../Trimmed_Sequence_Data/MultiQC_Reports/trimmed_multiqc_data.zip" 
+           --human_zip "../HR-removed_Sequence_Data/MultiQC_Reports/HRrm_multiqc_data.zip" ' 
 
 # ------------------------------------------------------------------------------- Illumina ----------------------------------------------------------------------------------------- #
 
 # ---- Low biomass
-
+# Processing
 bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "low_biomass" --input_file sub_PE_file.csv --errorStrategy "ignore"  --technology "illumina" --assay_suffix "_GLlbsMetag"'
+
+# Post processing 
+bash ./launch.sh post_processing  ${WORKFLOW_DIR}/post_processing.nf  ${WORKFLOW_DIR}/config/post_processing.config \
+           '--name "First M. Last" --email "username@nasa.com" --glds_accession "OSD-944" --osd_accession "OSD-944" 
+           --assay_table assay_table.txt  --runsheet "PE_file.csv" --technology "illumina" --sample_type "low_biomass" 
+           --protocol_id "GL-DPPD-7117" --raw_suffix ".fastq.gz" --raw_R1_suffix "_R1.fastq.gz" --raw_R2_suffix "_R2.fastq.gz"  
+           --filtered_zip "../Filtered_Sequence_Data/MultiQC_Reports/filtered_multiqc_data.zip" 
+           --raw_zip "../Merged_Sequence_Data/MultiQC_Reports/HRrm_multiqc_data.zip" 
+           --human_summary "../../01-HRrm/results/human-read-removal-summary.tsv" 
+           --decontam_zip "../Decontaminated_Sequence_Data/MultiQC_Reports/decontam_multiqc_data.zip" '
 
 
 # ---- Standard
-
+# Processing
 bash ./launch.sh processing ${WORKFLOW_DIR}/main.nf ${WORKFLOW_DIR}/nextflow.config '--sample_type "standard" --input_file sub_PE_file.csv --errorStrategy "ignore"  --technology "illumina" --assay_suffix "_GLsMetag"'
 
-
+# Post processing 
+bash ./launch.sh post_processing  ${WORKFLOW_DIR}/post_processing.nf  ${WORKFLOW_DIR}/config/post_processing.config \
+           '--name "First M. Last" --email "username@nasa.com" --glds_accession "OSD-944" --osd_accession "OSD-944" 
+           --assay_table assay_table.txt --runsheet "PE_file.csv" --technology "illumina" --sample_type "standard" 
+           --protocol_id "GL-DPPD-7117" --raw_suffix ".fastq.gz" --raw_R1_suffix "_R1.fastq.gz" --raw_R2_suffix "_R2.fastq.gz"  
+           --filtered_zip "../Filtered_Sequence_Data/MultiQC_Reports/filtered_multiqc_data.zip" 
+           --raw_zip "../Merged_Sequence_Data/MultiQC_Reports/HRrm_multiqc_data.zip" 
+           --human_summary "../../01-HRrm/results/human-read-removal-summary.tsv" '
 
 ## Add a time-stamp at the end of the job then calculate how long the job took to run in seconds, minutes, and hours ##
 echo ""

@@ -1,7 +1,6 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl = 2
 
-//params.bin_dir = "${projectDir}/bin"
 /*
  * ========================================================================================
  * PROCESS: PACKAGE_PROCESSING_INFO
@@ -483,18 +482,20 @@ process GENERATE_README {
         path("${meta.output_prefix}README${meta.assay_suffix}.txt"), emit: readme
 
     script:
-        def runsheet_name = runsheet.getName()
         def host_removed_flag = params.host_removed ? "--host-removed" : ""  
         """    
         GL-gen-processed-metagenomics-readme \\
              --output '${meta.output_prefix}README${meta.assay_suffix}.txt' \\
-             --glds-id '${meta.osd_accession}' \\
+             --osd-id '${meta.osd_accession}' \\
              --name '${meta.name}' \\
              --email '${meta.email}' \\
              --protocol-id '${meta.protocol_id}' \\
-             --assay_suffix '${meta.assay_suffix}' \\
-             --runsheet '${runsheet_name}' \\
-             --validation_output_json '${meta.validation_manifest}' ${host_removed_flag}
+             --assay-suffix '${meta.assay_suffix}' \\
+             --output-prefix '${meta.output_prefix}' \\
+             --runsheet '${runsheet}' \\
+             --technology '${meta.technology}' \\
+             --sample-type '${meta.sample_type}' \\
+             --validation-json ${validation_manifest} ${host_removed_flag}
         """
 
 }
@@ -520,7 +521,7 @@ process GENERATE_README {
  *
  *   3. path: README
  *      Cardinality: one
- *      Description: Input file: README files
+ *      Description: Input file: README file
  *
  *
  * OUTPUTS:
@@ -544,7 +545,7 @@ process GENERATE_MD5SUMS {
     input:
         path(processing_dir)
         path(processing_info)
-        //path(README)
+        path(README)
 
     output:
         path("${params.output_prefix}processed_md5sum${params.assay_suffix}.tsv"), emit: md5sum
@@ -572,6 +573,9 @@ process GENERATE_MD5SUMS {
  *   2. path: software_versions
  *      Cardinality: one
  *      Description: Input file: software versions file
+ *   3. path: templates
+ *      Cardinality: one
+ *      Description: Input Directory: jinja protocols templates directory
  *
  * OUTPUTS:
  *   1. path: protocol.txt
@@ -595,14 +599,18 @@ process GENERATE_PROTOCOL {
     input:
         val(meta)
         path(software_versions)
+        path(templates)
     output:
         path("protocol.txt")
     script:
+        def concat_flag = params.concated ? "--concat-reads": ""
+        def host_removed_flag = params.host_removed ? "--host-removed" : ""
         """
-        generate_protocol.py --versions-file ${software_versions} \\
-                             --protocol-id ${meta.protocol_id} \\
-                             --sample-type ${meta.sample_type} \\
-                             --technology ${meta.technology}  > protocol.txt
+        generate_protocol_jinja.py --versions-file ${software_versions} \\
+                                   --protocol-id ${meta.protocol_id} \\
+                                   --sample-type ${meta.sample_type} \\
+                                   --technology ${meta.technology} \\
+                                   --kraken2-genome-reference '${meta.genome}' ${concat_flag} ${host_removed_flag} > protocol.txt
         """
 }
 

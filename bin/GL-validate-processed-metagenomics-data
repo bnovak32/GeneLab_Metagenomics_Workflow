@@ -740,7 +740,7 @@ def main():
     append_message_to_log(validation_log, f"    - {assembly_based_overview_table} was successfully validated")
 
     # ------------------ RUNTIME ZIP METADATA AUDIT ------------------
-    zip_archive_path = Path(outdir, args.processing_zip_file) if not os.path.dirname(args.processing_zip_file) else args.processing_zip_file
+    zip_archive_path = Path(args.processing_zip_file)
     runsheet = os.path.basename(args.runsheet)
     expected_zip_contents = ["command.txt","nextflow_processing_info.txt","software_versions.txt", runsheet]
     check_metagenomics_processing_zip(validation_log, zip_archive_path, expected_zip_contents)
@@ -750,10 +750,10 @@ def main():
     write_manifest_to_disk(manifest_output_file)
     if len(manifest_data['failed_missing']) > 0:
         append_message_to_log(validation_log, "Validation failed.")
-        print(f"\n{color_text("Validation failed, see manifest for list of missing files.", "red")}")
+        print(f"\n{color_text('Validation failed, see manifest for list of missing files.', 'red')}")
     else:
         append_message_to_log(validation_log, "Validation completed successfully.")
-        print(f"\n{color_text("Validation has completed successfully :)", "green")}")
+        print(f"\n{color_text('Validation has completed successfully', 'green')}")
     print(f"  Manifest JSON summary written to: '{manifest_output_file}'")
     
     get_read_count_stats(validation_log, "raw", raw_multiqc_zip, tech)
