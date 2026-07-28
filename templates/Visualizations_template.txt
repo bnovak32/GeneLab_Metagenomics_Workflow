@@ -1,0 +1,5 @@
+{% if sample_type == "low_biomass" %}
+Feature table decontamination and visualizations: All graphical displays were conducted using R v{{ r_version }}. Bar plots and heatmaps were generated using R packages ggplot2 v{{ ggplot2_version }} and pheatmap v{{ pheatmap_version }}, respectively. Taxonomy and function annotation tables from both read and assembly-based processing steps were decontaminated with decontam v{{ decontam_version}} an R package designed to statistically identify contaminant features in a feature table. 
+{% else %}
+Feature table visualizations: All graphical displays were conducted using R v{{ r_version }}. Bar plots and heatmaps were generated using R packages ggplot2 v{{ ggplot2_version }} and pheatmap v{{ pheatmap_version }}, respectively. 
+{% endif %}
