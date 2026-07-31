@@ -18,8 +18,50 @@ if(params.help){
   println()
   println("GeneLab Post Processing Pipeline: $workflow.manifest.version")
   println("USAGE:")
-  println("Example: Submit and run jobs with slurm in singularity containers.")
-  println("   > nextflow -C post_processing.config run post_processing.nf -resume -profile slurm,singularity")
+  println("Example 1: Illumina Standard Sample.")
+  println("""   > nextflow -C config/post_processing.config run post_processing.nf -resume -profile slurm,singularity \
+                            --technology "illumina" --sample_type "standard" --name "First M. Last" --email "username@nasa.com" \
+                            --glds_accession "OSD-944" --osd_accession "OSD-944"  --assay_table "assay_table.txt" \
+                            --runsheet "PE_file.csv"  --protocol_id "GL-DPPD-7117" --raw_suffix ".fastq.gz" \
+                            --raw_R1_suffix "_R1.fastq.gz" --raw_R2_suffix "_R2.fastq.gz"  \
+                            --filtered_zip "../Filtered_Sequence_Data/MultiQC_Reports/filtered_multiqc_data.zip" \
+                            --raw_zip "../Merged_Sequence_Data/MultiQC_Reports/HRrm_multiqc_data.zip" \
+                            --human_summary "../../01-HRrm/results/human-read-removal-summary.tsv"  
+         """)
+  println()
+  println("Example 2: Nanopore Standard Sample. Run the pipeline on slurm in conda environments.")
+  println("""   > nextflow -C config/post_processing.config run post_processing.nf -resume -profile slurm,mamba \
+                          --name "First M. Last" --email "username@nasa.com" --glds_accession "OSD-944" --osd_accession "OSD-944" \
+                          --assay_table "assay_table.txt" --runsheet "multiple.csv" --technology "nanopore" --sample_type "standard" \
+                          --protocol_id "GL-DPPD-7116" --raw_suffix ".fastq.gz" \
+                          --raw_zip "../Merged_Sequence_Data/MultiQC_Reports/raw_multiqc_data.zip" \
+                          --filtered_zip "../Filtered_Sequence_Data/MultiQC_Reports/filtered_multiqc_data.zip" \
+                          --trimmed_zip "../Trimmed_Sequence_Data/MultiQC_Reports/trimmed_multiqc_data.zip" \
+                          --human_zip "../HR-removed_Sequence_Data/MultiQC_Reports/HRrm_multiqc_data.zip" 
+         """)
+  println()
+  println("Example 3: Illumina Low-Biomass Sample.")
+  println("""   > nextflow -C config/post_processing.config run post_processing.nf -resume -profile slurm,singularity  \
+                          --name "First M. Last" --email "username@nasa.com" --glds_accession "OSD-944" --osd_accession "OSD-944" \
+                          --assay_table assay_table.txt  --runsheet "PE_file.csv" --technology "illumina" --sample_type "low_biomass" \
+                          --protocol_id "GL-DPPD-7117" --raw_suffix ".fastq.gz" --raw_R1_suffix "_R1.fastq.gz" --raw_R2_suffix "_R2.fastq.gz"  \
+                          --filtered_zip "../Filtered_Sequence_Data/MultiQC_Reports/filtered_multiqc_data.zip" \
+                          --raw_zip "../Merged_Sequence_Data/MultiQC_Reports/HRrm_multiqc_data.zip" \
+                          --human_summary "../../01-HRrm/results/human-read-removal-summary.tsv" \
+                          --decontam_zip "../Decontaminated_Sequence_Data/MultiQC_Reports/decontam_multiqc_data.zip"
+         """)
+  println()
+  println("Example 4: : Nanopore Low-Biomass Sample")
+  println("""   > nextflow -C config/post_processing.config run post_processing.nf -resume -profile slurm,singularity \
+                          --name "First M. Last" --email "username@nasa.com" --glds_accession "OSD-944" --osd_accession "OSD-944" \
+                          --assay_table assay_table.txt --runsheet "multiple.csv" \
+                          --technology "nanopore" --sample_type "low_biomass" --protocol_id "GL-DPPD-7116" --raw_suffix ".fastq.gz" \
+                          --raw_zip "../Merged_Sequence_Data/MultiQC_Reports/raw_multiqc_data.zip" \
+                          --filtered_zip "../Filtered_Sequence_Data/MultiQC_Reports/filtered_multiqc_data.zip" \
+                          --trimmed_zip "../Trimmed_Sequence_Data/MultiQC_Reports/trimmed_multiqc_data.zip" \
+                          --human_zip "../HR-removed_Sequence_Data/MultiQC_Reports/HRrm_multiqc_data.zip" \
+                          --decontam_zip "../Decontaminated_Sequence_Data/MultiQC_Reports/decontam_multiqc_data.zip"
+            """)
   println()
   println("Required Parameters:")
   println("  --technology [STRING]  Sequencing technology. Options are 'illumina' or 'nanopore'. Default: null.")
@@ -33,8 +75,12 @@ if(params.help){
   println("  --osd_accession [STRING]  A Genelab OSD accession number. Example OSD-574. Default: empty string")
   println("  --name [STRING] The analyst's full name. E.g. 'FirstName A. LastName'.  Default: FirstName A. LastName")
   println("  --email [STRING] The analyst's email address. E.g. 'mail@nasa.gov'.  Default: mail@nasa.gov")
-  println("  --assay_suffix [STRING]  Genelab's assay suffix. Default: _GLmetagenomics.")
+  println("  --assay_suffix [STRING]  Genelab's assay suffix.")
   println("  --output_prefix [STRING] Unique name to tag onto output files. Default: empty string.")
+  println("  --genome [STRING] Kraken2 human reference genome used to remove human reads. Default: (GCF_000001405.39) GRCh38.p13")
+  println("  --host_removed [BOOLEAN] was an additional host's reads removed beside human reads? Default: false")
+  println("  --single_end [BOOLEAN] are the illumina reads single ended?  Default: false")
+  println("  --concated [BOOLEAN] were the nanopore reads concated before processing. Default: false")
   println("  --v_v_guidelines_link [URL] Genelab metagenomics data validation and verification guidelines link. Default: https://genelab-tools.arc.nasa.gov/confluence/pages/viewpage.action?pageId=8225175.")
   println("File Suffixes:")
   println("      --raw_suffix [STRING]  Raw reads suffix for datasets during processing. Default: _HRrm.fastq.gz.")  
@@ -66,6 +112,7 @@ if(params.help){
   println("Directories:")
   println("    --output_dir  [PATH] Specifies the directory where outputs of this post-processing workflow will be published. Default: ../Post_Processing/")
   println("    --processing_dir  [PATH] Specifies the directory where outputs of the main processing workflow were published. Default: ../../processing/")
+  println("    --templates  [PATH] Specifies the directory where jinja templates for generating protocol.txt is located. Default: <projectDir>/templates/ ")
   println()
   println("Optional arguments:")  
   println("    --help [BOOLEAN] Print this help message and exit")
